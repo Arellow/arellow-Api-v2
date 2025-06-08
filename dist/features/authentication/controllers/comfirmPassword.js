@@ -8,35 +8,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthController = void 0;
+exports.ConfirmPasswordController = void 0;
 const confirmPassword_1 = require("../services/confirmPassword");
-class AuthController {
+const response_util_1 = __importDefault(require("../../../utils/helpers/response.util"));
+const appError_1 = require("../../../lib/appError");
+class ConfirmPasswordController {
     constructor() {
         this.comfirmPasswordService = new confirmPassword_1.ConfirmPasswordService();
         this.confirmForgotPassword = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const dto = req.body;
             try {
                 const result = yield this.comfirmPasswordService.confirmForgotPassword(dto);
-                return res.status(200).json({
-                    message: "Password has been reset successfully.",
-                    data: result.user,
-                    token: result.token,
-                    status: "success",
-                });
+                new response_util_1.default(200, true, "Password has been reset successfully.", res, { user: result.user, token: result.token });
             }
             catch (error) {
-                const statusCode = error.message.includes("expired")
-                    ? 400
-                    : error.message.includes("not match") || error.message.includes("required")
-                        ? 422
-                        : 500;
-                return res.status(statusCode).json({
-                    status: "error",
-                    message: error.message || "Something went wrong",
-                });
+                if (error.message.includes("expired")) {
+                    next(new appError_1.BadRequestError("Reset code has expired"));
+                }
+                else if (error.message.includes("not match") || error.message.includes("required")) {
+                    next(new appError_1.BadRequestError(error.message));
+                }
+                else {
+                    next(error);
+                }
             }
         });
     }
 }
-exports.AuthController = AuthController;
+exports.ConfirmPasswordController = ConfirmPasswordController;

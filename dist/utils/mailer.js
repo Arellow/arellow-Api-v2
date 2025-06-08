@@ -13,7 +13,7 @@ exports.emailVerificationMailOption = exports.sendForgetPasswordMailOption = exp
 const subscribeMailOption = (email) => __awaiter(void 0, void 0, void 0, function* () {
     // const capitalizedRecipientName = username.charAt(0).toUpperCase() + username.slice(1)
     const mailOptions = {
-        from: process.env, // sender address
+        from: process.env.SMTP_EMAIL, // sender address
         to: email, // list of receivers
         subject: "Arellow", // Subject line
         html: `

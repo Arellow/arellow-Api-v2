@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
-import { getDataUri } from "../middlewares/multler.js";
-import { Prisma } from "../lib/prisma.js";
-import pLimit from "p-limit";
+import { getDataUri } from "../middlewares/multler";
+import { Prisma } from "../lib/prisma";
 import sharp from "sharp";
 import Queue from "bull";
 
@@ -10,7 +9,12 @@ type ImageFile = {
   mimetype: string;
   size: number;
   originalname?: string;
-  content?: string; // optional if passed around
+  content?: string;
+  fieldname?: string;
+  encoding?: string;
+  stream?: any;
+  destination?: string;
+  path?: string;
 };
 
 // Configuration
@@ -232,66 +236,35 @@ uploadQueue.process(async (job) => {
   }
 });
 
+// Process multiple images with concurrency control
 export async function processImage(images: ImageFile[] = [], isProfile = false): Promise<string[]> {
-  if (!images || images.length === 0) {
-    return [];
-  }
+  if (!images.length) return [];
 
-  const successfulUploads: string[] = [];
-  const uploadErrors: { file: string; error: string }[] = [];
-  const jobs: { data: { image: ImageFile }; finished: () => Promise<string> }[] = [];
+  try {
+    // Dynamically import p-limit
+    const pLimit = (await import('p-limit')).default;
+    const limit = pLimit(CONCURRENT_UPLOADS);
 
-  // Create upload jobs
-  for (const image of images) {
-    if (!image || !image.buffer) {
-      console.warn("Invalid image data received");
-      continue;
-    }
-
-    const job = {
-      data: { image },
-      finished: async () => {
+    const uploadPromises = images.map((image) =>
+      limit(async () => {
         try {
+          validateImage(image);
           const optimizedBuffer = await optimizeImage(image.buffer);
           const dataUri = getDataUri({ ...image, buffer: optimizedBuffer });
-          const file = dataUri.content || dataUri.toString(); // Use string here
-          return await uploadWithRetry(file);
+          const fileContent = dataUri.content || dataUri.toString();
+          return await uploadWithRetry(fileContent);
         } catch (error) {
-          console.error("Image processing failed:", error);
+          logger.error("Image processing failed", { error, filename: image.originalname });
           throw error;
         }
-      },
-    };
-    jobs.push(job);
+      })
+    );
+
+    return await Promise.all(uploadPromises);
+  } catch (error) {
+    logger.error("Batch image processing failed", { error });
+    throw error;
   }
-
-  // Process queue with concurrency limit
-  const limit = pLimit(CONCURRENT_UPLOADS);
-  const imagesToUpload = jobs.map((job) =>
-    limit(async () => {
-      try {
-        const result = await job.finished();
-        successfulUploads.push(result);
-        return result;
-      } catch (error: any) {
-        const fileName = job.data?.image?.originalname || "unknown";
-        uploadErrors.push({
-          file: fileName,
-          error: error.message,
-        });
-        return null;
-      }
-    })
-  );
-
-  const results = await Promise.all(imagesToUpload);
-  const validResults = results.filter(Boolean) as string[];
-
-  if (uploadErrors.length > 0) {
-    console.error("Some images failed to upload:", uploadErrors);
-  }
-
-  return validResults;
 }
 
 export async function deleteImage(photoUrl?: string): Promise<void> {

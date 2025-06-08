@@ -8,11 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginController = void 0;
 const loginUser_1 = require("../services/loginUser");
 const appError_1 = require("../../../lib/appError");
 const trim_1 = require("../../../utils/trim");
+const response_util_1 = __importDefault(require("../../../utils/helpers/response.util"));
 class LoginController {
     static login(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30,21 +34,12 @@ class LoginController {
                 }
                 const loginDto = { email, password };
                 const { user, token } = yield loginUser_1.AuthService.login(loginDto);
-                const responseData = {
-                    status: "success",
-                    message: "Login successful",
-                    data: user,
-                    token,
-                    succeeded: true,
-                };
-                res
-                    .cookie("login", token, {
+                res.cookie("login", token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: true,
-                })
-                    .status(200)
-                    .json(responseData);
+                });
+                new response_util_1.default(200, true, "Login successful", res, { user, token });
             }
             catch (error) {
                 next(error);

@@ -4,6 +4,7 @@ import { LoginDto } from "../dtos/loginUserDto";
 import { BadRequestError } from "../../../lib/appError";
 import { trimObjectKeys } from "../../../utils/trim";
 import CustomResponse from "../../../utils/helpers/response.util";
+import { generateRefreshToken, generateToken } from "../../../utils/jwt";
 
 export class LoginController {
   static async login(req: Request, res: Response, next: NextFunction) {
@@ -24,21 +25,20 @@ export class LoginController {
       }
 
       const loginDto: LoginDto = { email, password };
-      const { user, token } = await AuthService.login(loginDto);
+      const { user } = await AuthService.login(loginDto);
 
-      res.cookie("login", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: true,
+      const token = generateToken(user.id, user.email);
+      const refreshToken = generateRefreshToken(user.id, user.email);
+
+      res.setHeader("Authorization", `Bearer ${token}`);
+      res.setHeader("x-refresh-token", refreshToken);
+
+      new CustomResponse(200, true, "Login successful", res, {
+        user,
+        token,
+        message:
+          "Use this token in the Authorization header as: Bearer <token>",
       });
-
-      new CustomResponse(
-        200,
-        true,
-        "Login successful",
-        res,
-        { user, token }
-      );
     } catch (error) {
       next(error);
     }

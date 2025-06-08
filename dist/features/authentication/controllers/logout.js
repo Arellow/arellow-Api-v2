@@ -12,19 +12,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserController = void 0;
-const changePassword_1 = require("../services/changePassword");
+exports.LogoutController = void 0;
 const response_util_1 = __importDefault(require("../../../utils/helpers/response.util"));
-class UserController {
-    constructor() {
-        this.authService = new changePassword_1.ChangePasswordService();
-        this.changePassword = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const userId = req.params.userId;
-            const dto = req.body;
+class LogoutController {
+    static logout(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.authService.changePassword(userId, dto);
-                new response_util_1.default(200, true, "Password changed successfully", res);
-                return;
+                // Clear the login cookie
+                res.clearCookie("login", {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: true,
+                });
+                new response_util_1.default(200, true, "Logged out successfully", res);
             }
             catch (error) {
                 next(error);
@@ -32,4 +32,4 @@ class UserController {
         });
     }
 }
-exports.UserController = UserController;
+exports.LogoutController = LogoutController;

@@ -32,9 +32,6 @@ export class AuthService {
     });
 
     const maxAge = 1000 * 60 * 60 * 24 * 7;
-
-    const token = generateToken(user.id, user.email );
-      const refreshToken = generateRefreshToken(user.id, user.email);
     const {
       password: _,
       role,
@@ -56,8 +53,6 @@ export class AuthService {
     } = user;
 
     return {
-      token,
-      maxAge,
       user: sanitizedUser,
     };
   }
