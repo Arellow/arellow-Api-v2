@@ -7,7 +7,7 @@ import { generateToken } from "../../../utils/jwt";
 
 export class ConfirmPasswordService {
   async confirmForgotPassword(dto: ConfirmForgotPasswordDto) {
-    const { token: resetCode, newpassword, confirmPassword } = dto;
+    const { resetCode, newpassword, confirmPassword } = dto;
 
     if (!resetCode || !newpassword || !confirmPassword) {
       throw new BadRequestError("Reset code, new password, and confirmation are required");
@@ -17,10 +17,10 @@ export class ConfirmPasswordService {
       throw new BadRequestError("New password and confirm password do not match");
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-    if (!passwordRegex.test(newpassword.trim())) {
-      throw new BadRequestError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
-    }
+    // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    // if (!passwordRegex.test(newpassword.trim())) {
+    //   throw new BadRequestError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
+    // }
 
     const resetPasswordEntries = await Prisma.resetPassword.findMany();
 

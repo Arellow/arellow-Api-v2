@@ -6,20 +6,19 @@ import { BadRequestError, NotFoundError } from "../../../lib/appError";
 
 
 interface DecodedToken {
-  id: string;
+  userId: string;
 }
 
 export class AuthService {
   static async verifyEmail({ token }: VerifyEmailDto): Promise<string> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY as string) as DecodedToken;
-
-      if (!decoded?.id) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
+      if (!decoded?.userId ) {
         throw new BadRequestError("Invalid or expired token.");
       }
 
       const user = await Prisma.user.findUnique({
-        where: { id: decoded.id },
+        where: { id: decoded.userId },
       });
 
       if (!user) {
@@ -31,7 +30,7 @@ export class AuthService {
       }
 
       await Prisma.user.update({
-        where: { id: decoded.id },
+        where: { id: decoded.userId },
         data: { is_verified: true },
       });
 

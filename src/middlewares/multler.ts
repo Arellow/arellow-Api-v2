@@ -4,51 +4,48 @@ import path from "path";
 
 const storage = multer.memoryStorage();
 
-// Configure multer with minimal restrictions
-export const multipleupload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    // Only allow images
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-}).fields([
-  { name: "banner" },
-  { name: "outside_view_images" },
-  { name: "living_room_images" },
-  { name: "kitchen_room_images" },
-  { name: "primary_room_images" },
-  { name: "floor_plan_images" },
-  { name: "tour_3d_images" },
-  { name: "other_images" },
-  { name: "youTube_thumbnail" }
+export const singleupload = multer({storage}).single("file");
+// export const multipleupload = multer({storage}).fields([
+//     {name: "outside_view_images"},
+//     {name: "living_room_images"},
+//     {name: "kitchen_room_images"},
+//     {name: "floor_plan_images"},
+//     {name: "virtual_tour_images"},
+//     {name: "other_images"},
+//     {name: "banner", maxCount: 1},
+//     {name: "youTube_thumbnail", maxCount: 1},
+//     {name: "avatar", maxCount: 1}
+// ]);
+
+
+export const multipleupload = multer({ storage }).fields([
+  { name: "outside_view_images",  },  
+  { name: "living_room_images", },   
+  { name: "kitchen_room_images",  }, 
+  { name: "primary_room_images",  },  
+  { name: "floor_plan_images",},     
+  { name: "tour_3d_images", },    
+  { name: "other_images", },          
+  { name: "banner",  },              
+  { name: "youTube_thumbnail", }   
 ]);
 
-type ImageFile = {
+interface FileData {
+  originalname: string;
   buffer: Buffer;
-  mimetype: string;
-  size: number;
-  originalname?: string;
-  content?: string;
-  fieldname?: string;
-  encoding?: string;
-  stream?: any;
-  destination?: string;
-  path?: string;
-};
+}
 
-export const getDataUri = (file: ImageFile) => {
-  try {
-    const parser = new DataUriParser();
-    const extName = path.extname(file.originalname || 'file').toString();
-    return parser.format(extName, file.buffer);
-  } catch (error) {
-    throw new Error('Failed to process file data');
+export const getDataUri = (file: FileData): { content: string } => {
+  const parser = new DataUriParser();
+  const extName = path.extname(file.originalname).toString();
+  const result = parser.format(extName, file.buffer);
+  
+  if (!result.content) {
+    throw new Error('Failed to generate data URI');
   }
-};
+  
+  return { content: result.content };
+}
 
 
 

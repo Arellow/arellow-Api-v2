@@ -3,13 +3,9 @@ import Joi from 'joi';
 export const updateUserSchema = Joi.object({
   username: Joi.string().min(3).max(30),
   fullname: Joi.string().min(2).max(100),
-  phone_number: Joi.string().pattern(/^\+?[\d\s-]{10,}$/),
-  gender: Joi.string().valid('male', 'female', 'other'),
-  city: Joi.string().max(100),
-  country: Joi.string().max(100),
-  biography: Joi.string().max(500),
-  avatar: Joi.string().uri(),
-  banner: Joi.string().uri()
+  phone_number: Joi.string()
+  .pattern(/^\+?[1-9]\d{9,14}$/)
+  .message("Invalid phone number format")
 });
 
 export const userRatingSchema = Joi.object({

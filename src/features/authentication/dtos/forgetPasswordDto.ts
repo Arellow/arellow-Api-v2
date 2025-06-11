@@ -1,5 +1,5 @@
 export interface ConfirmForgotPasswordDto {
-  token: string;
+  resetCode: string;
   newpassword: string;
   confirmPassword: string;
 }
