@@ -37,10 +37,10 @@ authRouter.post("/forgetpassword/mobile", (0, propertyParsingAndValidation_1.val
     req.body.isMobile = true;
     next();
 }, forgetPasswordController.forgetPassword);
-authRouter.post("/forgetpassword/confirm", (0, propertyParsingAndValidation_1.validateSchema)(auth_validation_1.confirmForgotPasswordSchema), confirmPasswordController.confirmForgotPassword);
+authRouter.patch("/forgetpassword/confirm", (0, propertyParsingAndValidation_1.validateSchema)(auth_validation_1.confirmForgotPasswordSchema), confirmPasswordController.confirmForgotPassword);
 authRouter.post("/subscribe", subscribeController.subscribe);
 // Protected routes
-authRouter.post("/change-password/", auth_middleware_1.default, (0, propertyParsingAndValidation_1.validateSchema)(auth_validation_1.changePasswordSchema), userController.changePassword);
+authRouter.patch("/change-password/", auth_middleware_1.default, (0, propertyParsingAndValidation_1.validateSchema)(auth_validation_1.changePasswordSchema), userController.changePassword);
 authRouter.get("/resend-verification", auth_middleware_1.default, resendVerificationController.resendVerification);
 authRouter.post("/logout", auth_middleware_1.default, logout_1.LogoutController.logout);
 exports.default = authRouter;

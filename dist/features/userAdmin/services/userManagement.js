@@ -11,23 +11,73 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListingService = void 0;
 const appError_1 = require("../../../lib/appError");
-const prisma_1 = require("../../../lib/prisma");
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 class ListingService {
+    // async getUserListings(userId: string, query: ListingQueryDto): Promise<ListingResponseDto[]> {
+    //   try {
+    //     const { userType, category, country, state, search, page=1, limit= 10 } = query;
+    //     const skip = (page - 1) * limit;
+    //     const listings = await Prisma.project.findMany({
+    //       where: {
+    //         userId,
+    //         ...(userType && { userType }),
+    //         ...(category && { category }),
+    //         ...(country && { country }),
+    //         ...(state && { state }),
+    //         ...(search && { propertyName: { contains: search, mode: "insensitive" } }),
+    //         isapproved: { in: ["approved", "pending", "rejected"] },
+    //       },
+    //       orderBy: { createdAt: "desc" },
+    //       skip,
+    //       take: limit,
+    //     });
+    //   const totalCount = await Prisma.project.count({
+    //       where: {  
+    //         userId}})
+    //    return listings.map(listing => ({
+    //       id: listing.id,
+    //       propertyName: listing.title || null,
+    //       propertyType: listing.property_type || null,
+    //       price: listing.price || null,
+    //       location: listing.property_location || null,
+    //       listingDate: listing.createdAt,
+    //       propertyImage: listing.outside_view_images[0] || null,
+    //       status: listing.isapproved as "approved" | "pending" | "rejected",
+    //       totalCount: totalCount, 
+    //     }));
+    //   } catch (error) {
+    //     console.error("[getUserListings] Prisma error:", error);
+    //     throw new InternalServerError("Database error when fetching user listings.");
+    //   }
+    // }
     getUserListings(userId, query) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { userType, category, country, state, search, page = 1, limit = 10 } = query;
+                const { requestCategory, propertyType, isapproved, country, state, search, page = 1, limit = 10 } = query;
                 const skip = (page - 1) * limit;
-                const listings = yield prisma_1.Prisma.project.findMany({
-                    where: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ userId }, (userType && { userType })), (category && { category })), (country && { country })), (state && { state })), (search && { propertyName: { contains: search, mode: "insensitive" } })), { isapproved: { in: ["approved", "pending", "rejected"] } }),
+                // Build OR conditions if search is provided
+                const orConditions = search
+                    ? [
+                        { title: { contains: search, mode: "insensitive" } },
+                        { property_type: { contains: search, mode: "insensitive" } },
+                        { property_location: { contains: search, mode: "insensitive" } },
+                        { country: { contains: search, mode: "insensitive" } },
+                        { region: { contains: search, mode: "insensitive" } },
+                        { city: { contains: search, mode: "insensitive" } },
+                        { description: { contains: search, mode: "insensitive" } },
+                    ]
+                    : [];
+                // Construct where clause with explicit typing
+                const whereClause = Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ userId }, (requestCategory && { category: { equals: requestCategory, mode: "insensitive" } })), (propertyType && { property_type: { equals: propertyType, mode: "insensitive" } })), (country && { country: { equals: country, mode: "insensitive" } })), (state && { region: { equals: state, mode: "insensitive" } })), (search && { OR: orConditions })), (isapproved && { isapproved: { equals: isapproved } })), (!isapproved && { isapproved: { in: ["approved", "pending", "rejected"] } }));
+                const listings = yield prisma.project.findMany({
+                    where: whereClause,
                     orderBy: { createdAt: "desc" },
                     skip,
-                    take: limit,
+                    take: 10,
                 });
-                const totalCount = yield prisma_1.Prisma.project.count({
-                    where: {
-                        userId
-                    }
+                const totalCount = yield prisma.project.count({
+                    where: whereClause,
                 });
                 return listings.map(listing => ({
                     id: listing.id,
@@ -38,19 +88,22 @@ class ListingService {
                     listingDate: listing.createdAt,
                     propertyImage: listing.outside_view_images[0] || null,
                     status: listing.isapproved,
-                    totalCount: totalCount,
+                    totalCount,
                 }));
             }
             catch (error) {
                 console.error("[getUserListings] Prisma error:", error);
-                throw new appError_1.InternalServerError("Database error when fetching user listings.");
+                if (error instanceof Error) {
+                    throw new appError_1.InternalServerError(`Database error when fetching user listings: ${error.message}`);
+                }
+                throw new appError_1.InternalServerError("Unknown database error when fetching user listings.");
             }
         });
     }
     getPropertyDetails(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const property = yield prisma_1.Prisma.project.findUnique({
+                const property = yield prisma.project.findUnique({
                     where: { id },
                 });
                 if (!property) {
@@ -124,13 +177,13 @@ class ListingService {
     deleteProperty(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const property = yield prisma_1.Prisma.project.findUnique({
+                const property = yield prisma.project.findUnique({
                     where: { id },
                 });
                 if (!property) {
                     throw new appError_1.NotFoundError("Property not found.");
                 }
-                yield prisma_1.Prisma.project.delete({
+                yield prisma.project.delete({
                     where: { id },
                 });
             }

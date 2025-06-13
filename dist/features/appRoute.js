@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const auth_route_1 = __importDefault(require("./authentication/routes/auth.route"));
-const post_route_1 = __importDefault(require("./property/routes/post.route"));
 const user_route_1 = __importDefault(require("./superAdmin/routes/user.route"));
 const reward_route_1 = __importDefault(require("./rewards/routes/reward.route"));
 const user_route_2 = __importDefault(require("./user/routes/user.route"));
@@ -14,7 +13,6 @@ const appRouter = express_1.default.Router();
 appRouter.use("/auth", auth_route_1.default);
 appRouter.use("/user", user_route_2.default);
 appRouter.use("/userAdmin", userManagement_1.default);
-appRouter.use("/post", post_route_1.default);
 appRouter.use("/reward", reward_route_1.default);
 appRouter.use("/superAdmin", user_route_1.default);
 exports.default = appRouter;
