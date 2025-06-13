@@ -8,13 +8,9 @@ const joi_1 = __importDefault(require("joi"));
 exports.updateUserSchema = joi_1.default.object({
     username: joi_1.default.string().min(3).max(30),
     fullname: joi_1.default.string().min(2).max(100),
-    phone_number: joi_1.default.string().pattern(/^\+?[\d\s-]{10,}$/),
-    gender: joi_1.default.string().valid('male', 'female', 'other'),
-    city: joi_1.default.string().max(100),
-    country: joi_1.default.string().max(100),
-    biography: joi_1.default.string().max(500),
-    avatar: joi_1.default.string().uri(),
-    banner: joi_1.default.string().uri()
+    phone_number: joi_1.default.string()
+        .pattern(/^\+?[1-9]\d{9,14}$/)
+        .message("Invalid phone number format")
 });
 exports.userRatingSchema = joi_1.default.object({
     rating: joi_1.default.number().required().min(1).max(5),

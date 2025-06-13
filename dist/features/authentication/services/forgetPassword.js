@@ -32,7 +32,7 @@ class ForgetPasswordService {
             if (!user) {
                 throw new appError_1.UnAuthorizedError("Invalid credentials, please register");
             }
-            const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
+            const generatePin = () => Math.floor(1000 + Math.random() * 9000).toString();
             const resetCode = generatePin();
             const hashedResetCode = yield bcryptjs_1.default.hash(resetCode, 12);
             // Delete old reset entries for this user

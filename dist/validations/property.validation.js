@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePropertySchema = exports.mortgageSchema = exports.buyAbilitySchema = exports.createPropertySchema = void 0;
+exports.createPropertySchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 exports.createPropertySchema = joi_1.default.object({
     category: joi_1.default.string().required(),
@@ -48,73 +48,4 @@ exports.createPropertySchema = joi_1.default.object({
     maintenance_monthly: joi_1.default.number().min(0),
     price_negotiable: joi_1.default.boolean().default(false),
     available_from: joi_1.default.date().allow(null),
-});
-exports.buyAbilitySchema = joi_1.default.object({
-    monthly_income: joi_1.default.number().required().min(0),
-    monthly_expenses: joi_1.default.number().required().min(0),
-    down_payment: joi_1.default.number().required().min(0),
-    location: joi_1.default.string().required(),
-    property_type: joi_1.default.string().required(),
-    credit_score: joi_1.default.number().min(300).max(850),
-    employment_status: joi_1.default.string().required().valid('employed', 'self-employed', 'business-owner'),
-    employment_duration: joi_1.default.number().min(0),
-    other_loans: joi_1.default.number().min(0),
-    other_assets: joi_1.default.number().min(0)
-});
-exports.mortgageSchema = joi_1.default.object({
-    property_id: joi_1.default.string().required(),
-    loan_amount: joi_1.default.number().required().min(0),
-    down_payment: joi_1.default.number().required().min(0),
-    interest_rate: joi_1.default.number().required().min(0),
-    loan_term: joi_1.default.number().required().min(1).max(30),
-    monthly_income: joi_1.default.number().required().min(0),
-    employment_status: joi_1.default.string().required().valid('employed', 'self-employed', 'business-owner'),
-    employment_duration: joi_1.default.number().required().min(0),
-    credit_score: joi_1.default.number().required().min(300).max(850),
-    other_loans: joi_1.default.number().min(0),
-    other_assets: joi_1.default.number().min(0),
-    property_value: joi_1.default.number().required().min(0),
-    property_type: joi_1.default.string().required(),
-    property_use: joi_1.default.string().required().valid('primary', 'secondary', 'investment'),
-    property_location: joi_1.default.string().required()
-});
-exports.updatePropertySchema = joi_1.default.object({
-    category: joi_1.default.string(),
-    title: joi_1.default.string().min(3).max(100),
-    description: joi_1.default.string().min(10).max(2000),
-    features: joi_1.default.array().items(joi_1.default.string()),
-    amenities: joi_1.default.array().items(joi_1.default.string()),
-    property_location: joi_1.default.string(),
-    neighborhood: joi_1.default.string().optional(),
-    number_of_bedrooms: joi_1.default.number().min(0),
-    number_of_bathrooms: joi_1.default.number().min(0),
-    number_of_floors: joi_1.default.number().min(0),
-    square: joi_1.default.number().min(0),
-    price: joi_1.default.number().min(0),
-    property_type: joi_1.default.string(),
-    listing_type: joi_1.default.string(),
-    property_status: joi_1.default.string(),
-    property_age: joi_1.default.number().min(0),
-    furnishing: joi_1.default.string(),
-    parking_spaces: joi_1.default.number().min(0),
-    total_floors: joi_1.default.number().min(0),
-    available_floor: joi_1.default.number().min(0),
-    facing_direction: joi_1.default.string(),
-    street_width: joi_1.default.number().min(0),
-    plot_area: joi_1.default.number().min(0),
-    construction_status: joi_1.default.string(),
-    possession_status: joi_1.default.string(),
-    transaction_type: joi_1.default.string(),
-    ownership_type: joi_1.default.string(),
-    expected_pricing: joi_1.default.number().min(0),
-    price_per_sqft: joi_1.default.number().min(0),
-    booking_amount: joi_1.default.number().min(0),
-    maintenance_monthly: joi_1.default.number().min(0),
-    price_negotiable: joi_1.default.boolean(),
-    available_from: joi_1.default.date(),
-    longitude: joi_1.default.string(),
-    latitude: joi_1.default.string(),
-    country: joi_1.default.string(),
-    region: joi_1.default.string(),
-    city: joi_1.default.string()
 });

@@ -27,7 +27,6 @@ exports.AuthService = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma_1 = require("../../../lib/prisma");
 const appError_1 = require("../../../lib/appError");
-const jwt_1 = require("../../../utils/jwt");
 class AuthService {
     static login(_a) {
         return __awaiter(this, arguments, void 0, function* ({ email, password }) {
@@ -51,12 +50,8 @@ class AuthService {
                 data: { last_login: new Date() },
             });
             const maxAge = 1000 * 60 * 60 * 24 * 7;
-            const token = (0, jwt_1.generateToken)(user.id, user.email);
-            const refreshToken = (0, jwt_1.generateRefreshToken)(user.id, user.email);
             const { password: _, role, banner, biography, kyc_status, nin_status, nin_number, nin_slip_url, cac_status, cac_number, cac_doc_url, face_status, face_image_url, kyc_verified_at, conversationsIds, isMessageReadedCounter } = user, sanitizedUser = __rest(user, ["password", "role", "banner", "biography", "kyc_status", "nin_status", "nin_number", "nin_slip_url", "cac_status", "cac_number", "cac_doc_url", "face_status", "face_image_url", "kyc_verified_at", "conversationsIds", "isMessageReadedCounter"]);
             return {
-                token,
-                maxAge,
                 user: sanitizedUser,
             };
         });

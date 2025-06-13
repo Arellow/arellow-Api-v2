@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.emailVerificationMailOption = exports.sendForgetPasswordMailOption = exports.subscribeMailOption = void 0;
+exports.suspendedAccountMailOption = exports.emailVerificationMailOption = exports.sendForgetPasswordMailOption = exports.subscribeMailOption = void 0;
 const subscribeMailOption = (email) => __awaiter(void 0, void 0, void 0, function* () {
     // const capitalizedRecipientName = username.charAt(0).toUpperCase() + username.slice(1)
     const mailOptions = {
@@ -375,7 +375,7 @@ const subscribeMailOption = (email) => __awaiter(void 0, void 0, void 0, functio
         </body>
         </html>
         
-        `
+        `,
     };
     return mailOptions;
 });
@@ -443,3 +443,55 @@ const emailVerificationMailOption = (email, verificationLink) => __awaiter(void 
     };
 });
 exports.emailVerificationMailOption = emailVerificationMailOption;
+const suspendedAccountMailOption = (email, reason) => __awaiter(void 0, void 0, void 0, function* () {
+    const suspensionReason = reason || "Violation of our platform's terms of service.";
+    return {
+        from: process.env.SMTP_EMAIL,
+        to: email,
+        subject: "Account Suspension Notice",
+        html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="utf-8">
+          <title>Account Suspended</title>
+          <style>
+              body {
+                  font-family: 'Lato', sans-serif;
+                  background: #f7f7f7;
+                  margin: 0;
+                  padding: 0;
+              }
+              .container {
+                  max-width: 600px;
+                  margin: 50px auto;
+                  background: white;
+                  padding: 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .reason {
+                  background: #ffe6e6;
+                  padding: 10px;
+                  border-left: 4px solid #e74c3c;
+                  margin: 20px 0;
+                  font-style: italic;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>Your Account Has Been Suspended</h2>
+              <p>We regret to inform you that your account has been suspended.</p>
+              <div class="reason">
+                  <strong>Reason:</strong> ${suspensionReason}
+              </div>
+              <p>If you believe this is a mistake, please contact our support team for further assistance.</p>
+              <p>Thank you,<br/>The Support Team</p>
+          </div>
+      </body>
+      </html>
+    `,
+    };
+});
+exports.suspendedAccountMailOption = suspendedAccountMailOption;

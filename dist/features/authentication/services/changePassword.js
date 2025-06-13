@@ -19,8 +19,8 @@ const appError_1 = require("../../../lib/appError");
 class ChangePasswordService {
     changePassword(userId, dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { email, oldPassword, newPassword, confirmPassword } = dto;
-            if (!email || !oldPassword || !newPassword || !confirmPassword) {
+            const { oldPassword, newPassword, confirmPassword } = dto;
+            if (!oldPassword || !newPassword || !confirmPassword) {
                 throw new appError_1.BadRequestError("Please provide all required fields");
             }
             if (newPassword !== confirmPassword) {
@@ -29,12 +29,11 @@ class ChangePasswordService {
             if (oldPassword === newPassword) {
                 throw new appError_1.BadRequestError("New password must be different from the old password");
             }
-            const emailLower = email.toLowerCase();
             const user = yield prisma_1.Prisma.user.findUnique({
-                where: { email: emailLower },
+                where: { id: userId },
             });
-            if (!user || user.id !== userId) {
-                throw new appError_1.UnAuthorizedError("Invalid credentials");
+            if (!user) {
+                throw new appError_1.NotFoundError("User not found");
             }
             const isMatch = yield bcryptjs_1.default.compare(oldPassword, user.password);
             if (!isMatch) {

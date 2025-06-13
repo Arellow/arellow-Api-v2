@@ -60,7 +60,7 @@ authRouter.post("/forgetpassword/mobile", validateSchema(forgotPasswordSchema), 
 }, forgetPasswordController.forgetPassword);
 
 
-authRouter.post(
+authRouter.patch(
   "/forgetpassword/confirm",
   validateSchema(confirmForgotPasswordSchema),
   confirmPasswordController.confirmForgotPassword
@@ -72,7 +72,7 @@ authRouter.post(
 );
 
 // Protected routes
-authRouter.post(
+authRouter.patch(
   "/change-password/",
   authenticate,
   validateSchema(changePasswordSchema),
