@@ -27,9 +27,7 @@ exports.changePasswordSchema = joi_1.default.object({
     oldPassword: joi_1.default.string().required(),
     newPassword: joi_1.default.string()
         .required()
-        .min(8)
-        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-        .message('Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'),
+        .min(8),
     confirmPassword: joi_1.default.string().required().valid(joi_1.default.ref('newPassword'))
         .messages({ 'any.only': 'Passwords do not match' })
 });
@@ -37,12 +35,10 @@ exports.forgotPasswordSchema = joi_1.default.object({
     email: joi_1.default.string().required().email()
 });
 exports.confirmForgotPasswordSchema = joi_1.default.object({
-    token: joi_1.default.string().required(),
-    newPassword: joi_1.default.string()
+    resetCode: joi_1.default.string().required(),
+    newpassword: joi_1.default.string()
         .required()
-        .min(8)
-        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-        .message('Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'),
-    confirmPassword: joi_1.default.string().required().valid(joi_1.default.ref('newPassword'))
+        .min(8),
+    confirmPassword: joi_1.default.string().required().valid(joi_1.default.ref('newpassword'))
         .messages({ 'any.only': 'Passwords do not match' })
 });

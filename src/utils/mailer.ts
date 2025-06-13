@@ -1,13 +1,10 @@
-
-
-export const subscribeMailOption = async (email:string) => {
-
-    // const capitalizedRecipientName = username.charAt(0).toUpperCase() + username.slice(1)
-    const mailOptions = {
-        from: process.env.SMTP_EMAIL, // sender address
-        to: email, // list of receivers
-        subject: "Arellow", // Subject line
-        html: `
+export const subscribeMailOption = async (email: string) => {
+  // const capitalizedRecipientName = username.charAt(0).toUpperCase() + username.slice(1)
+  const mailOptions = {
+    from: process.env.SMTP_EMAIL, // sender address
+    to: email, // list of receivers
+    subject: "Arellow", // Subject line
+    html: `
         <!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
         <head>
@@ -366,16 +363,11 @@ export const subscribeMailOption = async (email:string) => {
         </body>
         </html>
         
-        `
+        `,
+  };
 
-    }
-
-
-   
-return mailOptions
-
-}
-
+  return mailOptions;
+};
 
 // export const sendForgetPasswordMailOption = async ({ email , username }, resetCode) => {
 //     const mailOptions = {
@@ -397,10 +389,10 @@ return mailOptions
 //         </div>
 //       `,
 //     };
-  
+
 //     return mailOptions;
 //   };
-  
+
 interface SendForgetPasswordMailOptionParams {
   email: string;
   username?: string;
@@ -438,13 +430,15 @@ export const sendForgetPasswordMailOption = async (
   return mailOptions;
 };
 
-
-export const emailVerificationMailOption = async (email : string, verificationLink :any) => {
-    return {
-      from: process.env.SMTP_EMAIL,
-      to: email,
-      subject: "Email Verification",
-      html: `
+export const emailVerificationMailOption = async (
+  email: string,
+  verificationLink: any
+) => {
+  return {
+    from: process.env.SMTP_EMAIL,
+    to: email,
+    subject: "Email Verification",
+    html: `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -476,6 +470,61 @@ export const emailVerificationMailOption = async (email : string, verificationLi
         </body>
         </html>
       `,
-    };
   };
-  
+};
+export const suspendedAccountMailOption = async (
+  email: string,
+  reason?: string
+) => {
+  const suspensionReason =
+    reason || "Violation of our platform's terms of service.";
+
+  return {
+    from: process.env.SMTP_EMAIL,
+    to: email,
+    subject: "Account Suspension Notice",
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="utf-8">
+          <title>Account Suspended</title>
+          <style>
+              body {
+                  font-family: 'Lato', sans-serif;
+                  background: #f7f7f7;
+                  margin: 0;
+                  padding: 0;
+              }
+              .container {
+                  max-width: 600px;
+                  margin: 50px auto;
+                  background: white;
+                  padding: 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .reason {
+                  background: #ffe6e6;
+                  padding: 10px;
+                  border-left: 4px solid #e74c3c;
+                  margin: 20px 0;
+                  font-style: italic;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>Your Account Has Been Suspended</h2>
+              <p>We regret to inform you that your account has been suspended.</p>
+              <div class="reason">
+                  <strong>Reason:</strong> ${suspensionReason}
+              </div>
+              <p>If you believe this is a mistake, please contact our support team for further assistance.</p>
+              <p>Thank you,<br/>The Support Team</p>
+          </div>
+      </body>
+      </html>
+    `,
+  };
+};

@@ -9,9 +9,9 @@ import {
 
 export class ChangePasswordService {
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const { email, oldPassword, newPassword, confirmPassword } = dto;
+    const {  oldPassword, newPassword, confirmPassword } = dto;
 
-    if (!email || !oldPassword || !newPassword || !confirmPassword) {
+    if ( !oldPassword || !newPassword || !confirmPassword) {
       throw new BadRequestError("Please provide all required fields");
     }
 
@@ -23,14 +23,14 @@ export class ChangePasswordService {
       throw new BadRequestError("New password must be different from the old password");
     }
 
-    const emailLower = email.toLowerCase();
+    
 
     const user = await Prisma.user.findUnique({
-      where: { email: emailLower },
+      where: { id: userId },
     });
 
-    if (!user || user.id !== userId) {
-      throw new UnAuthorizedError("Invalid credentials");
+    if (!user) {
+      throw new NotFoundError("User not found");  
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);

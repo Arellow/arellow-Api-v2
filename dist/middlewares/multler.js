@@ -9,6 +9,17 @@ const parser_js_1 = __importDefault(require("datauri/parser.js"));
 const path_1 = __importDefault(require("path"));
 const storage = multer_1.default.memoryStorage();
 exports.singleupload = (0, multer_1.default)({ storage }).single("file");
+// export const multipleupload = multer({storage}).fields([
+//     {name: "outside_view_images"},
+//     {name: "living_room_images"},
+//     {name: "kitchen_room_images"},
+//     {name: "floor_plan_images"},
+//     {name: "virtual_tour_images"},
+//     {name: "other_images"},
+//     {name: "banner", maxCount: 1},
+//     {name: "youTube_thumbnail", maxCount: 1},
+//     {name: "avatar", maxCount: 1}
+// ]);
 exports.multipleupload = (0, multer_1.default)({ storage }).fields([
     { name: "outside_view_images", },
     { name: "living_room_images", },
@@ -23,6 +34,10 @@ exports.multipleupload = (0, multer_1.default)({ storage }).fields([
 const getDataUri = (file) => {
     const parser = new parser_js_1.default();
     const extName = path_1.default.extname(file.originalname).toString();
-    return parser.format(extName, file.buffer);
+    const result = parser.format(extName, file.buffer);
+    if (!result.content) {
+        throw new Error('Failed to generate data URI');
+    }
+    return { content: result.content };
 };
 exports.getDataUri = getDataUri;

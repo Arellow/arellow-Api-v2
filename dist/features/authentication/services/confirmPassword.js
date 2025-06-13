@@ -31,17 +31,17 @@ const jwt_1 = require("../../../utils/jwt");
 class ConfirmPasswordService {
     confirmForgotPassword(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { token: resetCode, newpassword, confirmPassword } = dto;
+            const { resetCode, newpassword, confirmPassword } = dto;
             if (!resetCode || !newpassword || !confirmPassword) {
                 throw new appError_1.BadRequestError("Reset code, new password, and confirmation are required");
             }
             if (newpassword.trim() !== confirmPassword.trim()) {
                 throw new appError_1.BadRequestError("New password and confirm password do not match");
             }
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-            if (!passwordRegex.test(newpassword.trim())) {
-                throw new appError_1.BadRequestError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
-            }
+            // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+            // if (!passwordRegex.test(newpassword.trim())) {
+            //   throw new BadRequestError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character");
+            // }
             const resetPasswordEntries = yield prisma_1.Prisma.resetPassword.findMany();
             const resetPassword = yield Promise.all(resetPasswordEntries.map((entry) => __awaiter(this, void 0, void 0, function* () {
                 const match = yield bcryptjs_1.default.compare(resetCode.trim(), entry.resetString);

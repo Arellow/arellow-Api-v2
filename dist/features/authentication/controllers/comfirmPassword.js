@@ -21,6 +21,7 @@ class ConfirmPasswordController {
         this.comfirmPasswordService = new confirmPassword_1.ConfirmPasswordService();
         this.confirmForgotPassword = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const dto = req.body;
+            console.log(dto);
             try {
                 const result = yield this.comfirmPasswordService.confirmForgotPassword(dto);
                 new response_util_1.default(200, true, "Password has been reset successfully.", res, { user: result.user, token: result.token });

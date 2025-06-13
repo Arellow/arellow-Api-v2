@@ -19,7 +19,8 @@ class UserController {
     constructor() {
         this.authService = new changePassword_1.ChangePasswordService();
         this.changePassword = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const userId = req.params.userId;
+            var _a;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
             const dto = req.body;
             try {
                 yield this.authService.changePassword(userId, dto);

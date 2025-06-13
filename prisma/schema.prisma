@@ -45,6 +45,7 @@ model User {
   cac_status             KycStatus?        @default(pending)
   cac_number             String?
   cac_doc_url            String?
+  badge                 String?
   face_status            KycStatus?        @default(pending)
   face_image_url         String?
   kyc_verified_at        DateTime?

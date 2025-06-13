@@ -6,8 +6,8 @@ import { ChangePasswordDto } from "../dtos/changePasswordDto";
 export class UserController {
   private authService = new ChangePasswordService();
 
-  changePassword = async (req: Request, res: Response, next: NextFunction):Promise<void> => {
-    const userId = req.params.userId;
+  changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user?.id as string; 
     const dto: ChangePasswordDto = req.body;
 
     try {

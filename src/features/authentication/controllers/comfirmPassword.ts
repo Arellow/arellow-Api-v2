@@ -13,7 +13,7 @@ export class ConfirmPasswordController {
     next: NextFunction
   ) => {
     const dto: ConfirmForgotPasswordDto = req.body;
-
+    console.log(dto)
     try {
       const result = await this.comfirmPasswordService.confirmForgotPassword(dto);
       new CustomResponse(

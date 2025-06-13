@@ -27,7 +27,7 @@ export class ForgetPasswordService {
     }
 
     const generatePin = () =>
-      Math.floor(100000 + Math.random() * 900000).toString();
+      Math.floor(1000 + Math.random() * 9000).toString();
 
     const resetCode = generatePin();
     const hashedResetCode = await bcrypt.hash(resetCode, 12);

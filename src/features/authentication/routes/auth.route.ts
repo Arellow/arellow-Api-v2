@@ -47,14 +47,21 @@ authRouter.get(
   VerifyController.verifyEmail
 );
 
-authRouter.post(
-  "/forget-password",
-  validateSchema(forgotPasswordSchema),
-  forgetPasswordController.forgetPassword
-);
 
-authRouter.post(
-  "/confirm-password",
+
+authRouter.post("/forgetpassword/web", validateSchema(forgotPasswordSchema), (req,res,next) => {
+    req.body.isMobile = false
+    next()
+}, forgetPasswordController.forgetPassword);
+
+authRouter.post("/forgetpassword/mobile", validateSchema(forgotPasswordSchema), (req,res,next) => {
+    req.body.isMobile = true
+    next()
+}, forgetPasswordController.forgetPassword);
+
+
+authRouter.patch(
+  "/forgetpassword/confirm",
   validateSchema(confirmForgotPasswordSchema),
   confirmPasswordController.confirmForgotPassword
 );
@@ -65,8 +72,8 @@ authRouter.post(
 );
 
 // Protected routes
-authRouter.post(
-  "/change-password/:userId",
+authRouter.patch(
+  "/change-password/",
   authenticate,
   validateSchema(changePasswordSchema),
   userController.changePassword

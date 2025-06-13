@@ -20,12 +20,12 @@ class AuthService {
     static verifyEmail(_a) {
         return __awaiter(this, arguments, void 0, function* ({ token }) {
             try {
-                const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY);
-                if (!(decoded === null || decoded === void 0 ? void 0 : decoded.id)) {
+                const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+                if (!(decoded === null || decoded === void 0 ? void 0 : decoded.userId)) {
                     throw new appError_1.BadRequestError("Invalid or expired token.");
                 }
                 const user = yield prisma_1.Prisma.user.findUnique({
-                    where: { id: decoded.id },
+                    where: { id: decoded.userId },
                 });
                 if (!user) {
                     throw new appError_1.NotFoundError("User not found.");
@@ -34,7 +34,7 @@ class AuthService {
                     return "Email already verified.";
                 }
                 yield prisma_1.Prisma.user.update({
-                    where: { id: decoded.id },
+                    where: { id: decoded.userId },
                     data: { is_verified: true },
                 });
                 return "Email successfully verified.";
