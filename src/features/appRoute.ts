@@ -4,6 +4,7 @@ import userRoutes from './superAdmin/routes/user.route';
 import rewardRoutes from './rewards/routes/reward.route';
 import usersRoutes from './user/routes/user.route';
 import userAdminRoutes from './userAdmin/routes/userManagement';
+import blogRoutes from './blogs/routes/blog.route';
 const appRouter = express.Router();
 
  appRouter.use("/auth", authRoutes);
@@ -11,4 +12,5 @@ const appRouter = express.Router();
  appRouter.use("/userAdmin", userAdminRoutes);
  appRouter.use("/reward", rewardRoutes);
  appRouter.use("/superAdmin", userRoutes);
+ appRouter.use("/blog",blogRoutes )
 export default appRouter;

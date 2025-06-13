@@ -3,51 +3,13 @@ import { ListingQueryDto, ListingResponseDto, PropertyResponseDto } from "../dto
 import { Prisma, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 export class ListingService {
-  // async getUserListings(userId: string, query: ListingQueryDto): Promise<ListingResponseDto[]> {
-  //   try {
-  //     const { userType, category, country, state, search, page=1, limit= 10 } = query;
-  //     const skip = (page - 1) * limit;
-  //     const listings = await Prisma.project.findMany({
-  //       where: {
-  //         userId,
-  //         ...(userType && { userType }),
-  //         ...(category && { category }),
-  //         ...(country && { country }),
-  //         ...(state && { state }),
-  //         ...(search && { propertyName: { contains: search, mode: "insensitive" } }),
-  //         isapproved: { in: ["approved", "pending", "rejected"] },
-  //       },
-  //       orderBy: { createdAt: "desc" },
-  //       skip,
-  //       take: limit,
-  //     });
-  //   const totalCount = await Prisma.project.count({
-  //       where: {  
-  //         userId}})
 
-  //    return listings.map(listing => ({
-  //       id: listing.id,
-  //       propertyName: listing.title || null,
-  //       propertyType: listing.property_type || null,
-  //       price: listing.price || null,
-  //       location: listing.property_location || null,
-  //       listingDate: listing.createdAt,
-  //       propertyImage: listing.outside_view_images[0] || null,
-  //       status: listing.isapproved as "approved" | "pending" | "rejected",
-  //       totalCount: totalCount, 
-  //     }));
-  //   } catch (error) {
-  //     console.error("[getUserListings] Prisma error:", error);
-  //     throw new InternalServerError("Database error when fetching user listings.");
-  //   }
-  // }
 
 async getUserListings(userId: string, query: ListingQueryDto): Promise<ListingResponseDto[]> {
     try {
       const {  requestCategory,propertyType,isapproved, country, state, search, page = 1, limit = 10 } = query;
       const skip = (page - 1) * limit;
 
-      // Build OR conditions if search is provided
       const orConditions: Prisma.ProjectWhereInput[] = search
         ? [
             { title: { contains: search, mode: "insensitive" } },

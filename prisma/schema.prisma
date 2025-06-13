@@ -30,6 +30,7 @@ model User {
   projects               Project[]
   chat                   UserChat[]
   blogs                  Blog[]
+  blogs2                  Blog2[]
   UserChatGroup          UserChatGroup[]
   conversationsIds       String[]
   // conversations Conversation[]
@@ -213,6 +214,19 @@ model Blog {
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Blog2 {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  category  String   @default("Internal Blog")
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
 }
 
 model Contact_Us {

@@ -53,6 +53,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.3",
     "p-limit": "^6.2.0",
     "pino": "^9.7.0",
