@@ -7,9 +7,25 @@ exports.getDataUri = exports.multipleupload = exports.singleupload = void 0;
 const multer_1 = __importDefault(require("multer"));
 const parser_1 = __importDefault(require("datauri/parser"));
 const path_1 = __importDefault(require("path"));
+// Configure memory storage
 const storage = multer_1.default.memoryStorage();
+// File filter to enforce image types
+const fileFilter = (req, file, cb) => {
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    }
+    else {
+        cb(new Error("Only image files (jpeg, png, jpg) are allowed"), false);
+    }
+};
 // Single file upload middleware
-exports.singleupload = (0, multer_1.default)({ storage }).single("image");
+exports.singleupload = (0, multer_1.default)({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+}).single("image");
+// Multiple file upload middleware
 exports.multipleupload = (0, multer_1.default)({ storage }).fields([
     { name: "outside_view_images" },
     { name: "living_room_images" },

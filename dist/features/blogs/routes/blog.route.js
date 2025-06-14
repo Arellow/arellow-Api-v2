@@ -37,10 +37,11 @@ const express_1 = require("express");
 const blog_controller_1 = require("../controllers/blog.controller");
 const multer_1 = require("../../../middlewares/multer");
 const auth_middleware_1 = __importStar(require("../../../middlewares/auth.middleware"));
-const router = (0, express_1.Router)();
-// Define routes using singleupload as middleware
-router.post("/posts", auth_middleware_1.default, auth_middleware_1.isAdmin, multer_1.singleupload, blog_controller_1.createBlogPost);
-router.get("/posts", blog_controller_1.getBlogPosts);
-router.put("/posts/:id", auth_middleware_1.default, auth_middleware_1.isAdmin, multer_1.singleupload, blog_controller_1.updateBlogPost);
-router.delete("/posts/:id", auth_middleware_1.default, auth_middleware_1.isAdmin, blog_controller_1.deleteBlogPost);
-exports.default = router;
+const blogRoutes = (0, express_1.Router)();
+blogRoutes.post("/posts", auth_middleware_1.default, multer_1.singleupload, blog_controller_1.createBlogPost);
+blogRoutes.get("/posts/", auth_middleware_1.default, blog_controller_1.getBlogPosts);
+blogRoutes.get("/posts/:id", auth_middleware_1.default, blog_controller_1.getBlogPost);
+blogRoutes.patch("/posts/:id", auth_middleware_1.default, auth_middleware_1.isAdmin, multer_1.singleupload, blog_controller_1.updateBlogPost);
+blogRoutes.patch("/posts/:id", auth_middleware_1.default, auth_middleware_1.isAdmin, multer_1.singleupload, blog_controller_1.updateBlogPost);
+blogRoutes.delete("/posts/:id", auth_middleware_1.default, auth_middleware_1.isAdmin, blog_controller_1.deleteBlogPost);
+exports.default = blogRoutes;

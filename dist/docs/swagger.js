@@ -27,7 +27,7 @@ const options = {
             securitySchemes: {
                 bearerAuth: {
                     type: "http",
-                    scheme: "bearer",
+                    scheme: "Bearer",
                     bearerFormat: "JWT",
                 },
             },

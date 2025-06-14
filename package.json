@@ -1,7 +1,7 @@
 {
   "name": "arellowbackend",
   "version": "1.0.0",
-  "main": "dist/index.js", 
+  "main": "dist/server.js", 
   "scripts": {
     "postinstall": "prisma generate",
     "start": "node dist/server.js",

@@ -47,12 +47,12 @@ class BlogService {
             }
         });
     }
-    getBlogPosts(userId, filter) {
+    getBlogPosts(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { category, page = 1, limit = 10 } = filter;
                 const skip = (page - 1) * limit;
-                const whereClause = Object.assign({ userId }, (category && { category: { equals: category, mode: "insensitive" } }));
+                const whereClause = Object.assign({}, (category && { category: { equals: category, mode: "insensitive" } }));
                 const blogs = yield this.prisma.blog2.findMany({
                     where: whereClause,
                     take: limit,
@@ -86,19 +86,49 @@ class BlogService {
             }
         });
     }
-    updateBlogPost(userId, id, data) {
+    getBlogPost(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const blog = yield this.prisma.blog2.update({
+                const blog = yield this.prisma.blog2.findUnique({
                     where: { id },
-                    data: {
-                        title: data.title,
-                        content: data.content,
-                        category: data.category,
-                        imageUrl: data.imageUrl || undefined,
-                        updatedAt: new Date(),
+                    select: {
+                        id: true,
+                        title: true,
+                        content: true,
+                        category: true,
+                        imageUrl: true,
+                        createdAt: true,
+                        updatedAt: true,
                     },
                 });
+                if (!blog) {
+                    throw new appError_1.InternalServerError("Blog post not found.");
+                }
+                return {
+                    id: blog.id,
+                    title: blog.title,
+                    content: blog.content,
+                    category: blog.category,
+                    imageUrl: blog.imageUrl,
+                    createdAt: blog.createdAt,
+                    updatedAt: blog.updatedAt,
+                };
+            }
+            catch (error) {
+                console.error("[getBlogPost] Prisma error:", error);
+                throw new appError_1.InternalServerError("Failed to fetch blog post.");
+            }
+        });
+    }
+    updateBlogPost(userId, id, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Entering updateBlogPost service, userId:", userId, "id:", id, "data:", data);
+            try {
+                const blog = yield this.prisma.blog2.update({
+                    where: { id }, // Adjust if compound key is needed
+                    data: Object.assign(Object.assign({ userId }, data), { updatedAt: new Date() }),
+                });
+                console.log("Prisma update successful, blog:", blog);
                 return {
                     id: blog.id,
                     title: blog.title,
@@ -115,11 +145,11 @@ class BlogService {
             }
         });
     }
-    deleteBlogPost(userId, id) {
+    deleteBlogPost(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 yield this.prisma.blog2.delete({
-                    where: { id }, // Use 'id' if it's the unique identifier; adjust if needed
+                    where: { id },
                 });
             }
             catch (error) {
