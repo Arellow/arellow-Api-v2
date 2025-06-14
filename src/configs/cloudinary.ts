@@ -1,5 +1,7 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Configure Cloudinary with environment variables
 cloudinary.config({
@@ -12,17 +14,16 @@ cloudinary.config({
 interface CustomParams {
   folder?: string;
   allowedFormats?: string[];
-  transformation?: any[]; 
-  [key: string]: any; 
+  transformation?: any[];
+  [key: string]: any;
 }
-
 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: 'blog_images' as const, 
-    allowedFormats: ['jpg', 'png', 'jpeg'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+    folder: "blog_images" as const,
+    allowedFormats: ["jpg", "png", "jpeg"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
   } as CustomParams,
 });
 
