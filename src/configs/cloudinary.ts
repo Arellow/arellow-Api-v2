@@ -10,11 +10,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Define a custom params interface including 'folder'
+// Define a custom params interface with typed transformation
 interface CustomParams {
   folder?: string;
   allowedFormats?: string[];
-  transformation?: any[];
+  transformation?: { width: number; height: number; crop: string }[];
   [key: string]: any;
 }
 
