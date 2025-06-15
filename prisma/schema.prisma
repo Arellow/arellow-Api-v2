@@ -30,6 +30,8 @@ model User {
   projects               Project[]
   chat                   UserChat[]
   blogs                  Blog[]
+  blogs2                  Blog2[]
+  Campaign                  Campaign[]
   UserChatGroup          UserChatGroup[]
   conversationsIds       String[]
   // conversations Conversation[]
@@ -148,11 +150,10 @@ model Project {
   maintenance_monthly Float?
   price_negotiable    Boolean   @default(false)
   available_from      DateTime?
-
+  isFeatured          Boolean            @default(false)
   longitude                 String?
   latitude                  String?
   distance_between_facility Json?
-
   country String?
   region  String?
   city    String?
@@ -213,6 +214,44 @@ model Blog {
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Blog2 {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  category  String   @default("Internal Blog")
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+model Campaign {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String
+  campaignType    String
+  localMediaName  String
+  promotionAd     String
+  targetAudience  String
+  features        String
+  campaignDescription String
+  imageUrl        String?     
+  mediaPlatforms  String[]  
+  impressions     Int            @default(0)
+  clicks          Int            @default(0)
+  conversions     Int            @default(0)
+  cpc             Float          @default(0)
+  spend           Float          @default(0)   
+  startDate       DateTime
+  endDate         DateTime
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Contact_Us {
@@ -442,4 +481,6 @@ model RewardWithdrawal {
 
   @@index([userId])
 }
+
+
 

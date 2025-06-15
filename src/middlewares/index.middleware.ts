@@ -24,7 +24,7 @@ export default (app: Application) => {
   // Body parsing middleware
   app.use(json());
   app.use(urlencoded({ extended: true }));
-
+  
   // Security middleware
   app.use(helmet());
 
