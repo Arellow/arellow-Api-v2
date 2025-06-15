@@ -150,11 +150,10 @@ model Project {
   maintenance_monthly Float?
   price_negotiable    Boolean   @default(false)
   available_from      DateTime?
-
+  isFeatured          Boolean            @default(false)
   longitude                 String?
   latitude                  String?
   distance_between_facility Json?
-
   country String?
   region  String?
   city    String?
