@@ -234,6 +234,7 @@ export class ProjectService {
       }
 
       const home_price = project.price || 0;
+      
       const loan_type = "20-year fixed";
       const loan_term_years = 20;
       const interest_rate = 12;
