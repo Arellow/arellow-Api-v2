@@ -12,6 +12,7 @@ export class AgentService {
         createdAt: true,
         phone_number: true,
         email: true,
+        avatar:true,
         kyc_status: true,
         nin_status: true,
         nin_number: true,
@@ -88,6 +89,7 @@ export class AgentService {
         accountCreatedOn,
         phone_number: user.phone_number,
         email: user.email,
+        avatar:user.avatar,
         kyc_status: user.kyc_status,
         lastLogin,
         kycInformation: {

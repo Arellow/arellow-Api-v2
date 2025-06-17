@@ -14,6 +14,7 @@ export interface UserResponseDTO {
   fullname: string;
   is_verified: boolean;
   createdAt: Date;
+  avatar:string | null
 
 }
 

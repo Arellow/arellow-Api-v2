@@ -31,6 +31,7 @@ export class AuthService {
         phone_number,
         fullname,
         is_verified: false,
+        avatar: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?w=740"
       },
     });
     const verificationToken = generateToken(newUser.id, newUser.email);
@@ -46,6 +47,7 @@ export class AuthService {
       fullname: newUser.fullname,
       is_verified: newUser.is_verified,
       createdAt: newUser.createdAt,
+      avatar:newUser.avatar
     };
   }
 }

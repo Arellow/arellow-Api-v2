@@ -31,3 +31,13 @@ export interface RewardOverviewDto {
   propertyUploadEarnings: number;
   propertySoldEarnings: number;
 }
+
+export interface RecentListingDto {
+  id: string;
+  title: string | null;
+  location: string | null;
+  price: number | null ;
+  listingDate: Date;
+  status: string;
+  realtor: string;
+}

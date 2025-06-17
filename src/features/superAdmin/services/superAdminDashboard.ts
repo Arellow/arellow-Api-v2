@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
-import { DashboardSummaryDto, RewardOverviewDto } from "../dtos/superAdminDashboard";
+import { DashboardSummaryDto, RecentListingDto, RewardOverviewDto } from "../dtos/superAdminDashboard";
 import { TopRealtorsResponseDto } from "../dtos/superAdminDashboard";
 const prisma = new PrismaClient();
 export class DashboardService {
@@ -11,6 +11,7 @@ export class DashboardService {
 
     const weekBeforeLast = new Date(today);
     weekBeforeLast.setDate(today.getDate() - 14);
+
 
     const [
       totalListings,
@@ -165,6 +166,54 @@ private async getRewardSumByType(reason: string | null): Promise<number> {
     };
   }
 
+  async getRecentListings(): Promise<RecentListingDto[]> {
+    const recentListings = await prisma.project.findMany({
+      where: { createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+      select: {
+        id: true,
+        title: true,
+        floor_plan_images:true,
+        property_location: true,
+        price: true,
+        createdAt: true,
+        status: true,
+        user: { select: { fullname: true,avatar:true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    return recentListings.map(listing => ({
+      id: listing.id,
+      title: listing.title,
+      image: listing.floor_plan_images[0],
+      location: listing.property_location,
+      price: listing.price,
+      listingDate: listing.createdAt,
+      status: listing.status,
+      realtor: listing.user?.fullname || 'Unknown',
+    }));
+  }
+
+  async performQuickAction(action: string, projectId: string) {
+    switch (action) {
+      case 'approve-listing':
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { isapproved: 'approved' },
+        });
+        return { message: 'Listing approved successfully' };
+      case 'reject-listing':
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { isapproved: 'rejected' },
+        });
+        return { message: 'Listing rejected successfully' };
+     
+      default:
+        throw new Error('Invalid action');
+    }
+  }
 }
 
 

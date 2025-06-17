@@ -80,3 +80,47 @@ export interface UserResponseDto {
   propertiesSold: number;
   selling: number; 
 }
+
+// features/users/dtos/user.dto.ts
+export interface ProjectPost {
+  id: string;
+  title: string;
+  price: number;
+  property_type: string;
+  number_of_bedrooms: number;
+  number_of_bathrooms: number;
+  outside_view_images: string[];
+  banner: string | null;
+  createdAt: Date;
+  status: string;
+  updatedAt?: Date;
+}
+
+export interface UserDetails {
+  id: string;
+  fullname: string | null;
+  email: string | null;
+  phone: string | null;
+  createdAt: Date;
+  avatar?: string | null;
+  rating?: number;
+  role?: string;
+  projects?: ProjectPost[];
+}
+
+export interface RealtorStats {
+  id: string;
+  fullname: string | null;
+  avatar?: string | null;
+  rating: number;
+  earnings: number;
+  dealsClosed: number;
+  trend: "Rising" | "Falling" | "Steady";
+  role?: string;
+  monthEarnings?: number;
+}
+
+export interface LeaderboardResponse {
+  topPerformer: RealtorStats | null;
+  leaderboard: RealtorStats[];
+}
