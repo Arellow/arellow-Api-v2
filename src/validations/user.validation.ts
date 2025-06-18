@@ -5,7 +5,7 @@ export const updateUserSchema = Joi.object({
   fullname: Joi.string().min(2).max(100),
   phone_number: Joi.string()
   .pattern(/^\+?[1-9]\d{9,14}$/)
-  .message("Invalid phone number format")
+  .message("Invalid phone number format e.g. +2348012345678")
 });
 
 export const userRatingSchema = Joi.object({
