@@ -12,7 +12,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-// Define valid model names
+
 type ValidPrismaModel = "project" | "propertyRequest" | "rewardHistory";
 
 export class DashboardService {

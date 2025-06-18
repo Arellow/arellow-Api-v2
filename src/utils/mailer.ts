@@ -528,3 +528,91 @@ export const suspendedAccountMailOption = async (
     `,
   };
 };
+export const createPropertyRequestMailOptions = async (
+  to: string,
+  name: string,
+  email: string,
+  phone: string,
+  property_category: string,
+  property_type: string,
+  furnishing_status: string,
+  country: string,
+  state: string,
+  number_of_bedrooms: number,
+  number_of_bathrooms: number,
+  budget: number,
+  property_description?: string,
+  isAdmin?: boolean
+) => {
+  const additionalNote = property_description || "N/A";
+  const subject = isAdmin ? "New Property Request" : "Property Request Submitted";
+  const greeting = isAdmin ? "New Property Request Received" : `Dear ${name}`;
+  const closingMessage = isAdmin
+    ? "Please review the details below and take appropriate action."
+    : "We will contact you soon regarding your request.";
+
+  return {
+    from: process.env.SMTP_EMAIL,
+    to,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="utf-8">
+          <title>${subject}</title>
+          <style>
+              body {
+                  font-family: 'Lato', sans-serif;
+                  background: #f7f7f7;
+                  margin: 0;
+                  padding: 0;
+              }
+              .container {
+                  max-width: 600px;
+                  margin: 50px auto;
+                  background: white;
+                  padding: 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .details {
+                  margin: 20px 0;
+              }
+              .details ul {
+                  list-style-type: none;
+                  padding: 0;
+              }
+              .details li {
+                  margin-bottom: 10px;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>${greeting}</h2>
+              ${!isAdmin ? "<p>Thank you for submitting your property request!</p>" : ""}
+              <div class="details">
+                  <ul>
+                      <li><strong>Name:</strong> ${name}</li>
+                      <li><strong>Email:</strong> ${email}</li>
+                      <li><strong>Phone:</strong> ${phone}</li>
+                      <li><strong>Category:</strong> ${property_category}</li>
+                      <li><strong>Type:</strong> ${property_type}</li>
+                      <li><strong>Furnishing Status:</strong> ${furnishing_status}</li>
+                      <li><strong>Country:</strong> ${country}</li>
+                      <li><strong>State:</strong> ${state}</li>
+                      <li><strong>Bedrooms:</strong> ${number_of_bedrooms}</li>
+                      <li><strong>Bathrooms:</strong> ${number_of_bathrooms}</li>
+                      <li><strong>Budget:</strong> $${budget}</li>
+                      <li><strong>Additional Note:</strong> ${additionalNote}</li>
+                  </ul>
+              </div>
+              <p>${closingMessage}</p>
+              <p>Best,<br/>${isAdmin ? "The Admin Team" : "Your Property Team"}</p>
+          </div>
+      </body>
+      </html>
+    `,
+  };
+};

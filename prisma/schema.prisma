@@ -15,7 +15,7 @@ model User {
   username               String
   fullname               String
   password               String
-  avatar                 String?
+  avatar                 String?  @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?w=740")
   banner                 String?
   phone_number           String
   gender                 String?
@@ -39,6 +39,7 @@ model User {
   isMessageReadedCounter Int               @default(0)
   PrevUserChat           PrevUserChat[]
   PropertyRequest        PropertyRequest[]
+  mortgage        MortgageCalculationDraft[]
   supportTickets SupportTicket[]
   kyc_status             KycStatus?        @default(pending)
   nin_status             KycStatus?        @default(pending)
@@ -482,5 +483,14 @@ model RewardWithdrawal {
   @@index([userId])
 }
 
-
+model MortgageCalculationDraft {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  home_location     String
+  home_price        Float
+  down_payment      Float
+  userId            String?  @db.ObjectId
+  user              User?    @relation(fields: [userId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
 

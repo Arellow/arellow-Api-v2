@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getPropertyDetails, getUserListings } from "../controllers/userManagement";
-import authenticate from "../../../middlewares/auth.middleware";
+import { deleteProperty, getPropertyDetails, getUserListings } from "../controllers/userManagement";
+import authenticate, { isAdmin } from "../../../middlewares/auth.middleware";
 import { getAdminDashboardEarningHistory, getAdminDashboardProperties, getAdminDashboardRewards, getAdminDashboardSummary, getListedProperties } from "../controllers/dashboard";
 import { getEarningHistory, getEarningSummary } from "../controllers/history";
 
@@ -8,6 +8,7 @@ const router = Router();
 
 router.get("/myListings",authenticate, getUserListings);
 router.get("/myListing/:id",authenticate,getPropertyDetails);
+router.get("/myListing/:id",authenticate,deleteProperty);
 //dashboard routes
 router.get("/dashboard/summary",authenticate, getAdminDashboardSummary);
 router.get("/dashboard/rewards",authenticate, getAdminDashboardRewards);
