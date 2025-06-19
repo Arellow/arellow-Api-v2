@@ -81,7 +81,7 @@ authRouter.patch(
 
 authRouter.get(
   "/resend-verification",
-  authenticate,
+
   resendVerificationController.resendVerification
 );
 
