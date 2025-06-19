@@ -3,10 +3,12 @@ import { calculateProjectMortgage, getFeaturedProjects, getProjectById, getRecen
 import authenticate from '../../../middlewares/auth.middleware';
 import { createPropertyRequest } from '../../requestProperties/controllers/request';
 import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
+import { toggleProjectLike } from '../controllers/likeProperty';
 const propertyRoutes= express.Router();
 
 propertyRoutes.get("/featured",getFeaturedProjects)
 propertyRoutes.get("/recent",getRecentProjects)
+propertyRoutes.post("/like", authenticate, toggleProjectLike );
 propertyRoutes.post("/seed",seedNigerianStates)
 propertyRoutes.get("/seed",getAllStates)
 propertyRoutes.get("/:id",getProjectById)

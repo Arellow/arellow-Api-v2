@@ -1,56 +1,5 @@
-export interface ProjectFilterDto {
-  minPrice?: number;
-  maxPrice?: number;
-  propertyType?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  page?: number;
-  limit?: number;
-}
 
-export interface ProjectPost {
-  id: string;
-  title: string;
-  price: number;
-  property_type: string;
-  number_of_bedrooms: number;
-  number_of_bathrooms: number;
-  outside_view_images: string[];
-  banner: string | null;
-  createdAt: Date;
-  likeCount: number; 
-  isLiked: boolean;
-}
-
-export interface UserDetails {
-  id: string;
-  fullname: string | null;
-  email: string | null;
-  phone?: string | null;
-  createdAt: Date;
-  yearsOnPlatform: number;
-}
-
-export interface MortgageCalculation {
-  home_location: string | null;
-  home_price: number;
-  down_payment: number;
-  loan_amount: number;
-  loan_type: string;
-  interest_rate: number;
-  loan_term_years: number;
-  breakdown: {
-    principal_and_interest: number;
-    property_tax: number;
-    home_insurance: number;
-    hoa: number;
-    mortgage_insurance: number;
-  };
-  total_monthly_payment: number;
-  estimated_closing_cost: number;
-}
-
-export interface SingleProjectResponse {
+export interface Project {
   id: string;
   category: string | null;
   title: string | null;
@@ -59,8 +8,8 @@ export interface SingleProjectResponse {
   amenities: string[];
   property_location: string | null;
   neighborhood: string | null;
-  number_of_bedrooms: number;
-  number_of_bathrooms: number;
+  number_of_bedrooms: number | null;
+  number_of_bathrooms: number | null;
   number_of_floors: number | null;
   square: number | null;
   price: number | null;
@@ -95,6 +44,7 @@ export interface SingleProjectResponse {
   maintenance_monthly: number | null;
   price_negotiable: boolean;
   available_from: Date | null;
+  isFeatured: boolean;
   longitude: string | null;
   latitude: string | null;
   distance_between_facility: any;
@@ -102,21 +52,49 @@ export interface SingleProjectResponse {
   region: string | null;
   city: string | null;
   views: number;
-  isFeatured: boolean;
   archive: boolean;
   status: string;
   isapproved: string;
   rejectreason: string;
+  userId: string;
   createdAt: Date;
-  agent: UserDetails;
+  chatid: string[];
+  likeCount: number; 
+  isLiked: boolean;  
 }
 
-export interface FeaturedResponse {
-  data: ProjectPost[];
-  totalCount: number;
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  fullname: string;
+  password: string;
+  avatar: string | null;
+  banner: string | null;
+  phone_number: string;
+  gender: string | null;
+  city: string | null;
+  country: string | null;
+  biography: string | null;
+  rating: number;
+  is_verified: boolean;
+  role: string;
+  createdAt: Date;
+ 
 }
 
-export interface RecentResponse {
-  data: ProjectPost[];
-  totalCount: number;
+export interface LikeResponse {
+  projectId: string;
+  isLiked: boolean;
+  likeCount: number;
 }
+
+export interface UserLikedPropertiesResponse {
+  data: (Project & { totalLikes: number; isLiked: boolean })[];
+}
+
+export interface ProjectLikedUsersResponse {
+  totalUsers: number;
+  users: User[];
+}
+
