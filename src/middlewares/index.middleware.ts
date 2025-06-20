@@ -4,7 +4,6 @@ import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import errorHandler from "./errors.middleware";
 import indexRoutes from "../features/appRoute";
 
 export default (app: Application) => {
@@ -34,6 +33,4 @@ export default (app: Application) => {
   // Mounting routes
   app.use("/api/", indexRoutes);
 
-  // Custom error handling middleware - moved after routes
-  app.use(errorHandler);
 };

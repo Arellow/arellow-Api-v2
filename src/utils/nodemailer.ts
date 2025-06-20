@@ -1,4 +1,8 @@
+import 'dotenv/config'
 import nodemailer, { Transporter, SendMailOptions, SentMessageInfo } from "nodemailer";
+import sgMail, {MailDataRequired} from "@sendgrid/mail";
+ 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -39,3 +43,30 @@ export const nodeMailerController = async (mailOptions: SendMailOptions): Promis
     throw error;
   }
 };
+
+
+
+export const mailController =  (mailOptions: MailDataRequired) => {
+  // sgMail.setDataResidency('eu'); 
+  try {
+     sgMail.send(mailOptions);
+    console.log('Email sent')
+
+  } catch (error) {
+     console.error(error)
+  }
+
+};
+
+
+// const msg = {
+//   to: 'rahkeem.shlome@fsitip.com', // Change to your recipient
+//   from: 'info@arellow.com', // Change to your verified sender
+//   subject: 'Sending with SendGrid is Fun',
+//   text: 'and easy to do anywhere, even with Node.js',
+//   html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+// }
+
+
+//  mailController(msg)
+  
