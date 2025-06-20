@@ -8,14 +8,13 @@ import errorHandler from './middlewares/errors.middleware';
 const app = express();
 indexMiddleware(app);
 
-app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-// app.use("/", (req,res,) => {
-//     res.send("hello world test")
+app.use("/arellow-swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// });
+app.use("/", (req, res,) => {
+    res.send("welcome to arellow")
+});
 
-
-  // Custom error handling middleware - moved after routes
-  app.use(errorHandler);
+// Custom error handling middleware - moved after routes
+app.use(errorHandler);
 
 export default app;
