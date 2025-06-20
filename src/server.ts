@@ -1,7 +1,8 @@
 import app from "./app";
 import logger from "./middlewares/logger.middleware";
+import { PORT } from "./utils/constants.util";
 
-const PORT = process.env.PORT || 9871;
+
 
 (async () => {
   logger.info(`Attempting to run server on port ${PORT}`);

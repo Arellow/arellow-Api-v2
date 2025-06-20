@@ -6,16 +6,16 @@ import swaggerSpec from "./docs/swagger";
 import errorHandler from './middlewares/errors.middleware';
 
 const app = express();
-// indexMiddleware(app);
+indexMiddleware(app);
 
-// app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/", (req,res,) => {
-    res.send("hello world test")
+app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use("/", (req,res,) => {
+//     res.send("hello world test")
 
-});
+// });
 
 
   // Custom error handling middleware - moved after routes
-//   app.use(errorHandler);
+  app.use(errorHandler);
 
 export default app;

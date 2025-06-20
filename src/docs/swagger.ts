@@ -1,5 +1,6 @@
 import swaggerJsdoc from "swagger-jsdoc";
-import { PORT } from "../server";
+import { PORT } from "../utils/constants.util";
+
 
 const options = {
   definition: {
