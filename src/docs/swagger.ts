@@ -1,8 +1,8 @@
-import swaggerJsdoc from "swagger-jsdoc";
+import swaggerJSDoc from "swagger-jsdoc";
 import { PORT } from "../utils/constants.util";
 
 
-const options = {
+const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
@@ -16,7 +16,7 @@ const options = {
         description: "Development server",
       },
       {
-        url: `https://arellow-api-v2-4zny0l7qf.vercel.app`,
+        url: `https://arellow-api-v2.vercel.app/`,
         description: "Production Vercel server",
       },
     ],
@@ -29,11 +29,6 @@ const options = {
         },
       },
     },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
     paths: {
       "/api/auth/register": {
         post: {
@@ -104,9 +99,11 @@ const options = {
       },
     },
   },
-  apis: ["./src/routes/*.ts"],
+  
+
+  apis: ['src/features/**/*.ts', 'src/server.ts']
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 export default swaggerSpec; 

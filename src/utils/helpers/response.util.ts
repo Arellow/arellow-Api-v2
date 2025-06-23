@@ -1,6 +1,6 @@
 import { Response as ExpressResponse } from 'express';
 
-export default class Response {
+export default class CustomResponse {
 
   private code: number;
   private success: boolean;

@@ -128,107 +128,107 @@ export class ProjectService {
     }
   }
 
- async getProjectById(id: string): Promise<SingleProjectResponse> {
-    try {
-      const project = await this.prisma.project.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullname: true, 
-              email: true,
-              createdAt: true,
-            },
-          },
-        },
-      });
+//  async getProjectById(id: string): Promise<SingleProjectResponse> {
+//     try {
+//       const project = await this.prisma.project.findUnique({
+//         where: { id },
+//         include: {
+//           user: {
+//             select: {
+//               id: true,
+//               fullname: true, 
+//               email: true,
+//               createdAt: true,
+//             },
+//           },
+//         },
+//       });
 
-      if (!project) {
-        throw new InternalServerError("Project not found.");
-      }
+//       if (!project) {
+//         throw new InternalServerError("Project not found.");
+//       }
 
-      const currentDate = new Date();
-      const createdAt = project.user.createdAt || new Date(); 
-      const timeDiff = currentDate.getTime() - createdAt.getTime();
-      const years = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 365)); 
-      const yearsOnPlatform = years > 0 ? years : 1;
+//       const currentDate = new Date();
+//       const createdAt = project.user.createdAt || new Date(); 
+//       const timeDiff = currentDate.getTime() - createdAt.getTime();
+//       const years = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 365)); 
+//       const yearsOnPlatform = years > 0 ? years : 1;
 
-      const agent: UserDetails = {
-        id: project.user.id,
-        fullname: project.user.fullname,
-        email: project.user.email,
-        createdAt: project.user.createdAt,
-        yearsOnPlatform 
-      };
+//       const agent: UserDetails = {
+//         id: project.user.id,
+//         fullname: project.user.fullname,
+//         email: project.user.email,
+//         createdAt: project.user.createdAt,
+//         yearsOnPlatform 
+//       };
 
-      const data: SingleProjectResponse = {
-        id: project.id,
-        category: project.category,
-        title: project.title,
-        description: project.description,
-        features: project.features || [],
-        amenities: project.amenities || [],
-        property_location: project.property_location,
-        neighborhood: project.neighborhood,
-        number_of_bedrooms: project.number_of_bedrooms || 0,
-        number_of_bathrooms: project.number_of_bathrooms || 0,
-        number_of_floors: project.number_of_floors,
-        square: project.square,
-        price: project.price,
-        outside_view_images: project.outside_view_images || [],
-        living_room_images: project.living_room_images || [],
-        kitchen_room_images: project.kitchen_room_images || [],
-        primary_room_images: project.primary_room_images || [],
-        floor_plan_images: project.floor_plan_images || [],
-        tour_3d_images: project.tour_3d_images || [],
-        other_images: project.other_images || [],
-        banner: project.banner,
-        youTube_link: project.youTube_link,
-        youTube_thumbnail: project.youTube_thumbnail,
-        property_type: project.property_type,
-        listing_type: project.listing_type,
-        property_status: project.property_status,
-        property_age: project.property_age,
-        furnishing: project.furnishing,
-        parking_spaces: project.parking_spaces,
-        total_floors: project.total_floors,
-        available_floor: project.available_floor,
-        facing_direction: project.facing_direction,
-        street_width: project.street_width,
-        plot_area: project.plot_area,
-        construction_status: project.construction_status,
-        possession_status: project.possession_status,
-        transaction_type: project.transaction_type,
-        ownership_type: project.ownership_type,
-        expected_pricing: project.expected_pricing,
-        price_per_sqft: project.price_per_sqft,
-        booking_amount: project.booking_amount,
-        maintenance_monthly: project.maintenance_monthly,
-        price_negotiable: project.price_negotiable,
-        available_from: project.available_from,
-        longitude: project.longitude,
-        latitude: project.latitude,
-        distance_between_facility: project.distance_between_facility,
-        country: project.country,
-        region: project.region,
-        city: project.city,
-        views: project.views,
-        isFeatured: project.isFeatured,
-        archive: project.archive,
-        status: project.status,
-        isapproved: project.isapproved,
-        rejectreason: project.rejectreason,
-        createdAt: project.createdAt,
-        agent,
-      };
+//       const data: SingleProjectResponse = {
+//         id: project.id,
+//         category: project.category,
+//         title: project.title,
+//         description: project.description,
+//         features: project.features || [],
+//         amenities: project.amenities || [],
+//         property_location: project.property_location,
+//         neighborhood: project.neighborhood,
+//         number_of_bedrooms: project.number_of_bedrooms || 0,
+//         number_of_bathrooms: project.number_of_bathrooms || 0,
+//         number_of_floors: project.number_of_floors,
+//         square: project.square,
+//         price: project.price,
+//         outside_view_images: project.outside_view_images || [],
+//         living_room_images: project.living_room_images || [],
+//         kitchen_room_images: project.kitchen_room_images || [],
+//         primary_room_images: project.primary_room_images || [],
+//         floor_plan_images: project.floor_plan_images || [],
+//         tour_3d_images: project.tour_3d_images || [],
+//         other_images: project.other_images || [],
+//         banner: project.banner,
+//         youTube_link: project.youTube_link,
+//         youTube_thumbnail: project.youTube_thumbnail,
+//         property_type: project.property_type,
+//         listing_type: project.listing_type,
+//         property_status: project.property_status,
+//         property_age: project.property_age,
+//         furnishing: project.furnishing,
+//         parking_spaces: project.parking_spaces,
+//         total_floors: project.total_floors,
+//         available_floor: project.available_floor,
+//         facing_direction: project.facing_direction,
+//         street_width: project.street_width,
+//         plot_area: project.plot_area,
+//         construction_status: project.construction_status,
+//         possession_status: project.possession_status,
+//         transaction_type: project.transaction_type,
+//         ownership_type: project.ownership_type,
+//         expected_pricing: project.expected_pricing,
+//         price_per_sqft: project.price_per_sqft,
+//         booking_amount: project.booking_amount,
+//         maintenance_monthly: project.maintenance_monthly,
+//         price_negotiable: project.price_negotiable,
+//         available_from: project.available_from,
+//         longitude: project.longitude,
+//         latitude: project.latitude,
+//         distance_between_facility: project.distance_between_facility,
+//         country: project.country,
+//         region: project.region,
+//         city: project.city,
+//         views: project.views,
+//         isFeatured: project.isFeatured,
+//         archive: project.archive,
+//         status: project.status,
+//         isapproved: project.isapproved,
+//         rejectreason: project.rejectreason,
+//         createdAt: project.createdAt,
+//         agent,
+//       };
 
-      return data;
-    } catch (error) {
-      console.error("[getProjectById] Prisma error:", error);
-      throw new InternalServerError("Failed to fetch project.");
-    }
-  }
+//       return data;
+//     } catch (error) {
+//       console.error("[getProjectById] Prisma error:", error);
+//       throw new InternalServerError("Failed to fetch project.");
+//     }
+//   }
 
 
  async calculateMortgage(id: string, downPayment: number): Promise<MortgageCalculation> {
