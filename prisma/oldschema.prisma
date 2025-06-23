@@ -16,15 +16,16 @@
 //   fullname               String
 //   password               String
 //   avatar                 String?  @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?w=740")
-//   banner                 String?
 //   phone_number           String
+//   role                   Role              @default(user)
+//   is_verified            Boolean           @default(false)
+
+//   banner                 String?
 //   gender                 String?
 //   city                   String?
 //   country                String?
 //   biography              String?
 //   rating                 Int               @default(0)
-//   is_verified            Boolean           @default(false)
-//   role                   Role              @default(user)
 //   createdAt              DateTime          @default(now())
 //   notifications          Notification[]
 //   projects               Project[]

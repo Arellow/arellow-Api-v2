@@ -295,8 +295,151 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
     next(new InternalServerError("Server Error", 500));
   }
 
+};
+
+export const recentPropertiesByUser = async (req: Request, res: Response, next: NextFunction)  => {
+  try {
+    const userId = req.user?.id;
+ 
+    const {
+      search,
+      salesStatus,
+      minPrice,
+      maxPrice,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+   const filters: prisma.PropertyWhereInput = {
+  userId,
+  AND: [
+    search
+      ? {
+          OR: [
+            { title: { contains: search as string, mode: 'insensitive' } },
+            { category: { contains: search as string, mode: 'insensitive' } },
+            { city: { contains: search as string, mode: 'insensitive' } },
+            { state: { contains: search as string, mode: 'insensitive' } },
+            { country: { contains: search as string, mode: 'insensitive' } }
+          ]
+        }
+      : undefined,
+    salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+    minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
+    maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+  ].filter(Boolean) as prisma.PropertyWhereInput[] // 👈 IMPORTANT: ensure no `undefined` entries
+};
+    const [properties, total] = await Promise.all([
+      Prisma.property.findMany({
+        where: filters,
+        orderBy: { createdAt: "desc" },
+        skip: (pageNumber - 1) * pageSize,
+        take: pageSize
+      }),
+       Prisma.property.count({ where: filters })
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+    const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+    const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+     const canGoNext = pageNumber < totalPages;
+    const canGoPrev = pageNumber > 1;
+
+     new CustomResponse(200, true, "success", res, {
+      data: properties,
+      pagination: {
+        total,
+        page: pageNumber,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        nextPage,
+        prevPage,
+        canGoNext,
+        canGoPrev
+      }
+    });
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
 
 };
+
+
+export const featureProperties = async (req: Request, res: Response, next: NextFunction)  => {
+  try {
+    // const userId = req.user?.id;
+ 
+    const {
+      search,
+      salesStatus,
+      minPrice,
+      maxPrice,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+   const filters: prisma.PropertyWhereInput = {
+  // userId,
+  AND: [
+    search
+      ? {
+          OR: [
+            { title: { contains: search as string, mode: 'insensitive' } },
+            { category: { contains: search as string, mode: 'insensitive' } },
+            { city: { contains: search as string, mode: 'insensitive' } },
+            { state: { contains: search as string, mode: 'insensitive' } },
+            { country: { contains: search as string, mode: 'insensitive' } }
+          ]
+        }
+      : undefined,
+    salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+    minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
+    maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+  ].filter(Boolean) as prisma.PropertyWhereInput[] // 👈 IMPORTANT: ensure no `undefined` entries
+};
+    const [properties, total] = await Promise.all([
+      Prisma.property.findMany({
+        where: filters,
+        orderBy: { createdAt: "desc" },
+        skip: (pageNumber - 1) * pageSize,
+        take: pageSize
+      }),
+       Prisma.property.count({ where: filters })
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+    const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+    const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+     const canGoNext = pageNumber < totalPages;
+    const canGoPrev = pageNumber > 1;
+
+     new CustomResponse(200, true, "success", res, {
+      data: properties,
+      pagination: {
+        total,
+        page: pageNumber,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        nextPage,
+        prevPage,
+        canGoNext,
+        canGoPrev
+      }
+    });
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+
+};
+
+
+
 
 
  export const approveProperty = async (req: Request, res: Response, next: NextFunction) =>  {

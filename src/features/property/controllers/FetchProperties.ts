@@ -7,46 +7,46 @@ import CustomResponse from "../../../utils/helpers/response.util";
 
 const projectService = new ProjectService();
 
-export const getFeaturedProjects = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// export const getFeaturedProjects = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
 
-  try {
-    const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
-    const featured = await projectService.getFeaturedProjects(page, limit);
-    new CustomResponse(200, true, "Featured projects fetched successfully", res, featured);
-  } catch (error) {
-    console.error("Featured projects fetch error:", error);
-    next(new InternalServerError("Failed to fetch featured projects."));
-  }
-};
+//   try {
+//     const page = req.query.page ? parseInt(req.query.page as string) : 1;
+//     const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+//     const featured = await projectService.getFeaturedProjects(page, limit);
+//     new CustomResponse(200, true, "Featured projects fetched successfully", res, featured);
+//   } catch (error) {
+//     console.error("Featured projects fetch error:", error);
+//     next(new InternalServerError("Failed to fetch featured projects."));
+//   }
+// };
 
-export const getRecentProjects = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  try {
-    const filter: ProjectFilterDto = {
-      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
-      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
-      propertyType: req.query.propertyType as string,
-      bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
-      bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
-      page: req.query.page ? parseInt(req.query.page as string) : 1,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
-    };
-    const recent = await projectService.getRecentProjects(filter);
-    new CustomResponse(200, true, "Recent projects fetched successfully", res, recent);
-  } catch (error) {
-    console.error("Recent projects fetch error:", error);
-    next(new InternalServerError("Failed to fetch recent projects."));
-  }
-};
+// export const getRecentProjects = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   const userId = req.user?.id as string;
+//   try {
+//     const filter: ProjectFilterDto = {
+//       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
+//       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+//       propertyType: req.query.propertyType as string,
+//       bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
+//       bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
+//       page: req.query.page ? parseInt(req.query.page as string) : 1,
+//       limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+//     };
+//     const recent = await projectService.getRecentProjects(filter);
+//     new CustomResponse(200, true, "Recent projects fetched successfully", res, recent);
+//   } catch (error) {
+//     console.error("Recent projects fetch error:", error);
+//     next(new InternalServerError("Failed to fetch recent projects."));
+//   }
+// };
 
 // export const getProjectById = async (
 //   req: Request,

@@ -1,15 +1,15 @@
 import express from 'express'
-import { calculateProjectMortgage, getFeaturedProjects, getRecentProjects } from '../controllers/FetchProperties';
+import { calculateProjectMortgage } from '../controllers/FetchProperties';
 import authenticate, { requireRole } from '../../../middlewares/auth.middleware';
 import { createPropertyRequest } from '../../requestProperties/controllers/request';
 import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
-import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, getPropertiesByUser, mediaForProperty} from '../controllers/properties';
+import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, getPropertiesByUser, mediaForProperty, recentPropertiesByUser, featureProperties} from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 
 const propertyRoutes= express.Router();
 
-propertyRoutes.get("/featured",getFeaturedProjects)
-propertyRoutes.get("/recent",getRecentProjects)
+propertyRoutes.get("/featured", featureProperties)
+propertyRoutes.get("/recent", recentPropertiesByUser)
 // propertyRoutes.post("/like", authenticate, toggleProjectLike );
 propertyRoutes.post("/seed",seedNigerianStates)
 propertyRoutes.get("/seed",getAllStates)

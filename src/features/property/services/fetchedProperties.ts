@@ -7,126 +7,126 @@ const prisma = new PrismaClient();
 export class ProjectService {
   private prisma: PrismaClient = prisma;
 
-  async getFeaturedProjects(page: number = 1, limit: number = 5, userId?: string): Promise<FeaturedResponse> {
-    try {
-      const skip = (page - 1) * limit;
+  // async getFeaturedProjects(page: number = 1, limit: number = 5, userId?: string): Promise<FeaturedResponse> {
+  //   try {
+  //     const skip = (page - 1) * limit;
 
-      const whereClause: Prisma.ProjectWhereInput = {
-        isFeatured: true,
-        archive: false,
-        status: "selling",
-        isapproved: "approved",
-      };
+  //     const whereClause: Prisma.ProjectWhereInput = {
+  //       isFeatured: true,
+  //       archive: false,
+  //       status: "selling",
+  //       isapproved: "approved",
+  //     };
 
-      const featured = await this.prisma.project.findMany({
-        where: whereClause,
-        take: limit,
-        skip,
-        orderBy: { createdAt: "desc" },
-        include: {
-          _count: {
-            select: { likes: true }, 
-          },
-        },
-      });
+  //     const featured = await this.prisma.project.findMany({
+  //       where: whereClause,
+  //       take: limit,
+  //       skip,
+  //       orderBy: { createdAt: "desc" },
+  //       include: {
+  //         _count: {
+  //           select: { likes: true }, 
+  //         },
+  //       },
+  //     });
 
-      const totalCount = await this.prisma.project.count({ where: whereClause });
+  //     const totalCount = await this.prisma.project.count({ where: whereClause });
 
-      const data: ProjectPost[] = await Promise.all(
-        featured.map(async (p) => {
-          const isLiked = userId
-            ? await this.prisma.likeUser.findUnique({
-                where: { userId_projectId: { userId, projectId: p.id } },
-              }) !== null
-            : false; 
+  //     const data: ProjectPost[] = await Promise.all(
+  //       featured.map(async (p) => {
+  //         const isLiked = userId
+  //           ? await this.prisma.likeUser.findUnique({
+  //               where: { userId_projectId: { userId, projectId: p.id } },
+  //             }) !== null
+  //           : false; 
 
-          return {
-            id: p.id,
-            title: p.title || "",
-            price: p.price || 0,
-            property_type: p.property_type || "",
-            number_of_bedrooms: p.number_of_bedrooms || 0,
-            number_of_bathrooms: p.number_of_bathrooms || 0,
-            outside_view_images: p.outside_view_images || [],
-            banner: p.banner,
-            createdAt: p.createdAt,
-            likeCount: p._count.likes || 0,
-            isLiked,
-          };
-        })
-      );
+  //         return {
+  //           id: p.id,
+  //           title: p.title || "",
+  //           price: p.price || 0,
+  //           property_type: p.property_type || "",
+  //           number_of_bedrooms: p.number_of_bedrooms || 0,
+  //           number_of_bathrooms: p.number_of_bathrooms || 0,
+  //           outside_view_images: p.outside_view_images || [],
+  //           banner: p.banner,
+  //           createdAt: p.createdAt,
+  //           likeCount: p._count.likes || 0,
+  //           isLiked,
+  //         };
+  //       })
+  //     );
 
-      return { data, totalCount };
-    } catch (error) {
-      console.error("[getFeaturedProjects] Prisma error:", error);
-      throw new InternalServerError("Failed to fetch featured projects.");
-    }
-  }
+  //     return { data, totalCount };
+  //   } catch (error) {
+  //     console.error("[getFeaturedProjects] Prisma error:", error);
+  //     throw new InternalServerError("Failed to fetch featured projects.");
+  //   }
+  // }
 
 
 
-  async getRecentProjects(filter: ProjectFilterDto, userId?: string): Promise<RecentResponse> {
-    try {
-      const { minPrice, maxPrice, propertyType, bedrooms, bathrooms, page = 1, limit = 10 } = filter;
-      const skip = (page - 1) * limit;
+  // async getRecentProjects(filter: ProjectFilterDto, userId?: string): Promise<RecentResponse> {
+  //   try {
+  //     const { minPrice, maxPrice, propertyType, bedrooms, bathrooms, page = 1, limit = 10 } = filter;
+  //     const skip = (page - 1) * limit;
 
-      const whereClause: Prisma.ProjectWhereInput = {
-        price: {
-          ...(minPrice !== undefined && { gte: minPrice }),
-          ...(maxPrice !== undefined && { lte: maxPrice }),
-        },
-        property_type: propertyType ? { equals: propertyType, mode: "insensitive" } : undefined,
-        number_of_bedrooms: bedrooms ? { equals: bedrooms } : undefined,
-        number_of_bathrooms: bathrooms ? { equals: bathrooms } : undefined,
-        archive: false,
-        status: "selling",
-        isapproved: "approved",
-      };
+  //     const whereClause: Prisma.PropertyWhereInput = {
+  //       price: {
+  //         ...(minPrice !== undefined && { gte: minPrice }),
+  //         ...(maxPrice !== undefined && { lte: maxPrice }),
+  //       },
+  //       category: propertyType ? { equals: propertyType, mode: "insensitive" } : undefined,
+  //       bedrooms: bedrooms ? { equals: bedrooms } : undefined,
+  //       bathrooms: bathrooms ? { equals: bathrooms } : undefined,
+  //       archived: false,
+  //       salesStatus: "SELLING",
+  //       status: "APPROVED",
+  //     };
 
-      const recent = await this.prisma.project.findMany({
-        where: whereClause,
-        take: limit,
-        skip,
-        orderBy: { createdAt: "desc" },
-        include: {
-          _count: {
-            select: { likes: true }, 
-          },
-        },
-      });
+  //     const recent = await this.prisma.property.findMany({
+  //       where: whereClause,
+  //       take: limit,
+  //       skip,
+  //       orderBy: { createdAt: "desc" },
+  //       include: {
+  //         _count: {
+  //           select: { likedBy: true }, 
+  //         },
+  //       },
+  //     });
 
-      const totalCount = await this.prisma.project.count({ where: whereClause });
+  //     const totalCount = await this.prisma.property.count({ where: whereClause });
 
-      const data: ProjectPost[] = await Promise.all(
-        recent.map(async (p) => {
-          const isLiked = userId
-            ? await this.prisma.likeUser.findUnique({
-                where: { userId_projectId: { userId, projectId: p.id } },
-              }) !== null
-            : false; 
+  //     const data: ProjectPost[] = await Promise.all(
+  //       recent.map(async (p) => {
+  //         const isLiked = userId
+  //           ? await this.prisma.likeUser.findUnique({
+  //               where: { userId_projectId: { userId, projectId: p.id } },
+  //             }) !== null
+  //           : false; 
 
-          return {
-            id: p.id,
-            title: p.title || "",
-            price: p.price || 0,
-            property_type: p.property_type || "",
-            number_of_bedrooms: p.number_of_bedrooms || 0,
-            number_of_bathrooms: p.number_of_bathrooms || 0,
-            outside_view_images: p.outside_view_images || [],
-            banner: p.banner,
-            createdAt: p.createdAt,
-            likeCount: p._count.likes || 0,
-            isLiked, // Added isLiked status
-          };
-        })
-      );
+  //         return {
+  //           id: p.id,
+  //           title: p.title || "",
+  //           price: p.price || 0,
+  //           property_type: p.property_type || "",
+  //           number_of_bedrooms: p.number_of_bedrooms || 0,
+  //           number_of_bathrooms: p.number_of_bathrooms || 0,
+  //           outside_view_images: p.outside_view_images || [],
+  //           banner: p.banner,
+  //           createdAt: p.createdAt,
+  //           likeCount: p._count.likes || 0,
+  //           isLiked, // Added isLiked status
+  //         };
+  //       })
+  //     );
 
-      return { data, totalCount };
-    } catch (error) {
-      console.error("[getRecentProjects] Prisma error:", error);
-      throw new InternalServerError("Failed to fetch recent projects.");
-    }
-  }
+  //     return { data, totalCount };
+  //   } catch (error) {
+  //     console.error("[getRecentProjects] Prisma error:", error);
+  //     throw new InternalServerError("Failed to fetch recent projects.");
+  //   }
+  // }
 
 //  async getProjectById(id: string): Promise<SingleProjectResponse> {
 //     try {
@@ -233,7 +233,7 @@ export class ProjectService {
 
  async calculateMortgage(id: string, downPayment: number): Promise<MortgageCalculation> {
     try {
-      const project = await this.prisma.project.findUnique({
+      const project = await this.prisma.property.findUnique({
         where: { id },
       });
 
@@ -285,7 +285,7 @@ export class ProjectService {
       const estimated_closing_cost = parseFloat((0.02 * home_price).toFixed(2));
 
       return {
-        home_location: project.property_location,
+        home_location: project.neighborhood,
         home_price,
         down_payment: downPayment,
         loan_amount,
