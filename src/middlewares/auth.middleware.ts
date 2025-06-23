@@ -2,23 +2,9 @@
 
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient , UserRole} from "@prisma/client";
 
 const prisma = new PrismaClient();
-
-import * as express from "express";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        role: "user" | "admin" | "superadmin" | "realtor" | "agent" | "buyer";
-      };
-    }
-  }
-}
 
 export default async function authenticate(
   req: Request,
@@ -58,7 +44,7 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction): void =
 
   const { role } = req.user;
 
-  if (role !== "admin" && role !== "superadmin") {
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
     res.status(403).json({ success: false, message: "Access denied: Admins only" });
     return;
   }
@@ -75,10 +61,29 @@ export const isSuperAdmin = (req: Request, res: Response, next: NextFunction): v
 
   const { role } = req.user;
 
-  if (role !== "superadmin") {
+  if (role !== "SUPER_ADMIN") {
     res.status(403).json({ success: false, message: "Access denied: Superadmins only" });
     return;
   }
 
   next();
 };
+
+
+export function requireRole(...allowedRoles: UserRole[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user; 
+
+    if (!user) {
+       res.status(401).json({ success: false, message: "Unauthorized" });
+       return
+    }
+
+    if (!allowedRoles.includes(user.role)) {
+      res.status(403).json({ success: false, message: 'Forbidden: insufficient role' });
+       return
+    }
+
+    next();
+  };
+}

@@ -4,6 +4,7 @@ import { InternalServerError } from "../../../lib/appError";
 import { ProjectFilterDto } from "../dtos/property.dto";
 import CustomResponse from "../../../utils/helpers/response.util";
 
+
 const projectService = new ProjectService();
 
 export const getFeaturedProjects = async (
@@ -47,29 +48,29 @@ export const getRecentProjects = async (
   }
 };
 
-export const getProjectById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// export const getProjectById = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
   
-  try {
-    const id = req.params.id as string;
-    if (!id) {
-      res.status(400).json({
-        status: "failed",
-        message: "Project ID is required",
-        succeeded: false,
-      });
-      return;
-    }
-    const project = await projectService.getProjectById(id);
-    new CustomResponse(200, true, "Project fetched successfully", res, project);
-  } catch (error) {
-    console.error("Project fetch error:", error);
-    next(new InternalServerError("Failed to fetch project."));
-  }
-};
+//   try {
+//     const id = req.params.id as string;
+//     if (!id) {
+//       res.status(400).json({
+//         status: "failed",
+//         message: "Project ID is required",
+//         succeeded: false,
+//       });
+//       return;
+//     }
+//     const project = await projectService.getProjectById(id);
+//     new CustomResponse(200, true, "Project fetched successfully", res, project);
+//   } catch (error) {
+//     console.error("Project fetch error:", error);
+//     next(new InternalServerError("Failed to fetch project."));
+//   }
+// };
 
 
 export const calculateProjectMortgage = async (

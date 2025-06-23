@@ -19,8 +19,9 @@
     "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src", "api", "api"]
+  "include": ["src/**/*","api/**/*", "types/**/*"]
 }
 

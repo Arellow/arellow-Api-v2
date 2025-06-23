@@ -1,22 +1,38 @@
 import express from 'express'
-import { calculateProjectMortgage, getFeaturedProjects, getProjectById, getRecentProjects } from '../controllers/FetchProperties';
-import authenticate from '../../../middlewares/auth.middleware';
+import { calculateProjectMortgage, getFeaturedProjects, getRecentProjects } from '../controllers/FetchProperties';
+import authenticate, { requireRole } from '../../../middlewares/auth.middleware';
 import { createPropertyRequest } from '../../requestProperties/controllers/request';
 import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
-import { toggleProjectLike } from '../controllers/likeProperty';
+import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, getPropertiesByUser, mediaForProperty} from '../controllers/properties';
+import { UserRole } from '@prisma/client';
+
 const propertyRoutes= express.Router();
 
 propertyRoutes.get("/featured",getFeaturedProjects)
 propertyRoutes.get("/recent",getRecentProjects)
-propertyRoutes.post("/like", authenticate, toggleProjectLike );
+// propertyRoutes.post("/like", authenticate, toggleProjectLike );
 propertyRoutes.post("/seed",seedNigerianStates)
 propertyRoutes.get("/seed",getAllStates)
-propertyRoutes.get("/:id",getProjectById)
 propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property
-propertyRoutes.post("/requestProperty",authenticate,createPropertyRequest)
+propertyRoutes.post("/requestProperty",authenticate,createPropertyRequest);
 
+
+// undocumented on postman
+propertyRoutes.post("/createproperty", authenticate, createPropertyRequest);
+propertyRoutes.post("/:id/like", authenticate, likeProperty );
+propertyRoutes.delete('/:id/like', authenticate, unLikeProperty );
+propertyRoutes.get("/:id",singleProperty);
+propertyRoutes.patch("/:id/approve", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), approveProperty);
+propertyRoutes.patch("/:id/reject", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), rejectProperty);
+propertyRoutes.patch("/:id/archive", authenticate, archiveProperty);
+propertyRoutes.patch("/:id/unarchive", authenticate, unArchiveProperty);
+propertyRoutes.patch("/:id/status", authenticate, statusProperty);
+propertyRoutes.delete("/:id", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), deleteProperty);
+propertyRoutes.get("/liked", authenticate,  getLikedPropertiesByUser);
+propertyRoutes.get("/user", authenticate,  getPropertiesByUser);
+propertyRoutes.patch("/:propertyId/media", authenticate,  mediaForProperty);
 
 
 export default propertyRoutes;
