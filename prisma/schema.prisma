@@ -26,7 +26,7 @@ model User {
   fullname           String
   username           String
   password           String
-  phone_number       String?
+  phone_number       String
   role               UserRole  
   avatar             String?
   is_verified        Boolean    @default(false)
