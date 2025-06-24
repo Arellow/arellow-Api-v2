@@ -35,20 +35,6 @@ export class AuthService {
     const {
       password: _,
       role,
-      banner,
-      biography,
-      kyc_status,
-      nin_status,
-      nin_number,
-      nin_slip_url,
-      cac_status,
-      cac_number,
-      cac_doc_url,
-      face_status,
-      face_image_url,
-      kyc_verified_at,
-      conversationsIds,
-      isMessageReadedCounter,
       ...sanitizedUser
     } = user;
 

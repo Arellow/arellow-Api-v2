@@ -1,0 +1,201 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DashboardService = void 0;
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+class DashboardService {
+    getDashboardSummary() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const today = new Date();
+            const lastWeek = new Date(today);
+            lastWeek.setDate(today.getDate() - 7);
+            const weekBeforeLast = new Date(today);
+            weekBeforeLast.setDate(today.getDate() - 14);
+            const [totalListings, totalSelling, totalSold, numberOfRealtors, pendingProperties, listingsThisWeek, listingsLastWeek, sellingThisWeek, sellingLastWeek, soldThisWeek, soldLastWeek, realtorsThisWeek, realtorsLastWeek, pendingThisWeek, pendingLastWeek,] = yield Promise.all([
+                // Totals
+                prisma.project.count(),
+                prisma.project.count({ where: { status: "selling" } }),
+                prisma.project.count({ where: { status: "sold" } }),
+                prisma.user.count({ where: { role: "realtor" } }),
+                prisma.project.count({ where: { isapproved: "pending" } }),
+                // Weekly comparisons
+                prisma.project.count({ where: { createdAt: { gte: lastWeek } } }),
+                prisma.project.count({ where: { createdAt: { gte: weekBeforeLast, lt: lastWeek } } }),
+                prisma.project.count({
+                    where: { createdAt: { gte: lastWeek }, status: "selling" },
+                }),
+                prisma.project.count({
+                    where: { createdAt: { gte: weekBeforeLast, lt: lastWeek }, status: "selling" },
+                }),
+                prisma.project.count({
+                    where: { createdAt: { gte: lastWeek }, status: "sold" },
+                }),
+                prisma.project.count({
+                    where: { createdAt: { gte: weekBeforeLast, lt: lastWeek }, status: "sold" },
+                }),
+                prisma.user.count({
+                    where: { createdAt: { gte: lastWeek }, role: "realtor" },
+                }),
+                prisma.user.count({
+                    where: { createdAt: { gte: weekBeforeLast, lt: lastWeek }, role: "realtor" },
+                }),
+                prisma.project.count({
+                    where: { createdAt: { gte: lastWeek }, isapproved: "pending" },
+                }),
+                prisma.project.count({
+                    where: { createdAt: { gte: weekBeforeLast, lt: lastWeek }, isapproved: "pending" },
+                }),
+            ]);
+            const getPercentageChange = (current, previous) => {
+                if (previous === 0 && current === 0)
+                    return 0;
+                if (previous === 0)
+                    return 100;
+                return ((current - previous) / previous) * 100;
+            };
+            const percentages = {
+                listings: getPercentageChange(listingsThisWeek, listingsLastWeek),
+                selling: getPercentageChange(sellingThisWeek, sellingLastWeek),
+                sold: getPercentageChange(soldThisWeek, soldLastWeek),
+                realtors: getPercentageChange(realtorsThisWeek, realtorsLastWeek),
+                pendingProperties: getPercentageChange(pendingThisWeek, pendingLastWeek),
+            };
+            return {
+                totalListings,
+                totalSelling,
+                totalSold,
+                numberOfRealtors,
+                pendingProperties,
+                percentages,
+            };
+        });
+    }
+    getTopRealtors() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Fetch all sold projects to count per user
+            const soldProjects = yield prisma.project.findMany({
+                where: { status: "sold" },
+                select: { userId: true },
+            });
+            const totalSold = soldProjects.length;
+            if (totalSold === 0) {
+                return { topRealtors: [] };
+            }
+            // Count sold projects per realtor
+            const countMap = {};
+            soldProjects.forEach((p) => {
+                if (p.userId) {
+                    countMap[p.userId] = (countMap[p.userId] || 0) + 1;
+                }
+            });
+            // Sort by sold count descending and take top 3
+            const sorted = Object.entries(countMap)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 3);
+            const topUserIds = sorted.map(([id]) => id);
+            // Fetch top users
+            const users = yield prisma.user.findMany({
+                where: { id: { in: topUserIds } },
+                select: { id: true, fullname: true, avatar: true },
+            });
+            // Build response
+            const topRealtors = sorted.map(([userId, soldCount]) => {
+                const user = users.find((u) => u.id === userId);
+                return {
+                    id: userId,
+                    fullname: (user === null || user === void 0 ? void 0 : user.fullname) || "Unknown",
+                    avatar: (user === null || user === void 0 ? void 0 : user.avatar) || null,
+                    soldCount,
+                    percentage: parseFloat(((soldCount / totalSold) * 100).toFixed(1)),
+                };
+            });
+            return { topRealtors };
+        });
+    }
+    getRewardSumByType(reason) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const whereClause = reason ? { reason: { equals: reason } } : {};
+            const sum = yield prisma.rewardHistory.aggregate({
+                _sum: { points: true },
+                where: whereClause,
+            });
+            return sum._sum.points || 0;
+        });
+    }
+    getRewardOverview() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const [totalRewardEarned, propertyUploadEarnings, propertySoldEarnings] = yield Promise.all([
+                this.getRewardSumByType(null),
+                this.getRewardSumByType("upload"),
+                this.getRewardSumByType("sold"),
+            ]);
+            return {
+                totalRewardEarned,
+                propertyUploadEarnings,
+                propertySoldEarnings,
+            };
+        });
+    }
+    getRecentListings() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const recentListings = yield prisma.project.findMany({
+                where: { createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+                select: {
+                    id: true,
+                    title: true,
+                    floor_plan_images: true,
+                    property_location: true,
+                    price: true,
+                    createdAt: true,
+                    status: true,
+                    user: { select: { fullname: true, avatar: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 5,
+            });
+            return recentListings.map(listing => {
+                var _a;
+                return ({
+                    id: listing.id,
+                    title: listing.title,
+                    image: listing.floor_plan_images[0],
+                    location: listing.property_location,
+                    price: listing.price,
+                    listingDate: listing.createdAt,
+                    status: listing.status,
+                    realtor: ((_a = listing.user) === null || _a === void 0 ? void 0 : _a.fullname) || 'Unknown',
+                });
+            });
+        });
+    }
+    performQuickAction(action, projectId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            switch (action) {
+                case 'approve-listing':
+                    yield prisma.project.update({
+                        where: { id: projectId },
+                        data: { isapproved: 'approved' },
+                    });
+                    return { message: 'Listing approved successfully' };
+                case 'reject-listing':
+                    yield prisma.project.update({
+                        where: { id: projectId },
+                        data: { isapproved: 'rejected' },
+                    });
+                    return { message: 'Listing rejected successfully' };
+                default:
+                    throw new Error('Invalid action');
+            }
+        });
+    }
+}
+exports.DashboardService = DashboardService;

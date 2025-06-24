@@ -1,0 +1,98 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAllStates = exports.seedNigerianStates = void 0;
+const appError_1 = require("../../../lib/appError");
+const prisma_1 = require("../../../lib/prisma");
+// List of all Nigerian states with typed structure
+const NIGERIAN_STATES = [
+    { name: "Abia", image: "https://i.pinimg.com/736x/33/bc/09/33bc0964043b6ecf95feff21aede096a.jpg" },
+    { name: "Adamawa", image: "https://i.pinimg.com/736x/d6/31/80/d63180c481e14cf394f10614b1bf45ef.jpg" },
+    { name: "Akwa Ibom", image: "https://i.pinimg.com/736x/4f/92/23/4f9223513b76f6d5bc87e5c32955f772.jpg" },
+    { name: "Anambra", image: "https://i.pinimg.com/736x/9f/69/cb/9f69cb68515feb3d3f7870bc8d8da240.jpg" },
+    { name: "Bauchi", image: "https://i.pinimg.com/736x/a5/64/f9/a564f9e83810d8a659312eef7fb8a5f1.jpg" },
+    { name: "Bayelsa", image: "https://i.pinimg.com/736x/25/ff/4c/25ff4cb7c426655c64f5a9e3b82c75e7.jpg" },
+    { name: "Benue", image: "https://i.pinimg.com/736x/ea/59/71/ea5971cb10af6e325666486eba9fff87.jpg" },
+    { name: "Borno", image: "https://i.pinimg.com/736x/52/3a/76/523a76fc2e35ca6dfdff4b8e4f51ba5e.jpg" },
+    { name: "Cross River", image: "https://i.pinimg.com/736x/6a/84/bd/6a84bdf1219b60fdb8f0e547b4e608ea.jpg" },
+    { name: "Delta", image: "https://i.pinimg.com/736x/f0/b4/99/f0b49989caf52bea2d6fd23f7c5c7e28.jpg" },
+    { name: "Ebonyi", image: "https://i.pinimg.com/736x/da/65/b6/da65b6901a29931abaa313e0e197ce52.jpg" },
+    { name: "Edo", image: "https://i.pinimg.com/736x/1b/db/46/1bdb4642723b600a7a9663ae99c68553.jpg" },
+    { name: "Ekiti", image: "https://i.pinimg.com/736x/e3/68/15/e3681521cb4f8994b1aa2a55bb23113b.jpg" },
+    { name: "Enugu", image: "https://i.pinimg.com/736x/a3/4d/c0/a34dc0b2921ecf04f2d4dd17f4a5b808.jpg" },
+    { name: "Gombe", image: "https://i.pinimg.com/736x/4b/99/af/4b99af11abf7336395a71b30854d6eb2.jpg" },
+    { name: "Imo", image: "https://i.pinimg.com/736x/a5/7c/69/a57c69cd513a7cf95b513cfea51bb2fc.jpg" },
+    { name: "Jigawa", image: "https://i.pinimg.com/736x/b2/77/19/b27719d3e5657a2970aed5afb1a939d3.jpg" },
+    { name: "Kaduna", image: "https://i.pinimg.com/736x/6f/2b/fa/6f2bfa6630c00ef9b796d7814cd5eed0.jpg" },
+    { name: "Kano", image: "https://i.pinimg.com/736x/01/d2/96/01d29656c0eee8865bff87facf1998c3.jpg" },
+    { name: "Katsina", image: "https://i.pinimg.com/736x/56/7f/8d/567f8dc4495dfc784e6c71e77964e887.jpg" },
+    { name: "Kebbi", image: "https://i.pinimg.com/736x/ad/ae/e9/adaee92f7db3cc3a67cc0028b6de706e.jpg" },
+    { name: "Kogi", image: "https://i.pinimg.com/736x/41/69/a4/4169a475fbe5ab8b3dbb3db71f3512be.jpg" },
+    { name: "Kwara", image: "https://i.pinimg.com/736x/b1/8f/19/b18f19709c9598fa2ad4fad79152e059.jpg" },
+    { name: "Lagos", image: "https://i.pinimg.com/736x/4d/c9/23/4dc923f37a3307e2fc92464b1a895ce9.jpg" },
+    { name: "Nasarawa", image: "https://i.pinimg.com/736x/58/0a/83/580a8346c83d3d661a48d3a663ccaf98.jpg" },
+    { name: "Niger", image: "https://i.pinimg.com/736x/e6/c5/30/e6c530d4659d38432a373b79edc8293d.jpg" },
+    { name: "Ogun", image: "https://i.pinimg.com/736x/57/7b/4b/577b4ba3c8ba15deb0a6bbbaabeafc87.jpg" },
+    { name: "Ondo", image: "https://i.pinimg.com/736x/58/63/4c/58634cad5731cf5b725c1cdff47c1a7e.jpg" },
+    { name: "Osun", image: "https://i.pinimg.com/736x/e3/fc/97/e3fc972f1c567889055c814fc25d48a3.jpg" },
+    { name: "Oyo", image: "https://i.pinimg.com/736x/a4/68/f6/a468f6c2c1b61a4d9a51a3f0f9243079.jpg" },
+    { name: "Plateau", image: "https://i.pinimg.com/736x/9f/69/cb/9f69cb68515feb3d3f7870bc8d8da240.jpg" },
+    { name: "Rivers", image: "https://i.pinimg.com/736x/17/a8/a7/17a8a7d72ca2ece638590902ae16cc86.jpg" },
+    { name: "Sokoto", image: "https://i.pinimg.com/736x/e7/ee/82/e7ee82ad7ff3669d575cf93ec29aeb6a.jpg" },
+    { name: "Taraba", image: "https://i.pinimg.com/736x/dc/6d/f1/dc6df1bb532eaa78e564deb429f75550.jpg" },
+    { name: "Yobe", image: "https://i.pinimg.com/736x/a5/d9/75/a5d9757d33968fa57a6d492206a0419f.jpg" },
+    { name: "Zamfara", image: "https://i.pinimg.com/736x/8b/b9/ef/8bb9eff51dfe8ebe22254267dee019a4.jpg" },
+    { name: "FCT", image: "https://www.shutterstock.com/image-photo/abuja-fctnigeria-may-13th-2018-260nw-1090600706.jpg" },
+];
+// Seed Nigerian states
+const seedNigerianStates = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Check if states already exist (idempotency)
+        const existing = yield prisma_1.Prisma.state.findMany();
+        if (existing && existing.length >= NIGERIAN_STATES.length) {
+            res.status(200).json({
+                status: "success",
+                message: "States already seeded.",
+                data: existing,
+                succeeded: true,
+            });
+            return;
+        }
+        const stateObjects = NIGERIAN_STATES.map(({ name, image }) => ({ name, image }));
+        // Insert states (skip duplicates)
+        const created = yield prisma_1.Prisma.state.createMany({
+            data: stateObjects,
+        });
+        res.status(201).json({
+            status: "success",
+            message: "Nigerian states seeded successfully.",
+            data: created,
+            succeeded: true,
+        });
+    }
+    catch (error) {
+        console.error("seedNigerianStates error:", error);
+        throw new appError_1.InternalServerError("Something went wrong while seeding states");
+    }
+});
+exports.seedNigerianStates = seedNigerianStates;
+// Get all states
+const getAllStates = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const states = yield prisma_1.Prisma.state.findMany();
+        res.status(200).json({ success: true, data: states });
+    }
+    catch (error) {
+        console.error("Error fetching states:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+exports.getAllStates = getAllStates;
