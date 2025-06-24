@@ -5,6 +5,7 @@ import { nodeMailerController } from "../../../utils/nodemailer";
 import { generateToken } from "../../../utils/jwt";
 
 export class ResendVerificationService {
+
   async resendVerification(email: string) {
     const user = await Prisma.user.findUnique({
       where: { email: email.toLowerCase() },

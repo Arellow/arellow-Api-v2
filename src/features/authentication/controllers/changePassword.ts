@@ -9,7 +9,6 @@ export class UserController {
   changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id as string; 
     const dto: ChangePasswordDto = req.body;
-
     try {
       await this.authService.changePassword(userId, dto);
        new CustomResponse(200, true, "Password changed successfully", res);

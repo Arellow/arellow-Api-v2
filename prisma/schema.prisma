@@ -30,7 +30,11 @@ model User {
   role               UserRole  
   avatar             String?
   is_verified        Boolean    @default(false)
-
+  suspended            Boolean            @default(false)
+  points                 Int?
+  last_login             DateTime? 
+  rewardHistory        RewardHistory[]
+  rewardWithdrawals    RewardWithdrawal[]
   companyId    String?   @db.ObjectId
   company      Company?  @relation(fields: [companyId], references: [id])
   likes        UserPropertyLike[]
@@ -87,7 +91,8 @@ model Property {
   likedBy      UserPropertyLike[]
   likesCount   Int           @default(0)
 
-
+ rewardHistories RewardHistory[] 
+  
   media         Media[]
   salesStatus   SalesStatus  @default(SELLING)
 
@@ -107,7 +112,6 @@ model Amenity {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   photoUrl   String
-
   propertyId String   @db.ObjectId
   property   Property @relation(fields: [propertyId], references: [id])
 }
@@ -172,3 +176,38 @@ model Media {
 
 
 
+model RewardHistory {
+   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId      String   @db.ObjectId
+  points       Int @default(0)
+   reason      String  
+  description String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  propertyId    String   // This is a foreign key
+  property    Property  @relation(fields: [propertyId], references: [id])
+}
+
+ model RewardWithdrawal {
+   id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+   user               User      @relation(fields: [userId], references: [id])
+  userId             String    @db.ObjectId
+  points             Int       // amount the user requested to withdraw
+  bankAccountName    String
+  bankAccountNumber  String
+  bankName           String
+  status             String    @default("pending") 
+   createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+
+ model ResetPassword {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    userId      String
+    resetString String
+    createdAt   Int
+    expiresAt   Int
+ }

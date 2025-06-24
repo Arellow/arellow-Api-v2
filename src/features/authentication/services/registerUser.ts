@@ -1,4 +1,3 @@
-
 import { RegisterDTO,UserResponseDTO } from "../dtos/registerUserDto";
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
@@ -29,6 +28,7 @@ export class AuthService {
         email: emailLower,
         password: hashedPassword,
         phone_number,
+        role:"REALTOR",
         fullname,
         is_verified: false,
         avatar: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?w=740"
