@@ -46,26 +46,30 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
     // Basic validation
     if (!title || !description) {
-      return res.status(400).json({ error: 'Title and description are required' });
+      res.status(400).json({ error: 'Title and description are required' });
+      return 
     }
 
     // Validate amenities format if provided
     if (amenities && !Array.isArray(amenities)) {
-      return res.status(400).json({ error: 'Amenities must be an array' });
+      res.status(400).json({ error: 'Amenities must be an array' });
+      return 
     }
 
 
     if (amenities) {
       for (const amenity of amenities) {
         if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
-          return res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
+          res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
+          return 
         }
       }
     }
     if (features) {
       for (const amenity of amenities) {
         if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
-          return res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
+          res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
+          return 
         }
       }
     }

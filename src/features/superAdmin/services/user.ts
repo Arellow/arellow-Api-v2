@@ -1,4 +1,4 @@
-import { Role, KycStatus, Prisma, PrismaClient } from "@prisma/client";
+import { UserRole, KycStatus, Prisma, PrismaClient } from "@prisma/client";
 import { UserQueryDTO } from "../dtos/user.dto";
 const prisma = new PrismaClient();
 
@@ -14,12 +14,12 @@ export const getUsersService = async (query: UserQueryDTO) => {
 
   const where: Prisma.UserWhereInput = {};
 
-  if (userType && Object.values(Role).includes(userType as Role)) {
-    where.role = userType as Role;
+  if (userType && Object.values(UserRole).includes(userType as UserRole)) {
+    where.role = userType as UserRole;
   }
 
   if (kycStatus && Object.values(KycStatus).includes(kycStatus as KycStatus)) {
-    where.kyc_status = kycStatus as KycStatus;
+    // where.kyc_status = kycStatus as KycStatus;
   }
 
   if (typeof suspended !== 'undefined') {
@@ -51,7 +51,7 @@ export const getUsersService = async (query: UserQueryDTO) => {
         avatar: true,
         role: true,
         last_login: true,
-        kyc_status: true,
+        // kyc_status: true,
       },
     }),
     prisma.user.count({ where }),

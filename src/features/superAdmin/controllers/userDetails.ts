@@ -20,14 +20,14 @@ export const userDetail = async (
   const limit = Math.max(1, parseInt(req.query.limit as string) || 3);
 
   try {
-    const data = await agentService.getAgentDetail(userId, page, limit);
-     new CustomResponse(
-      200,
-      true,
-       "Agent details fetched successfully",
-      res,
-      data,
-    );
+    // const data = await agentService.getAgentDetail(userId, page, limit);
+    //  new CustomResponse(
+    //   200,
+    //   true,
+    //    "Agent details fetched successfully",
+    //   res,
+    //   data,
+    // );
   } catch (error) {
     next(error);
   }

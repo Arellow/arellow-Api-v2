@@ -1,112 +1,113 @@
 import { Request, Response, NextFunction } from "express";
-import { RequestPropertyService } from "../services/request";
+// import { RequestPropertyService } from "../services/request";
 import { InternalServerError } from "../../../lib/appError";
 import CustomResponse from '../../../utils/helpers/response.util'
 import { createPropertyRequestMailOptions } from "../../../utils/mailer";
 import { nodeMailerController } from "../../../utils/nodemailer";
 import dotenv from 'dotenv'
 dotenv.config();
-const projectService = new RequestPropertyService();
 
-export const createPropertyRequest = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
+// const projectService = new RequestPropertyService();
 
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
+// export const createPropertyRequest = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   const userId = req.user?.id as string;
 
-  try {
-    const {
-      name,
-      email,
-      phone,
-      category,
-      type,
-      furnishingStatus,
-      country,
-      city,
-      numberOfBedrooms,
-      numberOfBathrooms,
-      budget,
-      additionalNote,
-    } = req.body;
+//   if (!userId) {
+//     res.status(401).json({
+//       status: "failed",
+//       message: "Unauthorized access",
+//       succeeded: false,
+//     });
+//     return;
+//   }
 
-    // Basic validation
-    if (!name || !email || !phone || !category || !type || !furnishingStatus || !country || !city || !numberOfBedrooms || !numberOfBathrooms || !budget) {
-      res.status(400).json({
-        status: "failed",
-        message: "All required fields must be provided",
-        succeeded: false,
-      });
-      return;
-    }
+//   try {
+//     const {
+//       name,
+//       email,
+//       phone,
+//       category,
+//       type,
+//       furnishingStatus,
+//       country,
+//       city,
+//       numberOfBedrooms,
+//       numberOfBathrooms,
+//       budget,
+//       additionalNote,
+//     } = req.body;
 
-    const result = await projectService.createPropertyRequest(
-      name,
-      email,
-      phone,
-      category,
-      type,
-      furnishingStatus,
-      country,
-      city,
-      numberOfBedrooms,
-      numberOfBathrooms,
-      budget,
-      additionalNote || null,
-      userId
-    );
+//     // Basic validation
+//     if (!name || !email || !phone || !category || !type || !furnishingStatus || !country || !city || !numberOfBedrooms || !numberOfBathrooms || !budget) {
+//       res.status(400).json({
+//         status: "failed",
+//         message: "All required fields must be provided",
+//         succeeded: false,
+//       });
+//       return;
+//     }
 
-    // Email to Admin
-    const adminEmail = process.env.ADMIN_EMAIL || "uche.ali.tech@gmail.com";
-    const adminMailOptions = await createPropertyRequestMailOptions(
-      adminEmail,
-      name,
-      email,
-      phone,
-      category,
-      type,
-      furnishingStatus,
-      country,
-      city,
-      numberOfBedrooms,
-      numberOfBathrooms,
-      budget,
-      additionalNote,
-      true
-    );
-    await nodeMailerController(adminMailOptions);
+//     const result = await projectService.createPropertyRequest(
+//       name,
+//       email,
+//       phone,
+//       category,
+//       type,
+//       furnishingStatus,
+//       country,
+//       city,
+//       numberOfBedrooms,
+//       numberOfBathrooms,
+//       budget,
+//       additionalNote || null,
+//       userId
+//     );
 
-    // Email to User
-    const userMailOptions = await createPropertyRequestMailOptions(
-      email,
-      name,
-      email,
-      phone,
-      category,
-      type,
-      furnishingStatus,
-      country,
-      city,
-      numberOfBedrooms,
-      numberOfBathrooms,
-      budget,
-      additionalNote
-    );
-    await nodeMailerController(userMailOptions);
+//     // Email to Admin
+//     const adminEmail = process.env.ADMIN_EMAIL || "uche.ali.tech@gmail.com";
+//     const adminMailOptions = await createPropertyRequestMailOptions(
+//       adminEmail,
+//       name,
+//       email,
+//       phone,
+//       category,
+//       type,
+//       furnishingStatus,
+//       country,
+//       city,
+//       numberOfBedrooms,
+//       numberOfBathrooms,
+//       budget,
+//       additionalNote,
+//       true
+//     );
+//     await nodeMailerController(adminMailOptions);
 
-    new CustomResponse(201, true, "Property request created successfully", res, result);
-  } catch (error) {
-    console.error("Property request creation error:", error);
-    next(new InternalServerError("Failed to create property request."));
-  }
-};
+//     // Email to User
+//     const userMailOptions = await createPropertyRequestMailOptions(
+//       email,
+//       name,
+//       email,
+//       phone,
+//       category,
+//       type,
+//       furnishingStatus,
+//       country,
+//       city,
+//       numberOfBedrooms,
+//       numberOfBathrooms,
+//       budget,
+//       additionalNote
+//     );
+//     await nodeMailerController(userMailOptions);
+
+//     new CustomResponse(201, true, "Property request created successfully", res, result);
+//   } catch (error) {
+//     console.error("Property request creation error:", error);
+//     next(new InternalServerError("Failed to create property request."));
+//   }
+// };

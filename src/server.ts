@@ -18,29 +18,22 @@ export default app;
 
 
 // {
-//   "version": 2,
-//   "builds": [
-//     {
-//       "src": "dist/server.js",
-//       "use": "@vercel/node"
-//     }
-//   ],
-//   "routes": [
-//     {
-//       "src": "/(.*)",
-//       "dest": "dist/server.js"
-//     }
-//   ]
-// } 
-
-
-// "scripts": {
-//     "postinstall": "prisma generate",
-//     "start": "node --max-old-space-size=512 dist/server.js",
-//     "dev": "nodemon --exec ts-node src/server.ts",
-//     "build": "tsc",
-//     "prisma:generate": "prisma generate"
+//   "compilerOptions": {
+//     "target": "ES2020",
+//     "lib": ["ES2020"],
+//     "module": "commonjs",
+//     "moduleResolution": "node",
+//     "outDir": "./dist",
+//     "rootDir": "./src",
+//     "strict": true,
+//     "esModuleInterop": true,
+//     "resolveJsonModule": true,
+//     "skipLibCheck": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "typeRoots": ["./node_modules/@types", "./src/types"],
 //   },
+//   "include": ["src/**/*.ts"],
+//   "exclude": ["node_modules", "dist"]
+// }
 
 
-  // "dev": "nodemon --exec ts-node src/server.ts",

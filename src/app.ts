@@ -1,4 +1,5 @@
 import 'dotenv/config';
+// import './types/express';
 import express from "express";
 import indexMiddleware from "./middlewares/index.middleware";
 import swaggerUi from "swagger-ui-express";

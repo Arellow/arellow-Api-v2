@@ -19,31 +19,30 @@ model Company {
   updatedAt   DateTime @updatedAt
 }
 
-
 model User {
-  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
-  email              String      @unique
-  fullname           String
-  username           String
-  password           String
-  phone_number       String
-  role               UserRole  
-  avatar             String?
-  is_verified        Boolean    @default(false)
-  suspended            Boolean            @default(false)
-  points                 Int?
-  last_login             DateTime? 
-  rewardHistory        RewardHistory[]
-  rewardWithdrawals    RewardWithdrawal[]
-  companyId    String?   @db.ObjectId
-  company      Company?  @relation(fields: [companyId], references: [id])
-  likes        UserPropertyLike[]
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  email             String             @unique
+  fullname          String
+  username          String
+  password          String
+  phone_number      String
+  role              UserRole
+  avatar            String?
+  is_verified       Boolean            @default(false)
+  suspended         Boolean            @default(false)
+  points            Int?
+  last_login        DateTime?
+  rewardHistory     RewardHistory[]
+  rewardWithdrawals RewardWithdrawal[]
+  companyId         String?            @db.ObjectId
+  company           Company?           @relation(fields: [companyId], references: [id])
+  likes             UserPropertyLike[]
 
-  properties         Property[]  @relation("UserProperties")
-  approvedProperties Property[]  @relation("ApprovedProperties")
+  properties         Property[] @relation("UserProperties")
+  approvedProperties Property[] @relation("ApprovedProperties")
 
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
@@ -54,7 +53,6 @@ enum UserRole {
   BUYER
 }
 
-
 enum PropertyStatus {
   PENDING
   APPROVED
@@ -62,46 +60,45 @@ enum PropertyStatus {
 }
 
 model Property {
-  id            String     @id @default(auto()) @map("_id") @db.ObjectId
-  title         String
-  description   String
-  category      String
-  features      String[]
-  amenities  Amenity[]
-  country       String
-  state         String
-  city          String
-  neighborhood  String
-  location      GeoPoint
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String
+  category     String
+  features     String[]
+  amenities    Amenity[]
+  country      String
+  state        String
+  city         String
+  neighborhood String
+  location     GeoPoint
 
-  bedrooms      Int
-  bathrooms     Int
-  floors        Int
-  squareMeters  Int
-  price         Float
+  bedrooms     Int
+  bathrooms    Int
+  floors       Int
+  squareMeters Int
+  price        Float
 
-  userId        String     @db.ObjectId
-  user          User       @relation(fields: [userId], references: [id], name: "UserProperties")
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
 
-  status        PropertyStatus @default(PENDING)
-  rejectionReason String?   
-  approvedById  String?         @db.ObjectId
-  approvedBy    User?           @relation("ApprovedProperties", fields: [approvedById], references: [id])
-  
-  likedBy      UserPropertyLike[]
-  likesCount   Int           @default(0)
+  status          PropertyStatus @default(PENDING)
+  rejectionReason String?
+  approvedById    String?        @db.ObjectId
+  approvedBy      User?          @relation("ApprovedProperties", fields: [approvedById], references: [id])
 
- rewardHistories RewardHistory[] 
-  
-  media         Media[]
-  salesStatus   SalesStatus  @default(SELLING)
+  likedBy    UserPropertyLike[]
+  likesCount Int                @default(0)
 
-  archived      Boolean         @default(false)
+  rewardHistories RewardHistory[]
 
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  media       Media[]
+  salesStatus SalesStatus @default(SELLING)
+
+  archived Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-
 
 enum SalesStatus {
   SELLING
@@ -117,12 +114,12 @@ model Amenity {
 }
 
 model UserPropertyLike {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
-  propertyId  String   @db.ObjectId
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  propertyId String @db.ObjectId
 
-  user        User     @relation(fields: [userId], references: [id])
-  property    Property @relation(fields: [propertyId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
 
   @@unique([userId, propertyId])
 }
@@ -131,7 +128,6 @@ type GeoPoint {
   lat Float
   lng Float
 }
-
 
 enum MediaType {
   PHOTO
@@ -148,66 +144,67 @@ enum PhotoType {
   OTHER
 }
 
-
-
 model Media {
-  id         String     @id @default(auto()) @map("_id") @db.ObjectId
-  property   Property   @relation(fields: [propertyId], references: [id])
-  propertyId String     @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String   @db.ObjectId
 
-  type       MediaType
-  photoType  PhotoType? // Optional if not PHOTO
+  type      MediaType
+  photoType PhotoType? // Optional if not PHOTO
 
-  url        String
-  publicId   String
-  caption    String?
-  altText    String?
-  order      Int?
+  url      String
+  publicId String
+  caption  String?
+  altText  String?
+  order    Int?
 
-  width      Int?
-  height     Int?
-  duration   Float?
-  sizeInKB   Float?
-  format     String?
+  width    Int?
+  height   Int?
+  duration Float?
+  sizeInKB Float?
+  format   String?
 
-  createdAt  DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
-
-
-
 model RewardHistory {
-   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-   userId      String   @db.ObjectId
-  points       Int @default(0)
-   reason      String  
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  points      Int      @default(0)
+  reason      String
   description String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
-  propertyId    String   // This is a foreign key
-  property    Property  @relation(fields: [propertyId], references: [id])
+  propertyId  String // This is a foreign key
+  property    Property @relation(fields: [propertyId], references: [id])
 }
 
- model RewardWithdrawal {
-   id                 String    @id @default(auto()) @map("_id") @db.ObjectId
-   user               User      @relation(fields: [userId], references: [id])
-  userId             String    @db.ObjectId
-  points             Int       // amount the user requested to withdraw
-  bankAccountName    String
-  bankAccountNumber  String
-  bankName           String
-  status             String    @default("pending") 
-   createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+model RewardWithdrawal {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String   @db.ObjectId
+  points            Int // amount the user requested to withdraw
+  bankAccountName   String
+  bankAccountNumber String
+  bankName          String
+  status            String   @default("pending")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([userId])
 }
 
+model ResetPassword {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String
+  resetString String
+  createdAt   Int
+  expiresAt   Int
+}
 
- model ResetPassword {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
-    userId      String
-    resetString String
-    createdAt   Int
-    expiresAt   Int
- }
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}

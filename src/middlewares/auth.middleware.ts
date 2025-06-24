@@ -3,6 +3,7 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
 import { PrismaClient , UserRole} from "@prisma/client";
+import { User } from "types/custom";
 
 const prisma = new PrismaClient();
 
@@ -29,6 +30,7 @@ export default async function authenticate(
     }
 
     req.user = { id: user.id, email: user.email, role: user.role };
+
     next();
   } catch (err) {
     res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -72,7 +74,7 @@ export const isSuperAdmin = (req: Request, res: Response, next: NextFunction): v
 
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user; 
+    const user = req?.user; 
 
     if (!user) {
        res.status(401).json({ success: false, message: "Unauthorized" });
