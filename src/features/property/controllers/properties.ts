@@ -444,8 +444,6 @@ export const featureProperties = async (req: Request, res: Response, next: NextF
 
 
 
-
-
  export const approveProperty = async (req: Request, res: Response, next: NextFunction) =>  {
   const { id } = req.params;
 
