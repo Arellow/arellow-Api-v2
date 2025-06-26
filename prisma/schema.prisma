@@ -27,7 +27,7 @@ model User {
   password          String
   phone_number      String
   role              UserRole
-  avatar            String?
+  avatar            String?  @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740") 
   is_verified       Boolean            @default(false)
   suspended         Boolean            @default(false)
   points            Int?
@@ -38,11 +38,15 @@ model User {
   company           Company?           @relation(fields: [companyId], references: [id])
   likes             UserPropertyLike[]
 
-  properties         Property[] @relation("UserProperties")
-  approvedProperties Property[] @relation("ApprovedProperties")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  properties         Property[]                 @relation("UserProperties")
+  approvedProperties Property[]                 @relation("ApprovedProperties")
+  PropertyRequest    PropertyRequest[]
+  mortgage           MortgageCalculationDraft[]
+  Campaign           Campaign[]
+  preQualifications  PreQualification[]
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  Blog               Blog[]
 }
 
 enum UserRole {
@@ -51,6 +55,7 @@ enum UserRole {
   REALTOR
   DEVELOPER
   BUYER
+  user
 }
 
 enum PropertyStatus {
@@ -175,7 +180,7 @@ model RewardHistory {
   description String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
-  propertyId  String // This is a foreign key
+  propertyId  String   @db.ObjectId // This is a foreign key
   property    Property @relation(fields: [propertyId], references: [id])
 }
 
@@ -202,6 +207,114 @@ model ResetPassword {
   expiresAt   Int
 }
 
+model Subscribe {
+  id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  email String?
+  phone String?
+}
+
+model PropertyRequest {
+  id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  agent_category       String?
+  email                String
+  phone_number         String
+  country              String  @default("Nigeria")
+  state                String
+  property_location    String
+  neighborhood         String
+  property_category    String
+  property_type        String
+  furnishing_status    String?
+  number_of_bedrooms   Int?
+  number_of_bathrooms  Int?
+  budget               Float?
+  property_description String?
+
+  status    String   @default("pending") // pending, approved, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model PreQualification {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  role                String?
+  email               String
+  phone               String
+  home_address        String?
+  state               String
+  city                String
+  property_category   String
+  neighbourhood       String?
+  monthly_budget      Float
+  down_payment_goal   Float
+  business_or_civil   String?
+  employer_name       String?
+  level_of_employment String?
+  bank_name           String?
+  userId              String   @db.ObjectId // Required for linking to User
+  user                User     @relation(fields: [userId], references: [id])
+  createdAt           DateTime @default(now())
+}
+
+model MortgageCalculationDraft {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  home_location String
+  home_price    Float
+  down_payment  Float
+  userId        String?  @db.ObjectId
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Campaign {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignType        String
+  localMediaName      String
+  promotionAd         String
+  targetAudience      String
+  features            String
+  campaignDescription String
+  imageUrl            String?
+  mediaPlatforms      String[]
+  impressions         Int      @default(0)
+  clicks              Int      @default(0)
+  conversions         Int      @default(0)
+  cpc                 Float    @default(0)
+  spend               Float    @default(0)
+  startDate           DateTime
+  endDate             DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  userId              String   @db.ObjectId
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model State {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String @unique
+  image String
+}
+
+model Blog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  category  String   @default("Internal Blog")
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
 
 enum KycStatus {
   PENDING

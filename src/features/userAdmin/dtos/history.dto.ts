@@ -1,3 +1,4 @@
+import { Property } from "@prisma/client";
 
 export interface EarningSummaryResponse {
   total_earning: number;
@@ -7,26 +8,18 @@ export interface EarningSummaryResponse {
 
 export interface EarningHistoryFilterDto {
   date?: Date;
-  propertyCategory?: string;
   country?: string;
-  propertyState?: string;
+  state?: string;
   search?: string;
   page?: number;
   limit?: number;
 }
 
 export interface EarningHistoryItem {
-  uploadedPoint: string;
-  soldPoint: string;
-  totalPoint: string;
-  property?: {
-    title: string;
-    image: string | null;
-    id: string;
-  } | null;
+  points: number;
+  reason: string;
+  property?: Pick<Property, "id" | "title"> & { banner?: string | null } | null;
   date: Date;
-  status: "Earnings" | "Withdraw";
-  action: "Earnings" | "Withdraw";
 }
 
 export interface EarningHistoryResponse {

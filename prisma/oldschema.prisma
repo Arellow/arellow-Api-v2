@@ -31,8 +31,6 @@
 //   messages               ChatMessage[]
 //   isMessageReadedCounter Int               @default(0)
 //   PrevUserChat           PrevUserChat[]
-//   PropertyRequest        PropertyRequest[]
-//   mortgage        MortgageCalculationDraft[]
 //   supportTickets SupportTicket[]
 //   kyc_status             KycStatus?        @default(pending)
 //   nin_status             KycStatus?        @default(pending)
@@ -220,31 +218,7 @@
 //   updatedAt DateTime @updatedAt
 //   @@index([userId])
 // }
-// model Campaign {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   userId          String
-//   campaignType    String
-//   localMediaName  String
-//   promotionAd     String
-//   targetAudience  String
-//   features        String
-//   campaignDescription String
-//   imageUrl        String?     
-//   mediaPlatforms  String[]  
-//   impressions     Int            @default(0)
-//   clicks          Int            @default(0)
-//   conversions     Int            @default(0)
-//   cpc             Float          @default(0)
-//   spend           Float          @default(0)   
-//   startDate       DateTime
-//   endDate         DateTime
-//   createdAt       DateTime       @default(now())
-//   updatedAt       DateTime       @updatedAt
 
-//   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@index([userId])
-// }
 
 // model Contact_Us {
 //   id      String @id @default(auto()) @map("_id") @db.ObjectId
@@ -375,29 +349,6 @@
 //   updatedAt              DateTime @updatedAt
 // }
 
-// model PropertyRequest {
-//   id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name                 String
-//   agent_category         String?
-//   email                String
-//   phone_number         String
-//   country              String @default("Nigeria")
-//   state                String
-//   property_location    String
-//   neighborhood         String
-//   property_category    String
-//   property_type        String
-//   furnishing_status    String?
-//   number_of_bedrooms   Int?
-//   number_of_bathrooms  Int?
-//   budget               Float?
-//   property_description String?
-//   status               String   @default("pending") // pending, approved, rejected
-//   createdAt            DateTime @default(now())
-//   updatedAt            DateTime @updatedAt
-//   userId               String?  @db.ObjectId
-//   user                 User?    @relation(fields: [userId], references: [id])
-// }
 
 // model State {
 //   id    String @id @default(auto()) @map("_id") @db.ObjectId
@@ -409,26 +360,6 @@
 //   pending
 //   verified
 //   failed
-// }
-
-// model PreQualification {
-//   id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name                String
-//   role                String?
-//   email               String
-//   phone               String
-//   home_address        String?
-//   state               String
-//   city                String
-//   property_category   String
-//   neighbourhood       String?
-//   monthly_budget      Float
-//   down_payment_goal   Float
-//   business_or_civil   String?
-//   employer_name       String?
-//   level_of_employment String?
-//   bank_name           String?
-//   createdAt           DateTime @default(now())
 // }
 
 
@@ -474,14 +405,4 @@
 //   @@index([userId])
 // }
 
-// model MortgageCalculationDraft {
-//   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-//   home_location     String
-//   home_price        Float
-//   down_payment      Float
-//   userId            String?  @db.ObjectId
-//   user              User?    @relation(fields: [userId], references: [id])
-//   createdAt         DateTime @default(now())
-//   updatedAt         DateTime @updatedAt
-// }
 

@@ -22,41 +22,41 @@ export const getUserListings = async (
   }
 };
 
-// export const getPropertyDetails = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   const  id  = req.params.id as string; 
+export const getPropertyDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const  id  = req.params.id as string; 
 
-//   try {
-//     const property = await listingService.getPropertyDetails(id );
-//     res.status(200).json({
-//       status: "success",
-//       data: property,
-//     });
-//   } catch (error) {
-//     console.error("[getPropertyDetails] error:", error);
-//     next(error);
-//   }
-// };
+  try {
+    const property = await listingService.getPropertyDetails(id );
+    res.status(200).json({
+      status: "success",
+      data: property,
+    });
+  } catch (error) {
+    console.error("[getPropertyDetails] error:", error);
+    next(error);
+  }
+};
 
-// export const deleteProperty = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   const { id } = req.params
+export const deleteProperty = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { id } = req.params
 
-//   try {
-//     await listingService.deleteProperty( id );
-//     res.status(204).json({
-//       status: "success",
-//       data: null,
-//     });
-//   } catch (error) {
-//     console.error("[deleteProperty] error:", error);
-//     next(error);
-//   }
-// };
+  try {
+    await listingService.deleteProperty( id );
+    res.status(204).json({
+      status: "success",
+      data: null,
+    });
+  } catch (error) {
+    console.error("[deleteProperty] error:", error);
+    next(error);
+  }
+};
 

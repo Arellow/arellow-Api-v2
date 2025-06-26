@@ -1,8 +1,8 @@
 import express from 'express'
 import { calculateProjectMortgage } from '../controllers/FetchProperties';
 import authenticate, { requireRole } from '../../../middlewares/auth.middleware';
-// import { createPropertyRequest } from '../../requestProperties/controllers/request';
-// import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
+import { createPropertyRequest } from '../../requestProperties/controllers/request';
+import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
 import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, 
     unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, 
     getPropertiesByUser, mediaForProperty, recentPropertiesByUser, featureProperties, createNewProperty
@@ -14,8 +14,8 @@ const propertyRoutes= express.Router();
 propertyRoutes.get("/featured", featureProperties)
 propertyRoutes.get("/recent", recentPropertiesByUser)
 // propertyRoutes.post("/like", authenticate, toggleProjectLike );
-// propertyRoutes.post("/seed",seedNigerianStates)
-// propertyRoutes.get("/seed",getAllStates)
+propertyRoutes.post("/seed",seedNigerianStates)
+propertyRoutes.get("/seed",getAllStates)
 propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property

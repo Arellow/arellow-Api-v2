@@ -616,3 +616,88 @@ export const createPropertyRequestMailOptions = async (
     `,
   };
 };
+
+
+export const createPrequalificationMailOptions = async (
+  to: string,
+  name: string,
+  email: string,
+  phone: string,
+  state: string,
+  city: string,
+  property_category: string,
+  neighbourhood: string | null,
+  monthly_budget: number,
+  down_payment_goal: number,
+  isAdmin: boolean = false
+) => {
+  const additionalNote = neighbourhood || "N/A";
+  const subject = isAdmin ? "New Prequalification Request" : "Prequalification Request Submitted";
+  const greeting = isAdmin ? "New Prequalification Request Received" : `Dear ${name}`;
+  const closingMessage = isAdmin
+    ? "Please review the details below and take appropriate action."
+    : "We will contact you soon regarding your prequalification request.";
+
+  return {
+    from: process.env.SMTP_EMAIL,
+    to,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="utf-8">
+          <title>${subject}</title>
+          <style>
+              body {
+                  font-family: 'Lato', sans-serif;
+                  background: #f7f7f7;
+                  margin: 0;
+                  padding: 0;
+              }
+              .container {
+                  max-width: 600px;
+                  margin: 50px auto;
+                  background: white;
+                  padding: 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .details {
+                  margin: 20px 0;
+              }
+              .details ul {
+                  list-style-type: none;
+                  padding: 0;
+              }
+              .details li {
+                  margin-bottom: 10px;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>${greeting}</h2>
+              ${!isAdmin ? "<p>Thank you for submitting your prequalification request!</p>" : ""}
+              <div class="details">
+                  <ul>
+                      <li><strong>Name:</strong> ${name}</li>
+                      <li><strong>Email:</strong> ${email}</li>
+                      <li><strong>Phone:</strong> ${phone}</li>
+                      <li><strong>State:</strong> ${state}</li>
+                      <li><strong>City:</strong> ${city}</li>
+                      <li><strong>Property Category:</strong> ${property_category}</li>
+                      ${neighbourhood ? `<li><strong>Neighbourhood:</strong> ${neighbourhood}</li>` : ""}
+                      <li><strong>Monthly Budget:</strong> $${monthly_budget}</li>
+                      <li><strong>Down Payment Goal:</strong> $${down_payment_goal}</li>
+                      <li><strong>Additional Note:</strong> ${additionalNote}</li>
+                  </ul>
+              </div>
+              <p>${closingMessage}</p>
+              <p>Best,<br/>${isAdmin ? "The Admin Team" : "Your Prequalification Team"}</p>
+          </div>
+      </body>
+      </html>
+    `,
+  };
+};

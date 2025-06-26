@@ -1,21 +1,12 @@
+import { PropertyStatus, UserRole } from "@prisma/client";
+
 export interface UserCreateDto {
   email: string;
   username: string;
   fullname: string;
   password: string;
   phone_number: string;
-  gender?: string;
-  city?: string;
-  country?: string;
-  biography?: string;
-  avatar?: string;
-  banner?: string;
-  role?: string;
-  nin_number?: string;
-  nin_slip_url?: string;
-  cac_number?: string;
-  cac_doc_url?: string;
-  face_image_url?: string;
+  role?: UserRole;
 }
 
 export interface UserUpdateDto {
@@ -26,11 +17,13 @@ export interface UserUpdateDto {
 }
 
 export interface UserUpdateRoleDto {
-  role: "admin" | "superadmin" | "buyer" | "agent" | "realtor";
+  role: UserRole;
 }
+
 export interface UserSuspendDto {
- reason?: string;
+  reason?: string;
 }
+
 export interface UserSettingsDto {
   fullname?: string;
   username?: string;
@@ -51,49 +44,26 @@ export interface UserResponseDto {
   username: string;
   fullname: string;
   avatar?: string;
-  banner?: string;
   phone_number: string;
-  gender?: string;
-  city?: string;
-  country?: string;
-  biography?: string;
-  rating: number;
+  role: UserRole;
   is_verified: boolean;
-  role: string;
-  createdAt: Date;
-  kyc_status?: string;
-  nin_status?: string;
-  nin_number?: string;
-  nin_slip_url?: string;
-  cac_status?: string;
-  cac_number?: string;
-  cac_doc_url?: string;
-  badge?: string;
-  face_status?: string;
-  face_image_url?: string;
-  kyc_verified_at?: Date;
+  suspended: boolean;
   points?: number;
   last_login?: Date;
-  suspended: boolean;
-  twoFactorEnabled?: boolean;
+  createdAt: Date;
   propertiesListed: number;
   propertiesSold: number;
-  selling: number; 
+  selling: number;
 }
 
-// features/users/dtos/user.dto.ts
 export interface ProjectPost {
   id: string;
   title: string;
-  price: number;
-  property_type: string;
-  number_of_bedrooms: number;
-  number_of_bathrooms: number;
-  outside_view_images: string[];
-  banner: string | null;
+  price: number | null;
+  number_of_bedrooms: number | null;
+  number_of_bathrooms: number | null;
   createdAt: Date;
-  status: string;
-  updatedAt?: Date;
+  status: PropertyStatus;
 }
 
 export interface UserDetails {
@@ -103,8 +73,7 @@ export interface UserDetails {
   phone: string | null;
   createdAt: Date;
   avatar?: string | null;
-  rating?: number;
-  role?: string;
+  role?: UserRole;
   projects?: ProjectPost[];
 }
 
@@ -112,12 +81,10 @@ export interface RealtorStats {
   id: string;
   fullname: string | null;
   avatar?: string | null;
-  rating: number;
   earnings: number;
   dealsClosed: number;
   trend: "Rising" | "Falling" | "Steady";
-  role?: string;
-  monthEarnings?: number;
+  role?: UserRole;
 }
 
 export interface LeaderboardResponse {

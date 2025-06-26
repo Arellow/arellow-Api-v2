@@ -55,54 +55,54 @@ interface CreateManyResponse {
   count: number;
 }
 
-// Seed Nigerian states
-// export const seedNigerianStates = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   try {
-//     // Check if states already exist (idempotency)
-//     const existing = await Prisma.state.findMany();
-//     if (existing && existing.length >= NIGERIAN_STATES.length) {
-//       res.status(200).json({
-//         status: "success",
-//         message: "States already seeded.",
-//         data: existing,
-//         succeeded: true,
-//       });
-//       return;
-//     }
+//Seed Nigerian states
+export const seedNigerianStates = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Check if states already exist (idempotency)
+    const existing = await Prisma.state.findMany();
+    if (existing && existing.length >= NIGERIAN_STATES.length) {
+      res.status(200).json({
+        status: "success",
+        message: "States already seeded.",
+        data: existing,
+        succeeded: true,
+      });
+      return;
+    }
 
-//     const stateObjects: State[] = NIGERIAN_STATES.map(({ name, image }) => ({ name, image }));
+    const stateObjects: State[] = NIGERIAN_STATES.map(({ name, image }) => ({ name, image }));
 
-//     // Insert states (skip duplicates)
-//     const created: CreateManyResponse = await Prisma.state.createMany({
-//       data: stateObjects,
-//     });
+    // Insert states (skip duplicates)
+    const created: CreateManyResponse = await Prisma.state.createMany({
+      data: stateObjects,
+    });
 
-//     res.status(201).json({
-//       status: "success",
-//       message: "Nigerian states seeded successfully.",
-//       data: created,
-//       succeeded: true,
-//     });
-//   } catch (error) {
-//     console.error("seedNigerianStates error:", error);
-//     throw new InternalServerError( "Something went wrong while seeding states");
-//   }
-// };
+    res.status(201).json({
+      status: "success",
+      message: "Nigerian states seeded successfully.",
+      data: created,
+      succeeded: true,
+    });
+  } catch (error) {
+    console.error("seedNigerianStates error:", error);
+    throw new InternalServerError( "Something went wrong while seeding states");
+  }
+};
 
-// Get all states
-// export const getAllStates = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const states: State[] = await Prisma.state.findMany();
-//     res.status(200).json({ success: true, data: states });
-//   } catch (error) {
-//     console.error("Error fetching states:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// };
+//Get all states
+export const getAllStates = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const states: State[] = await Prisma.state.findMany();
+    res.status(200).json({ success: true, data: states });
+  } catch (error) {
+    console.error("Error fetching states:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

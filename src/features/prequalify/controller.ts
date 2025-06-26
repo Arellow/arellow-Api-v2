@@ -3,8 +3,9 @@ import { PropertyService } from "./service";
 import { InternalServerError } from "../../lib/appError";
 import CustomResponse from "../../utils/helpers/response.util";
 import { PreQualificationDto } from "./dto";
-import { createPreQualificationMailOptions } from "../../utils/mailer";
+// import { createPreQualificationMailOptions } from "../../utils/mailer";
 import { nodeMailerController } from "../../utils/nodemailer";
+import { createPrequalificationMailOptions } from "utils/mailer";
 
 const propertyService = new PropertyService();
 
@@ -27,43 +28,50 @@ export const createPreQualification = async (
 
   try {
     const result = await propertyService.createPreQualification(data, userId);
-    // Email options for the user
-    // const userMailOptions = await createPreQualificationMailOptions(
-    //   data.email,
-    //   data.name,
-    //   data.email,
-    //   data.phone,
-    //   data.state,
-    //   data.city,
-    //   data.property_category,
-    //   data.neighbourhood ,
-    //   data.monthly_budget,
-    //   data.down_payment_goal,
-    //   false 
-    // );
-    // await nodeMailerController(userMailOptions);
 
-    // // Email options for the admin
-    // const adminMailOptions = await createPreQualificationMailOptions(
-    //   process.env.ADMIN_EMAIL || "",
-    //   data.name,
-    //   data.email,
-    //   data.phone,
-    //   data.state,
-    //   data.city,
-    //   data.property_category,
-    //   data.neighbourhood,
-    //   data.monthly_budget,
-    //   data.down_payment_goal,
-    //   true 
-    // );
-    // await nodeMailerController(adminMailOptions);
- 
+    const userMailOptions = await createPrequalificationMailOptions(
+      data.email,
+      data.name,
+      data.email,
+      data.phone,
+      data.state,
+      data.city,
+      data.property_category,
+      data.neighbourhood || null,
+      data.monthly_budget,
+      data.down_payment_goal,
+      false
+    );
+    await nodeMailerController(userMailOptions);
 
-    new CustomResponse(201, true, "Pre-qualification request created successfully", res, result);
+    // Email options for the admin
+    const adminMailOptions = await createPrequalificationMailOptions(
+      process.env.ADMIN_EMAIL || "",
+      data.name,
+      data.email,
+      data.phone,
+      data.state,
+      data.city,
+      data.property_category,
+      data.neighbourhood || null,
+      data.monthly_budget,
+      data.down_payment_goal,
+      true
+    );
+    await nodeMailerController(adminMailOptions);
+
+    new CustomResponse(
+      201,
+      true,
+      "Pre-qualification request created successfully",
+      res,
+      result
+    );
   } catch (error) {
     console.error("Create pre-qualification request error:", error);
-    next(new InternalServerError("Failed to create pre-qualification request."));
+    next(
+      new InternalServerError("Failed to create pre-qualification request.")
+    );
   }
 };
 
@@ -90,10 +98,18 @@ export const getAllPreQualifications = async (
       page ? parseInt(page as string) : 1,
       limit ? parseInt(limit as string) : 10
     );
-    new CustomResponse(200, true, "Pre-qualification requests fetched successfully", res, result);
+    new CustomResponse(
+      200,
+      true,
+      "Pre-qualification requests fetched successfully",
+      res,
+      result
+    );
   } catch (error) {
     console.error("Get all pre-qualification requests error:", error);
-    next(new InternalServerError("Failed to fetch pre-qualification requests."));
+    next(
+      new InternalServerError("Failed to fetch pre-qualification requests.")
+    );
   }
 };
 
@@ -133,7 +149,13 @@ export const getPreQualificationById = async (
       });
       return;
     }
-    new CustomResponse(200, true, "Pre-qualification request fetched successfully", res, result);
+    new CustomResponse(
+      200,
+      true,
+      "Pre-qualification request fetched successfully",
+      res,
+      result
+    );
   } catch (error) {
     console.error("Get pre-qualification request error:", error);
     next(new InternalServerError("Failed to fetch pre-qualification request."));
@@ -168,11 +190,23 @@ export const updatePreQualification = async (
   }
 
   try {
-    const result = await propertyService.updatePreQualification(id, data, userId);
-    new CustomResponse(200, true, "Pre-qualification request updated successfully", res, result);
+    const result = await propertyService.updatePreQualification(
+      id,
+      data,
+      userId
+    );
+    new CustomResponse(
+      200,
+      true,
+      "Pre-qualification request updated successfully",
+      res,
+      result
+    );
   } catch (error) {
     console.error("Update pre-qualification request error:", error);
-    next(new InternalServerError("Failed to update pre-qualification request."));
+    next(
+      new InternalServerError("Failed to update pre-qualification request.")
+    );
   }
 };
 
@@ -204,9 +238,16 @@ export const deletePreQualification = async (
 
   try {
     await propertyService.deletePreQualification(id, userId);
-    new CustomResponse(200, true, "Pre-qualification request deleted successfully", res);
+    new CustomResponse(
+      200,
+      true,
+      "Pre-qualification request deleted successfully",
+      res
+    );
   } catch (error) {
     console.error("Delete pre-qualification request error:", error);
-    next(new InternalServerError("Failed to delete pre-qualification request."));
+    next(
+      new InternalServerError("Failed to delete pre-qualification request.")
+    );
   }
 };

@@ -17,9 +17,9 @@ export class AuthService {
     });
 
     if (!user) throw new UnAuthorizedError("Invalid credentials.");
-    if (!user.is_verified) {
-      throw new UnAuthorizedError("Please verify your email before logging in.");
-    }
+    // if (!user.is_verified) {
+    //   throw new UnAuthorizedError("Please verify your email before logging in.");
+    // }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
