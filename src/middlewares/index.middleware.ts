@@ -30,7 +30,8 @@ export default (app: Application) => {
   // Cookie parsing middleware
   app.use(cookieParser());
 
+  
   // Mounting routes
-  app.use("/api/", indexRoutes);
+  app.use("/api", indexRoutes);
 
 };

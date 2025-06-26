@@ -1,5 +1,4 @@
 
-
 export interface PropertyRequestDto {
   name: string;
   email: string;
@@ -8,7 +7,7 @@ export interface PropertyRequestDto {
   property_type: string;
   furnishing_status: string;
   country: string;
-  city: string; // Changed from state to city based on createPropertyRequest
+  state: string;
   number_of_bedrooms?: number;
   number_of_bathrooms?: number;
   budget?: number;
@@ -21,16 +20,16 @@ export interface PropertyRequest {
   name: string;
   email: string;
   phone: string;
-  category: string; 
-  type: string; 
-  furnishingStatus: string; 
+  category: string;
+  type: string;
+  furnishingStatus: string | null; 
   country: string;
-  city: string; 
+  state: string;
   numberOfBedrooms: number | null;
   numberOfBathrooms: number | null;
   budget: number | null;
   additionalNote: string | null;
-  userId: string;
+  userId: string | null; 
   property_location: string;
   neighborhood: string;
   createdAt: Date;

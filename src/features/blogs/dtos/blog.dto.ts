@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 export interface CreateBlogDto {
   title: string;
   content: string;
-  category: string
+  category: string;
   imageUrl?: string | null; 
 }
 
@@ -11,7 +11,7 @@ export interface UpdateBlogDto {
   title?: string;
   content?: string;
   category?: string;
-  imageUrl?: string | null ; 
+  imageUrl?: string | null;
 }
 
 export interface BlogFilterDto {
@@ -25,7 +25,7 @@ export interface BlogPost {
   title: string;
   content: string;
   category: string;
-  imageUrl: string | null
+  imageUrl: string | null; 
   createdAt: Date;
   updatedAt: Date;
 }
