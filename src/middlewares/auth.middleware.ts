@@ -3,7 +3,6 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
 import { PrismaClient , UserRole} from "@prisma/client";
-import { User } from "types/custom";
 
 const prisma = new PrismaClient();
 

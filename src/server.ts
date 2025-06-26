@@ -18,22 +18,15 @@ export default app;
 
 
 // {
-//   "compilerOptions": {
-//     "target": "ES2020",
-//     "lib": ["ES2020"],
-//     "module": "commonjs",
-//     "moduleResolution": "node",
-//     "outDir": "./dist",
-//     "rootDir": "./src",
-//     "strict": true,
-//     "esModuleInterop": true,
-//     "resolveJsonModule": true,
-//     "skipLibCheck": true,
-//     "forceConsistentCasingInFileNames": true,
-//     "typeRoots": ["./node_modules/@types", "./src/types"],
-//   },
-//   "include": ["src/**/*.ts"],
-//   "exclude": ["node_modules", "dist"]
+//   "version": 2,
+//   "builds": [
+//     {
+//       "src": "api/server.ts",
+//       "use": "@vercel/node"
+//     }
+//   ],
+//   "routes": [
+//     { "src": "/(.*)", "dest": "api/server.ts" }
+//   ]
 // }
-
 
