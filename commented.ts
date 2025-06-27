@@ -406,3 +406,14 @@
 // }
 
 
+
+/**
+ * old script
+ */
+// "scripts": {
+//     "postinstall": "prisma generate",
+//     "start": "ts-node src/server.ts",
+//     "dev": "nodemon --exec ts-node src/server.ts",
+//     "build": "prisma generate && prisma migrate deploy",
+//     "prisma:generate": "prisma generate"
+//   },

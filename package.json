@@ -2,13 +2,13 @@
   "name": "arellowbackend",
   "version": "1.0.0",
   "main": "src/server.ts",
-  "scripts": {
-    "postinstall": "prisma generate",
-    "start": "ts-node src/server.ts",
-    "dev": "nodemon --exec ts-node src/server.ts",
-    "build": "prisma generate && prisma migrate deploy",
-    "prisma:generate": "prisma generate"
-  },
+ "scripts": {
+  "postinstall": "prisma generate && prisma db push",
+  "start": "ts-node src/server.ts",
+  "dev": "nodemon --exec ts-node src/server.ts",
+  "build": "prisma generate && prisma db push",
+  "prisma:generate": "prisma generate"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
