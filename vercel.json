@@ -10,3 +10,4 @@
     { "src": "/(.*)", "dest": "dist/api/index.js" }
   ]
 }
+
