@@ -425,7 +425,13 @@
 //   "build": "prisma generate && prisma db push",
 //   "prisma:generate": "prisma generate"
 // },
-
+//  "scripts": {
+//   "postinstall": "prisma generate && prisma db push",
+//   "start": "ts-node src/server.ts",
+//   "dev": "nodemon --exec ts-node src/server.ts",
+//   "build": "tsc && prisma generate && prisma db push",
+//   "prisma:generate": "prisma generate"
+// },
 
 // {
 //   "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
