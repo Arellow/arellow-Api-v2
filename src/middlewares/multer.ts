@@ -22,17 +22,17 @@ export const singleupload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).single("image");
 
+
 // Multiple file upload middleware
 export const multipleupload = multer({ storage }).fields([
-  { name: "outside_view_images" },
-  { name: "living_room_images" },
-  { name: "kitchen_room_images" },
-  { name: "primary_room_images" },
-  { name: "floor_plan_images" },
-  { name: "tour_3d_images" },
-  { name: "other_images" },
-  { name: "banner" },
-  { name: "youTube_thumbnail" },
+  { name: "FRONT_VIEW" },
+  { name: "LIVING_ROOM" },
+  { name: "KITCHEN" },
+  { name: "FLOOR_PLAN" },
+  { name: "PRIMARY_ROOM" },
+  { name: "OTHER" },
+  { name: "VIDEO" },
+  { name: "TOUR_3D" }
 ]);
 
 // Interface for file data
