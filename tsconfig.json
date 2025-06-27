@@ -38,10 +38,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "./dist",
+    "outDir": "dist",
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./src/types", "./node_modules/@types"],
-    "baseUrl": "."
+    // "baseUrl": "."
   },
-  "include": ["api"]
+  "include": ["src/api", "src"]
 }
