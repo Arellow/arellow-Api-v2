@@ -6,14 +6,14 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma as prisma , SalesStatus} from '@prisma/client';
 import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
-import multer from "multer";
+
 import { MediaType } from '@prisma/client';
 
 type Amenity = {
   name: string;
   photoUrl: string;
 }
-const upload = multer({ dest: 'tmp/', limits: { fileSize: 500 * 1024 * 1024 } });
+
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
