@@ -42,5 +42,5 @@
     "typeRoots": ["./src/types", "./node_modules/@types"],
     "baseUrl": "."
   },
-  "include": ["src", "api"]
+  "include": ["api"]
 }
