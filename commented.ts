@@ -440,3 +440,6 @@
 // "routes": [
 //     { "src": "/(.*)", "dest": "/api/index.ts" }
 //   ]
+
+
+    // "start": "ts-node api/index.ts",

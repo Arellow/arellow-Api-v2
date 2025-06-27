@@ -24,7 +24,7 @@ indexMiddleware(app);
 app.use("/arellow-swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/", (req, res,) => {
-    res.send("welcome to arellow");
+    res.send("welcome to arellow home");
 });
 
 // Custom error handling middleware - moved after routes

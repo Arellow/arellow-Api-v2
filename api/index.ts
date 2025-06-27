@@ -1,12 +1,13 @@
-import { Request, Response } from 'express';
-import serverless from 'serverless-http';
+// import { Request, Response } from 'express';
 
+
+// import app from '../src/server';
+
+
+// export default (req: Request, res: Response) => {
+//   return app(req, res);
+//   // return app(req, res);
+// };
 
 import app from '../src/server';
-
-const handler = serverless(app);
-
-export default (req: Request, res: Response) => {
-  return handler(req, res);
-  // return app(req, res);
-};
+export default app;

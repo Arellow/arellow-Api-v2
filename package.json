@@ -2,13 +2,13 @@
   "name": "arellowbackend",
   "version": "1.0.0",
   "main": "api/index.ts",
- "scripts": {
-  "postinstall": "prisma generate && prisma db push",
-  "start": "ts-node api/index.ts",
-  "dev": "nodemon --exec ts-node api/index.ts",
-  "build": "tsc && prisma generate && prisma db push",
-  "prisma:generate": "prisma generate"
-},
+  "scripts": {
+    "postinstall": "prisma generate && prisma db push",
+    "start": "node dist/api/index.js",
+    "dev": "nodemon --exec ts-node api/index.ts",
+    "build": "tsc && prisma generate && prisma db push",
+    "prisma:generate": "prisma generate"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -55,7 +55,6 @@
     "nodemailer": "^7.0.3",
     "p-limit": "^6.2.0",
     "pino": "^9.7.0",
-    "serverless-http": "^3.2.0",
     "sharp": "^0.34.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
