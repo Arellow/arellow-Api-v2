@@ -436,3 +436,7 @@
 // {
 //   "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
 // }
+
+// "routes": [
+//     { "src": "/(.*)", "dest": "/api/index.ts" }
+//   ]
