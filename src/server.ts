@@ -17,16 +17,6 @@ export default app;
 
 
 
-// {
-//   "version": 2,
-//   "builds": [
-//     {
-//       "src": "api/server.ts",
-//       "use": "@vercel/node"
-//     }
-//   ],
-//   "routes": [
-//     { "src": "/(.*)", "dest": "api/server.ts" }
-//   ]
-// }
+
+
 

@@ -417,3 +417,8 @@
 //     "build": "prisma generate && prisma migrate deploy",
 //     "prisma:generate": "prisma generate"
 //   },
+
+
+// {
+//   "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
+// }
