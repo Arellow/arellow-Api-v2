@@ -28,6 +28,8 @@ export class LoginController {
       const { user } = await AuthService.login(loginDto);
 
       const token = generateToken(user.id, user.email);
+
+
       const refreshToken = generateRefreshToken(user.id, user.email);
 
       res.setHeader("Authorization", `Bearer ${token}`);

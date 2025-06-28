@@ -55,7 +55,6 @@ enum UserRole {
   REALTOR
   DEVELOPER
   BUYER
-  user
 }
 
 enum PropertyStatus {

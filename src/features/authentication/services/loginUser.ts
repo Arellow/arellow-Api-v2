@@ -31,10 +31,8 @@ export class AuthService {
       data: { last_login: new Date() },
     });
 
-    const maxAge = 1000 * 60 * 60 * 24 * 7;
     const {
       password: _,
-      role,
       ...sanitizedUser
     } = user;
 
