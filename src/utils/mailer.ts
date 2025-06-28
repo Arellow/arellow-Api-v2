@@ -435,43 +435,52 @@ export const emailVerificationMailOption = async (
   verificationLink: any
 ) => {
   return {
-    from: process.env.SMTP_EMAIL,
+    // from: process.env.SMTP_EMAIL,
     to: email,
     subject: "Email Verification",
     html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <title>Email Verification</title>
-            <style>
-                body {
-                    font-family: 'Lato', sans-serif;
-                    background: #f7f7f7;
-                }
-                .button {
-                    background-color: #30e3ca;
-                    color: white;
-                    padding: 10px 20px;
-                    text-decoration: none;
-                    border-radius: 5px;
-                }
-            </style>
-        </head>
-        <body>
-            <center>
-                <div style="max-width: 600px; background: white; padding: 20px;">
-                    <h2>Email Verification</h2>
-                    <p>Click the button below to verify your email address:</p>
-                    <a href="${verificationLink}" class="button">Verify My Email</a>
-                    <p>If you didn’t sign up, please ignore this email.</p>
-                </div>
-            </center>
-        </body>
-        </html>
-      `,
+    
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Verification</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f7f7f7; font-family: Arial, sans-serif;">
+  <center>
+    <table width="100%" bgcolor="#f7f7f7" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center" style="padding: 30px 15px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
+            <tr>
+              <td align="center" style="padding: 40px 30px 20px 30px;">
+                <h2 style="margin: 0; font-size: 24px; color: #333333;">Email Verification</h2>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 10px 30px 30px 30px; color: #555555; font-size: 16px; line-height: 1.5;">
+                <p style="margin: 0 0 20px 0;">Click the button below to verify your email address:</p>
+                <a href="${verificationLink}" 
+                   style="display: inline-block; background-color: #30e3ca; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold;">
+                  Verify My Email
+                </a>
+                <p style="margin: 30px 0 0 0; font-size: 14px; color: #888888;">
+                  If you didn’t sign up, please ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>
+
+    `
   };
 };
+
 export const suspendedAccountMailOption = async (
   email: string,
   reason?: string
@@ -528,6 +537,8 @@ export const suspendedAccountMailOption = async (
     `,
   };
 };
+
+
 export const createPropertyRequestMailOptions = async (
   to: string,
   name: string,

@@ -1,10 +1,12 @@
 import { RegisterDTO,UserResponseDTO } from "../dtos/registerUserDto";
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 import { DuplicateError } from "../../../lib/appError";
 import { emailVerificationMailOption } from "../../../utils/mailer";
-import { nodeMailerController } from "../../../utils/nodemailer";
+import { mailController, 
+  // nodeMailerController 
+} from "../../../utils/nodemailer";
 import { generateToken } from "../../../utils/jwt";
 
 export class AuthService {
@@ -37,7 +39,17 @@ export class AuthService {
     const verificationToken = generateToken(newUser.id, newUser.email);
     const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}/verify-email?token=${verificationToken}`;
     const mailOptions = await emailVerificationMailOption(newUser.email, verificationUrl);
-    await nodeMailerController(mailOptions);
+    // await nodeMailerController(mailOptions);
+    mailController({from: "noreply@arellow.com", ...mailOptions})
+
+
+    // const msg = {
+//   to: 'rahkeem.shlome@fsitip.com', // Change to your recipient
+//   from: 'info@arellow.com', // Change to your verified sender
+//   subject: 'Sending with SendGrid is Fun',
+//   text: 'and easy to do anywhere, even with Node.js',
+//   html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+// }
 
     return {
       id: newUser.id,

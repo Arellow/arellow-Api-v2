@@ -27,6 +27,10 @@ export class LoginController {
       const loginDto: LoginDto = { email, password };
       const { user } = await AuthService.login(loginDto);
 
+      if(!user.is_verified){
+        
+      }
+
       const token = generateToken(user.id, user.email);
 
 
