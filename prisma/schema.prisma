@@ -27,7 +27,7 @@ model User {
   password          String
   phone_number      String
   role              UserRole
-  avatar            String?  @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740") 
+  avatar            String?            @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified       Boolean            @default(false)
   suspended         Boolean            @default(false)
   points            Int?
@@ -154,7 +154,7 @@ model Media {
   propertyId String   @db.ObjectId
 
   type      MediaType
-  photoType PhotoType? // Optional if not PHOTO
+  photoType PhotoType? 
 
   url      String
   publicId String
@@ -179,7 +179,7 @@ model RewardHistory {
   description String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
-  propertyId  String   @db.ObjectId // This is a foreign key
+  propertyId  String   @db.ObjectId 
   property    Property @relation(fields: [propertyId], references: [id])
 }
 
@@ -187,7 +187,7 @@ model RewardWithdrawal {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   user              User     @relation(fields: [userId], references: [id])
   userId            String   @db.ObjectId
-  points            Int // amount the user requested to withdraw
+  points            Int 
   bankAccountName   String
   bankAccountNumber String
   bankName          String
@@ -230,7 +230,7 @@ model PropertyRequest {
   budget               Float?
   property_description String?
 
-  status    String   @default("pending") // pending, approved, rejected
+  status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    String?  @db.ObjectId
@@ -254,7 +254,7 @@ model PreQualification {
   employer_name       String?
   level_of_employment String?
   bank_name           String?
-  userId              String   @db.ObjectId // Required for linking to User
+  userId              String   @db.ObjectId
   user                User     @relation(fields: [userId], references: [id])
   createdAt           DateTime @default(now())
 }
@@ -301,20 +301,34 @@ model State {
   image String
 }
 
+
+
 model Blog {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  content   String
-  category  String   @default("Internal Blog")
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
+  user             User     @relation(fields: [userId], references: [id])
+  title            String
+  content          String
+  author           String
+  imageUrl         String?  @db.String
+  socialMediaLinks String[] @default([]) @db.String
+  tags             String[] @unique @db.String @default(["tech"])
+  category         String   @default("Internal Blog")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isPublished       Boolean @default(false)
   @@index([userId])
+  @@map("blogs")
 }
-
+model Advert {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  fullName     String
+  email        String
+  phone_number String
+  subject      String
+  message      String
+  createdAt    DateTime @default(now())
+}
 enum KycStatus {
   PENDING
   VERIFIED
