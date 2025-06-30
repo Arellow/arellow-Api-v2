@@ -1,5 +1,3 @@
-
-
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
 import { PrismaClient , UserRole} from "@prisma/client";

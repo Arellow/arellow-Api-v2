@@ -36,7 +36,7 @@ export const multipleupload = multer({ storage }).fields([
 ]);
 
 // Interface for file data
-interface FileData {
+export interface FileData {
   originalname: string;
   buffer: Buffer;
 }
