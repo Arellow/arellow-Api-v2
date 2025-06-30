@@ -312,7 +312,7 @@ model Blog {
   author           String
   imageUrl         String?  @db.String
   socialMediaLinks String[] @default([]) @db.String
-  tags             String[] @unique @db.String @default(["tech"])
+  tags             String[]  @default(["tech"])
   category         String   @default("Internal Blog")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
