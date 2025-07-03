@@ -1,177 +1,244 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient, Prisma } from "@prisma/client";
-import { BlogDTO } from "../dtos/blog.dto";
-import { FileData, getDataUri } from "../../../middlewares/multer";
+import { BlogService } from "../services/blog.service";
+import { CreateBlogDto, UpdateBlogDto } from "../dtos/blog.dto";
+import { InternalServerError, BadRequestError } from "../../../lib/appError";
+import  CustomResponse  from "../../../utils/helpers/response.util";
+import { getDataUri } from "../../../middlewares/multer";
 import { cloudinary } from "../../../configs/cloudinary";
+import { UserRole } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const blogService = new BlogService();
 
-const blogController = {
- 
- async addBlog(req: Request, res: Response, next: NextFunction) {
-  const userId = req.user?.id;
+export const createBlogPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
   if (!userId) {
     res.status(401).json({
       status: "failed",
-      message: "Unauthorized access, userId is required",
+      message: "Unauthorized access",
       succeeded: false,
     });
     return;
   }
 
-  let imageUrl: string | undefined;
-
-  if (req.file) {
-    try {
-      const fileData: FileData = {
-        originalname: req.file.originalname,
-        buffer: req.file.buffer,
-      };
-
-      const dataUri = getDataUri(fileData);
-
-      const result = await cloudinary.uploader.upload(dataUri.content, {
-        folder: "Arellow_blog_images",
-        resource_type: "image",
-        allowed_formats: ["jpg", "png", "jpeg"],
-        transformation: [{ width: 500, height: 500, crop: "limit" }],
-      });
-      imageUrl = result.secure_url;
-    } catch (uploadErr) {
-      res.status(500).json({ error: "Failed to upload image to Cloudinary" });
-      return;
-    }
-  }
-
-  let socialMediaLinks: string[] = [];
-  if (req.body.socialMediaLinks) {
-    try {
-      const parsedLinks = typeof req.body.socialMediaLinks === "string"
-        ? JSON.parse(req.body.socialMediaLinks)
-        : req.body.socialMediaLinks;
-      socialMediaLinks = Array.isArray(parsedLinks) ? parsedLinks : [parsedLinks.toString()];
-    } catch (e) {
-      socialMediaLinks = req.body.socialMediaLinks ? [req.body.socialMediaLinks.toString()] : [];
-    }
-  }
-
-  const blogData: BlogDTO = {
-    title: req.body.title,
-    content: req.body.content,
-    author: req.body.author,
-    category: req.body.category,
-    imageUrl,
-    socialMediaLinks,
-    tags: req.body.tags || [],
-    createdAt: req.body.createdAt || new Date(),
-  };
-
   try {
-    const uniqueTags = [...new Set(blogData.tags)];
-
-    // Only check for duplicates if tags are not empty
-    if (uniqueTags.length > 0) {
-      const existingBlog = await prisma.blog.findFirst({
-        where: {
-          tags: {
-            equals: uniqueTags,
-          },
-          userId,
-        },
-      });
-
-      if (existingBlog) {
-        res.status(409).json({
-          status: "failed",
-          message: "A blog post with the same tags already exists for this user.",
-          succeeded: false,
+    let imageUrl: string | null = null;
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file as any);
+        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
+          folder: "Arellow_blog_images",
+          resource_type: "image",
+          allowedFormats: ["jpg", "png", "jpeg"],
+          transformation: [{ width: 500, height: 500, crop: "limit" }],
         });
-        return;
+        imageUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        throw new BadRequestError("Failed to upload image to Cloudinary");
       }
+    } else {
+      console.log("No file uploaded, imageUrl remains null");
     }
 
-    const blog = await prisma.blog.create({
-      data: {
-        title: blogData.title,
-        content: blogData.content,
-        author: blogData.author,
-        category: blogData.category,
-        imageUrl: blogData.imageUrl,
-        socialMediaLinks: blogData.socialMediaLinks,
-        tags: uniqueTags,
-        createdAt: blogData.createdAt,
-        userId,
-      },
-    });
-    res.status(201).json({
-      status: "success",
-      message: "Blog created successfully",
-      succeeded: true,
-      data: blog,
-    });
-  } catch (err: any) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      res.status(400).json({
-        error: "A blog post with the same tags already exists. Please use a different set of tags.",
-      });
+    const rawData = req.body;
+    // Validate required fields
+    if (!rawData.title || !rawData.content) {
+      throw new BadRequestError("Title and content are required");
+    }
+    if (rawData.category !== "INTERNAL" && rawData.category !== "EXTERNAL") {
+      throw new BadRequestError("Category must be 'INTERNAL' or 'EXTERNAL' ");
+    }
+  
+
+    const data: CreateBlogDto = {
+      title: rawData.title as string,
+      content: rawData.content as string,
+      category: rawData.category as "Internal Blog" | "External Blog",
+      imageUrl,
+      author: rawData.author as string || undefined, // Optional author field
+      tags: rawData.tags ? (rawData.tags as string[]) : undefined, // Optional tags field
+      socialMediaLinks: rawData.socialMediaLinks ? (rawData.socialMediaLinks as string[]) : undefined, // Optional social media links field   
+
+    };
+
+    const userRole = (req.user?.role as UserRole) || "BUYER";
+    const isEligibleForFeatured = userRole !== "ADMIN" && userRole !== "SUPER_ADMIN";
+
+    const blog = await blogService.createBlogPost(userId, data, isEligibleForFeatured);
+    new CustomResponse(200, true, "Blog created successfully", res, blog);
+  } catch (error) {
+    console.error("Blog creation error:", error);
+    if (error instanceof Error) {
+      next(new InternalServerError(error.message));
     } else {
-      res.status(400).json({ error: err.message || "Failed to create blog post" });
+      next(new InternalServerError("Failed to create blog post."));
     }
   }
-},
-
-  async getPosts(req: Request, res: Response) {
-    try {
-      const blogs = await prisma.blog.findMany({
-        orderBy: { createdAt: "desc" },
-      });
-      res.status(200).json({
-        status: "success",
-        message: "Blog posts retrieved",
-        succeeded: true,
-        data: blogs,
-      });
-    } catch (err: any) {
-      res.status(400).json({ error: err.message });
-    }
-  },
-
-  async getBlog(req: Request, res: Response) {
-    try {
-      const { id } = req.params as { id?: string };
-      if (!id) {
-        res.status(400).json({
-          status: "failed",
-          message: "Blog ID is required",
-          succeeded: false,
-        });
-        return;
-      }
-
-      const blog = await prisma.blog.findUnique({
-        where: { id },
-      });
-
-      if (!blog) {
-        res.status(404).json({
-          status: "failed",
-          message: "Blog post not found",
-          succeeded: false,
-        });
-        return;
-      }
-
-      res.status(200).json({
-        status: "success",
-        message: "Blog post retrieved",
-        succeeded: true,
-        data: blog,
-      });
-    } catch (err: any) {
-      res.status(400).json({ error: err.message });
-    }
-  },
 };
 
-export { blogController };
-export const { addBlog, getPosts, getBlog } = blogController;
+
+export const publishBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
+  if (!userId) {
+    res.status(401).json({
+      status: "failed",
+      message: "Unauthorized access",
+      succeeded: false,
+    });
+    return;
+  }
+
+  try {
+    const { id } = req.params;
+    const blog = await blogService.updateBlog(id, userId, { isPublished: true });
+    new CustomResponse(200, true, "Blog published successfully", res, blog);
+  } catch (error) {
+    console.error("Publish blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to publish blog."));
+    }
+  }
+};
+
+
+export const getBlogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogs = await blogService.getBlogs();
+    new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
+  } catch (error) {
+    console.error("Get blogs error:", error);
+    next(new InternalServerError("Failed to retrieve blogs."));
+  }
+};
+
+export const getBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const blog = await blogService.getBlog(id);
+    new CustomResponse(200, true, "Blog retrieved successfully", res, blog);
+  } catch (error) {
+    console.error("Get blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to retrieve blog."));
+    }
+  }
+};
+
+export const updateBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
+  if (!userId) {
+    console.log("Unauthorized access detected");
+    res.status(401).json({
+      status: "failed",
+      message: "Unauthorized access",
+      succeeded: false,
+    });
+    return;
+  }
+
+  try {
+    let imageUrl: string | null = null;
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file as any);
+        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
+          folder: "blog_images",
+          resource_type: "image",
+          allowedFormats: ["jpg", "png", "jpeg"],
+          transformation: [{ width: 500, height: 500, crop: "limit" }],
+        });
+        imageUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        throw new BadRequestError("Failed to upload image to Cloudinary");
+      }
+    }
+
+    const { id } = req.params;
+    const rawData = req.body;
+    const data: UpdateBlogDto = {
+      title: rawData.title,
+      content: rawData.content,
+      category: rawData.category,
+      imageUrl,
+    };
+
+    const blog = await blogService.updateBlog(id, userId, data);
+    new CustomResponse(200, true, "Blog updated successfully", res, blog);
+  } catch (error) {
+    console.error("Update blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to update blog."));
+    }
+  }
+};
+
+export const deleteBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
+  if (!userId) {
+    console.log("Unauthorized access detected");
+    res.status(401).json({
+      status: "failed",
+      message: "Unauthorized access",
+      succeeded: false,
+    });
+    return;
+  }
+
+  try {
+    const { id } = req.params;
+    await blogService.deleteBlog(id, userId);
+    new CustomResponse(200, true, "Blog deleted successfully", res);
+  } catch (error) {
+    console.error("Delete blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to delete blog."));
+    }
+  }
+};
+
+export const getFeaturedContributorBlogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogs = await blogService.getFeaturedContributorBlogs();
+    new CustomResponse(200, true, "Featured contributor blogs retrieved successfully", res, blogs);
+  } catch (error) {
+    console.error("Get featured contributor blogs error:", error);
+    next(new InternalServerError("Failed to retrieve featured contributor blogs."));
+  }
+};

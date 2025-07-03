@@ -1,19 +1,19 @@
+import express from 'express';
+import { createBlogPost, getBlogs, getBlog, updateBlog, deleteBlog, publishBlog, getFeaturedContributorBlogs } from '../controllers/blog.controller';
+import authenticate, { isAdmin } from '../../../middlewares/auth.middleware';
+import { singleupload } from '../../../middlewares/multer';
+
+const router = express.Router();
 
 
-import { Router } from "express";
-import {
- blogController
-} from "../controllers/blog.controller";
-import { singleupload } from "../../../middlewares/multer";
-import authenticate, { isAdmin } from "../../../middlewares/auth.middleware";
+router.get('/blogs', getBlogs); 
+router.get('/blogs/featured-contributors', getFeaturedContributorBlogs); 
 
-const blogRoutes = Router();
 
-blogRoutes.post("/posts", authenticate, singleupload, blogController.addBlog);
-blogRoutes.get("/posts/", blogController.getPosts);
-blogRoutes.get("/posts/:id", blogController.getBlog);
-// blogRoutes.patch("/posts/:id", authenticate, isAdmin, singleupload, updateBlogPost);
-// blogRoutes.patch("/posts/:id", authenticate, isAdmin, singleupload, updateBlogPost);
-// blogRoutes.delete("/posts/:id", authenticate, isAdmin, deleteBlogPost);
+router.post('/blogs', authenticate, singleupload, createBlogPost); 
+router.get('/blogs/:id', getBlog);
+router.put('/blogs/:id', authenticate, updateBlog); 
+router.delete('/blogs/:id', authenticate, deleteBlog); 
+router.patch('/blogs/:id/publish', authenticate,isAdmin, publishBlog); 
 
-export default blogRoutes;
+export default router;

@@ -44,6 +44,7 @@ model User {
   mortgage           MortgageCalculationDraft[]
   Campaign           Campaign[]
   preQualifications  PreQualification[]
+  featuredContributors BlogFeaturedContributor[] @relation("UserFeaturedContributors")
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
   Blog               Blog[]
@@ -313,12 +314,33 @@ model Blog {
   imageUrl         String?  @db.String
   socialMediaLinks String[] @default([]) @db.String
   tags             String[]  @default(["tech"])
-  category         String   @default("Internal Blog")
+  featuredContributors BlogFeaturedContributor[] @relation("BlogFeaturedContributors")
+  category         BlogCategory @default(INTERNAL)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   isPublished       Boolean @default(false)
+  timeToRead      Int      @default(5) 
   @@index([userId])
   @@map("blogs")
+}
+enum BlogCategory {
+  INTERNAL
+  EXTERNAL
+}
+
+model BlogFeaturedContributor {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], name: "UserFeaturedContributors")
+  blogId    String   @db.ObjectId
+  blog      Blog     @relation(fields: [blogId], references: [id], name: "BlogFeaturedContributors")
+  featured  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, blogId])
+  @@index([userId])
+  @@index([blogId])
 }
 model Advert {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
