@@ -110,7 +110,7 @@ export class BlogService {
 
 
 
-  async getBlogs(): Promise<BlogPost[]> {
+  async trendingBlog(): Promise<BlogPost[]> {
   try {
     const blogs = await this.prisma.blog.findMany({
       include: {
@@ -118,6 +118,45 @@ export class BlogService {
         featuredContributors: true,
       },
       orderBy: { createdAt: "desc" },
+    });
+
+    return blogs.map((blog) => ({
+      id: blog.id,
+      title: blog.title,
+      content: blog.content,
+      isPublished: blog.isPublished,
+      tags: blog.tags || [],
+      category: blog.category === "INTERNAL" ? "Internal Blog" : "External Blog",
+      imageUrl: blog.imageUrl,
+      createdAt: blog.createdAt,
+      updatedAt: blog.updatedAt,
+      author: blog.author || "Anonymous",
+      authorAvatar: blog.user.avatar || null,
+      socialMediaLinks: blog.socialMediaLinks || [], 
+      timeToRead: blog.timeToRead || 0, 
+      featuredContributors: blog.featuredContributors.map((fc) => ({
+        id: fc.id,
+        userId: fc.userId,
+        userFullname: blog.user.fullname , 
+        userAvatar: blog.user.avatar || null,
+      
+
+
+      })),
+    }));
+  } catch (error) {
+    console.error("[getBlogs] Prisma error:", error);
+    throw new InternalServerError("Failed to retrieve blogs.");
+  }
+}
+
+  async getBlogs(): Promise<BlogPost[]> {
+  try {
+    const blogs = await this.prisma.blog.findMany({
+      include: {
+        user: { select: { fullname: true, avatar: true } },
+        featuredContributors: true,
+      }
     });
 
     return blogs.map((blog) => ({

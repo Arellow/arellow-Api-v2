@@ -125,6 +125,20 @@ export const getBlogs = async (
   }
 };
 
+export const trendingBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogs = await blogService.getBlogs();
+    new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
+  } catch (error) {
+    console.error("Get blogs error:", error);
+    next(new InternalServerError("Failed to retrieve blogs."));
+  }
+};
+
 export const getBlog = async (
   req: Request,
   res: Response,
