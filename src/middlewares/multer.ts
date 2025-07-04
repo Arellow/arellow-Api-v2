@@ -22,8 +22,8 @@ export const singleupload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 }).single("image");
 
-
 // Multiple file upload middleware
+
 export const multipleupload = multer({ storage }).fields([
   { name: "FRONT_VIEW" },
   { name: "LIVING_ROOM" },

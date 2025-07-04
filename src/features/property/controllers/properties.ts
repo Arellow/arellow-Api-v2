@@ -8,6 +8,8 @@ import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
 import { MediaType } from '@prisma/client';
+import { mediaUploadQueue } from "../queues/media.queue";
+import { cloudinary } from "../../../configs/cloudinary";
 
 type Amenity = {
   name: string;
@@ -22,6 +24,12 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
   try {
 
     const userId = req.user?.id!;
+    const is_user_verified = req.user?.is_verified!;
+
+    // if(!is_user_verified){
+    //   return next(new InternalServerError("Email not verify", 401)); 
+    // }
+
 
     const {
       title,
@@ -33,16 +41,23 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
       country,
       floors,
       location,
-
       neighborhood,
       price,
       squareMeters,
       state,
       features,
-
+      amenities,
+  
     } = req.body;
 
-    const amenities: Amenity[] = req.body.amenities || []
+    const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
+    const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
+    const parsedLocation: {
+           lat: string,
+
+           lng: string
+         } = typeof location === 'string' ? JSON.parse(location) : location;
+
 
     // Basic validation
     if (!title || !description) {
@@ -51,22 +66,14 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
     }
 
     // Validate amenities format if provided
-    if (amenities && !Array.isArray(amenities)) {
+    if (parsedAmenities && !Array.isArray(parsedAmenities)) {
       res.status(400).json({ error: 'Amenities must be an array' });
       return 
     }
 
 
-    if (amenities) {
-      for (const amenity of amenities) {
-        if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
-          res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
-          return 
-        }
-      }
-    }
-    if (features) {
-      for (const amenity of amenities) {
+    if (parsedAmenities) {
+      for (const amenity of parsedAmenities) {
         if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
           res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
           return 
@@ -76,10 +83,18 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
 
 
+    const propertyAmenities = parsedAmenities.map(amenity => {
+      return { name: amenity.name.trim(), photoUrl: amenity.photoUrl.trim() }
+    });
 
-    const propertyAmenities = amenities.map(amenity => {
-      return { name: amenity.name, photoUrl: amenity.photoUrl }
-    })
+    
+    const propertyFeatures = parsedFeatures.map(feature => feature.trim());
+    const propertyLocation = {
+           lat: Number(parsedLocation.lat),
+
+           lng: Number(parsedLocation.lng)
+         };
+
 
     // Create property
     const newProperty = await Prisma.property.create({
@@ -90,29 +105,278 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
           create: propertyAmenities
         },
         userId,
-        bathrooms,
-        bedrooms,
         category,
         city,
         country,
-        floors,
-        location,
         neighborhood,
-        price,
-        squareMeters,
         state,
-        features
+        features: propertyFeatures,
+        location: propertyLocation,
+        bedrooms: Number(bedrooms),
+        bathrooms: Number(bathrooms),
+        floors: Number(floors),
+        squareMeters: Number(squareMeters),
+        price: Number(price),
+      },
+    });
+
+    if(!newProperty){
+      return next(new InternalServerError("Failed to upload property", 401)); 
+    };
+
+  
+    const fields = req.files as {[fieldname: string]: Express.Multer.File[]} || [];
+
+    for (const [fieldName, files] of Object.entries(fields)) {
+  const isPhoto = ['FRONT_VIEW', 'LIVING_ROOM', 'KITCHEN', 'FLOOR_PLAN', 'PRIMARY_ROOM', 'OTHER'].includes(fieldName);
+  const photoType = isPhoto ? fieldName : undefined;
+
+
+  // for (const file  of files) {
+await Promise.all(
+  files.map((file, index) => {
+     
+       mediaUploadQueue.add('upload', {
+        propertyId: newProperty.id,
+        file: {
+          buffer: file.buffer,
+          originalname: file.originalname,
+        },
+        meta: {
+          order: index, // optional
+          type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
+          photoType: photoType || null,
+        },
+      });
+
+    }))
+
+  // }
+
+}
+
+
+
+
+
+  //   await Promise.all(
+  //   files.map((file, index) =>
+  //     mediaUploadQueue.add('upload', {
+  //       // propertyId: property.id,
+  //       file: { buffer: file.buffer, originalname: file.originalname },
+  //       meta: { order: index },
+  //     })
+  //   )
+  // );
+
+
+    new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
+      propertyId: newProperty.id
+    });
+
+    
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+    // console.log(error)
+   
+  }
+
+
+};
+
+
+export const updateProperty = async (req: Request, res: Response, next: NextFunction) => {
+
+  try {
+
+    const { propertyId } = req.params;
+    const userId = req.user?.id!;
+    const is_user_verified = req.user?.is_verified!;
+
+    // if(!is_user_verified){
+    //   return next(new InternalServerError("Email not verify", 401)); 
+    // }
+
+
+    const {
+      title,
+      description,
+      bathrooms,
+      bedrooms,
+      category,
+      city,
+      country,
+      floors,
+      location,
+      neighborhood,
+      price,
+      squareMeters,
+      state,
+      features,
+      amenities,
+  
+    } = req.body;
+
+    const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
+    const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
+    const parsedLocation: {
+           lat: string,
+
+           lng: string
+         } = typeof location === 'string' ? JSON.parse(location) : location;
+
+
+    // Basic validation
+    if (!title || !description) {
+      res.status(400).json({ error: 'Title and description are required' });
+      return 
+    }
+
+    // Validate amenities format if provided
+    if (parsedAmenities && !Array.isArray(parsedAmenities)) {
+      res.status(400).json({ error: 'Amenities must be an array' });
+      return 
+    }
+
+
+    if (parsedAmenities) {
+      for (const amenity of parsedAmenities) {
+        if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
+          res.status(400).json({ error: 'Each amenity must have name and photoUrl strings' });
+          return 
+        }
+      }
+    }
+
+
+
+    const propertyAmenities = parsedAmenities.map(amenity => {
+      return { name: amenity.name.trim(), photoUrl: amenity.photoUrl.trim() }
+    });
+
+    
+    const propertyFeatures = parsedFeatures.map(feature => feature.trim());
+    const propertyLocation = {
+           lat: Number(parsedLocation.lat),
+
+           lng: Number(parsedLocation.lng)
+         };
+
+
+
+
+  //  Delete old media
+    const oldMedia = await Prisma.media.findMany({
+      where: { propertyId },
+    });
+
+
+    // Delete from Cloudinary
+    for (const media of oldMedia) {
+      try {
+        await cloudinary.uploader.destroy(media.publicId, {
+          resource_type: media.type === 'VIDEO' ? 'video' : 'image',
+        });
+      } catch (err) {
+        console.warn(`Failed to delete media ${media.publicId}:`, err);
+      }
+    }
+
+    // Delete from DB
+    await Prisma.media.deleteMany({ where: { propertyId } });
+
+
+    // Create property
+    const newProperty = await Prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        title,
+        description,
+        amenities: {
+          create: propertyAmenities
+        },
+        userId,
+        category,
+        city,
+        country,
+        neighborhood,
+        state,
+        features: propertyFeatures,
+        location: propertyLocation,
+        bedrooms: Number(bedrooms),
+        bathrooms: Number(bathrooms),
+        floors: Number(floors),
+        squareMeters: Number(squareMeters),
+        price: Number(price),
       },
     });
 
 
-    new CustomResponse(201, true, "Featured projects fetched successfully", res, newProperty);
+
+
+    if(!newProperty){
+      return next(new InternalServerError("Failed to upload property", 401)); 
+    };
+
+  
+    const fields = req.files as {[fieldname: string]: Express.Multer.File[]} || [];
+
+    for (const [fieldName, files] of Object.entries(fields)) {
+  const isPhoto = ['FRONT_VIEW', 'LIVING_ROOM', 'KITCHEN', 'FLOOR_PLAN', 'PRIMARY_ROOM', 'OTHER'].includes(fieldName);
+  const photoType = isPhoto ? fieldName : undefined;
+
+
+  // for (const file  of files) {
+await Promise.all(
+  files.map((file, index) => {
+     
+       mediaUploadQueue.add('upload', {
+        propertyId: newProperty.id,
+        file: {
+          buffer: file.buffer,
+          originalname: file.originalname,
+        },
+        meta: {
+          order: index, // optional
+          type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
+          photoType: photoType || null,
+        },
+      });
+
+    }))
+
+  // }
+
+}
+
+
+
+
+
+  //   await Promise.all(
+  //   files.map((file, index) =>
+  //     mediaUploadQueue.add('upload', {
+  //       // propertyId: property.id,
+  //       file: { buffer: file.buffer, originalname: file.originalname },
+  //       meta: { order: index },
+  //     })
+  //   )
+  // );
+
+
+    new CustomResponse(200, true, "Property updated. Media is updating in background.", res, {
+      propertyId: newProperty.id
+    });
+
+    
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
+    // console.log(error)
+   
   }
 
 
-}
+};
 
 
 export const singleProperty = async (req: Request, res: Response, next: NextFunction) => {
@@ -124,21 +388,174 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
         where: { id},
         include: { 
           amenities: true ,
+          media: true,
            user: {
-            include: {approvedProperties: true,}, 
+            include: {approvedProperties: true, }, 
             omit: {password: true}
            }
           
           },
       });
 
-    new CustomResponse(201, true, "Featured projects fetched successfully", res, response);
+    new CustomResponse(200, true, "successfully", res, response);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
   }
 
 
-}
+};
+
+export const getAllProperties = async (req: Request, res: Response, next: NextFunction)  => {
+  try {
+   
+    const {
+      search,
+      salesStatus,
+      minPrice,
+      maxPrice,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+   const filters: prisma.PropertyWhereInput = {
+
+  AND: [
+    search
+      ? {
+          OR: [
+            { title: { contains: search as string, mode: 'insensitive' } },
+            { category: { contains: search as string, mode: 'insensitive' } },
+            { city: { contains: search as string, mode: 'insensitive' } },
+            { state: { contains: search as string, mode: 'insensitive' } },
+            { country: { contains: search as string, mode: 'insensitive' } }
+          ]
+        }
+      : undefined,
+    salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+    minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
+    maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+  ].filter(Boolean) as prisma.PropertyWhereInput[] 
+};
+    const [properties, total] = await Promise.all([
+      Prisma.property.findMany({
+        where: filters,
+        include: {
+          media: true
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (pageNumber - 1) * pageSize,
+        take: pageSize
+      }),
+       Prisma.property.count({ where: filters })
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+    const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+    const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+     const canGoNext = pageNumber < totalPages;
+    const canGoPrev = pageNumber > 1;
+
+     new CustomResponse(200, true, "success", res, {
+      data: properties,
+      pagination: {
+        total,
+        page: pageNumber,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        nextPage,
+        prevPage,
+        canGoNext,
+        canGoPrev
+      }
+    });
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+
+};
+
+
+export const getPropertiesByUser = async (req: Request, res: Response, next: NextFunction)  => {
+  try {
+    const userId = req.user?.id;
+
+
+    console.log({userId})
+ 
+    const {
+      search,
+      salesStatus,
+      minPrice,
+      maxPrice,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+   const filters: prisma.PropertyWhereInput = {
+  userId,
+  AND: [
+    search
+      ? {
+          OR: [
+            { title: { contains: search as string, mode: 'insensitive' } },
+            { category: { contains: search as string, mode: 'insensitive' } },
+            { city: { contains: search as string, mode: 'insensitive' } },
+            { state: { contains: search as string, mode: 'insensitive' } },
+            { country: { contains: search as string, mode: 'insensitive' } }
+          ]
+        }
+      : undefined,
+    salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+    minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
+    maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+  ].filter(Boolean) as prisma.PropertyWhereInput[] 
+};
+    const [properties, total] = await Promise.all([
+      Prisma.property.findMany({
+        where: filters,
+        include: {
+          media: true
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (pageNumber - 1) * pageSize,
+        take: pageSize
+      }),
+       Prisma.property.count({ where: filters })
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+    const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+    const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+     const canGoNext = pageNumber < totalPages;
+    const canGoPrev = pageNumber > 1;
+
+     new CustomResponse(200, true, "success", res, {
+      data: properties,
+      pagination: {
+        total,
+        page: pageNumber,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        nextPage,
+        prevPage,
+        canGoNext,
+        canGoPrev
+      }
+    });
+  } catch (error) {
+    // next(new InternalServerError("Server Error", 500));
+    console.log(error)
+  }
+
+};
+
+
 
 // likes a property
 export const likeProperty = async (req: Request, res: Response, next: NextFunction) =>  {
@@ -231,75 +648,10 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
 };
 
 
-export const getPropertiesByUser = async (req: Request, res: Response, next: NextFunction)  => {
-  try {
-    const userId = req.user?.id;
- 
-    const {
-      search,
-      salesStatus,
-      minPrice,
-      maxPrice,
-      page = "1",
-      limit = "10"
-    } = req.query;
 
-    const pageNumber = parseInt(page as string, 10);
-    const pageSize = parseInt(limit as string, 10);
 
-   const filters: prisma.PropertyWhereInput = {
-  userId,
-  AND: [
-    search
-      ? {
-          OR: [
-            { title: { contains: search as string, mode: 'insensitive' } },
-            { category: { contains: search as string, mode: 'insensitive' } },
-            { city: { contains: search as string, mode: 'insensitive' } },
-            { state: { contains: search as string, mode: 'insensitive' } },
-            { country: { contains: search as string, mode: 'insensitive' } }
-          ]
-        }
-      : undefined,
-    salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
-    minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
-    maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
-  ].filter(Boolean) as prisma.PropertyWhereInput[] // 👈 IMPORTANT: ensure no `undefined` entries
-};
-    const [properties, total] = await Promise.all([
-      Prisma.property.findMany({
-        where: filters,
-        orderBy: { createdAt: "desc" },
-        skip: (pageNumber - 1) * pageSize,
-        take: pageSize
-      }),
-       Prisma.property.count({ where: filters })
-    ]);
 
-    const totalPages = Math.ceil(total / pageSize);
-    const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
-    const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
-     const canGoNext = pageNumber < totalPages;
-    const canGoPrev = pageNumber > 1;
 
-     new CustomResponse(200, true, "success", res, {
-      data: properties,
-      pagination: {
-        total,
-        page: pageNumber,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-        nextPage,
-        prevPage,
-        canGoNext,
-        canGoPrev
-      }
-    });
-  } catch (error) {
-    next(new InternalServerError("Server Error", 500));
-  }
-
-};
 
 export const recentPropertiesByUser = async (req: Request, res: Response, next: NextFunction)  => {
   try {

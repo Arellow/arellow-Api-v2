@@ -1,9 +1,10 @@
 
-import {  UserRole } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 
 export type User = {
-    id: string;
-      email: string;
-      role: UserRole;
+  id: string;
+  email: string;
+  role: UserRole;
+  is_verified: boolean
 }
 

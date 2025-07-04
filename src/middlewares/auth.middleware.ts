@@ -28,7 +28,7 @@ export default async function authenticate(
       return;
     }
 
-    req.user = { id: user.id, email: user.email, role: user.role };
+    req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified};
 
     next();
   } catch (err) {

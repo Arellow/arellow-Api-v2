@@ -5,7 +5,9 @@ import authenticate, { requireRole } from '../../../middlewares/auth.middleware'
 import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
 import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, 
     unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, 
-    getPropertiesByUser, mediaForProperty, recentPropertiesByUser, featureProperties, createNewProperty
+    getPropertiesByUser, mediaForProperty, recentPropertiesByUser, featureProperties, createNewProperty,
+    getAllProperties,
+    updateProperty
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
@@ -25,9 +27,18 @@ propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 // undocumented on postman
 propertyRoutes.post("/createproperty", authenticate, multipleupload, createNewProperty);
+propertyRoutes.post("/updateproperty/:propertyId", authenticate, multipleupload, updateProperty);
+propertyRoutes.get("/user", authenticate,  getPropertiesByUser);
+propertyRoutes.get("/:id",singleProperty);
+
+
+propertyRoutes.get("/",
+    // requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    getAllProperties);
+
+
 propertyRoutes.post("/:id/like", authenticate, likeProperty );
 propertyRoutes.delete('/:id/like', authenticate, unLikeProperty );
-propertyRoutes.get("/:id",singleProperty);
 propertyRoutes.patch("/:id/approve", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), approveProperty);
 propertyRoutes.patch("/:id/reject", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), rejectProperty);
 propertyRoutes.patch("/:id/archive", authenticate, archiveProperty);
@@ -35,7 +46,6 @@ propertyRoutes.patch("/:id/unarchive", authenticate, unArchiveProperty);
 propertyRoutes.patch("/:id/status", authenticate, statusProperty);
 propertyRoutes.delete("/:id", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), deleteProperty);
 propertyRoutes.get("/liked", authenticate,  getLikedPropertiesByUser);
-propertyRoutes.get("/user", authenticate,  getPropertiesByUser);
 propertyRoutes.patch("/:propertyId/media", authenticate,  mediaForProperty);
 
 
