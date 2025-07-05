@@ -6,5 +6,6 @@ export type User = {
   email: string;
   role: UserRole;
   is_verified: boolean
+  suspended: boolean
 }
 

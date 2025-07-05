@@ -49,7 +49,6 @@ export interface UserResponseDto {
   is_verified: boolean;
   suspended: boolean;
   points?: number;
-  last_login?: Date;
   createdAt: Date;
   propertiesListed: number;
   propertiesSold: number;

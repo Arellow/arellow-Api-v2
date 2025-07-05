@@ -34,21 +34,46 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
           amenities: true ,
           likedBy: {
             select: {
-              userId: true
+              userId: true,
+            },
+          },
+          media: {
+            select: {
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
-          media: true,
            user: {
-            include: {approvedProperties: true, }, 
-            omit: {password: true}
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
            }
           
           },
       });
 
+
+
+
+
     new CustomResponse(200, true, "successfully", res, response);
   } catch (error) {
-    next(new InternalServerError("Internal server error", 500));
+    // next(new InternalServerError("Internal server error", 500));
+    next(error)
   }
 
 
@@ -119,12 +144,31 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -222,12 +266,31 @@ export const getAllArchivedProperties = async (req: Request, res: Response, next
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -329,12 +392,31 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -435,12 +517,31 @@ export const getArchivedPropertiesByUser = async (req: Request, res: Response, n
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -545,12 +646,31 @@ export const featureProperties = async (req: Request, res: Response, next: NextF
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -649,12 +769,31 @@ export const recentProperties = async (req: Request, res: Response, next: NextFu
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -755,12 +894,31 @@ export const sellingProperties = async (req: Request, res: Response, next: NextF
       Prisma.property.findMany({
         where: filters,
         include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         orderBy: { createdAt: "desc" },
         skip: (pageNumber - 1) * pageSize,
@@ -795,8 +953,6 @@ export const sellingProperties = async (req: Request, res: Response, next: NextF
 };
 
 
-
-
 export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -806,12 +962,31 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
       include: {
         property: {
           include: {
-          media: true,
-           likedBy: {
+           media: {
             select: {
-              userId: true
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
             }
           },
+           user: {
+            select: {
+              email: true,
+              fullname: true,
+              username: true,
+              is_verified: true,
+              avatar: true,
+              approvedProperties: {
+                include: {
+                  _count: true
+                }
+              }
+
+            }
+           }
         },
         }
       },
@@ -841,8 +1016,10 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
     const is_user_verified = req.user?.is_verified!;
 
     if(!is_user_verified){
-      return next(new InternalServerError("Email not verify", 401)); 
+      return next(new InternalServerError("Unverify email please check mail and verify account", 401)); 
     }
+
+    const fields = req.files as {[fieldname: string]: Express.Multer.File[]} || [];
 
 
     const {
@@ -936,49 +1113,41 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
     };
 
   
-    const fields = req.files as {[fieldname: string]: Express.Multer.File[]} || [];
+    
 
     for (const [fieldName, files] of Object.entries(fields)) {
-  const isPhoto = ['FRONT_VIEW', 'LIVING_ROOM', 'KITCHEN', 'FLOOR_PLAN', 'PRIMARY_ROOM', 'OTHER'].includes(fieldName);
+  const isPhoto = [
+     "KITCHEN",
+    "FLOOR_PLAN",
+    "PRIMARY_ROOM",
+    "OTHER",
+    "FRONT_VIEW",
+    "LIVING_ROOM",
+    ].includes(fieldName);
+
+    
   const photoType = isPhoto ? fieldName : undefined;
 
 
-  // for (const file  of files) {
-await Promise.all(
-  files.map((file, index) => {
-     
-       mediaUploadQueue.add('upload', {
+
+  for (const file  of files) {
+
+   await mediaUploadQueue.add('upload', {
         propertyId: newProperty.id,
         file: {
           buffer: file.buffer,
           originalname: file.originalname,
         },
         meta: {
-          order: index, // optional
+          // order: index, // optional
           type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
           photoType: photoType || null,
         },
       });
 
-    }))
-
-  // }
-
 }
 
-
-
-
-
-  //   await Promise.all(
-  //   files.map((file, index) =>
-  //     mediaUploadQueue.add('upload', {
-  //       // propertyId: property.id,
-  //       file: { buffer: file.buffer, originalname: file.originalname },
-  //       meta: { order: index },
-  //     })
-  //   )
-  // );
+}
 
 
     new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
@@ -1130,31 +1299,66 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
   
     const fields = req.files as {[fieldname: string]: Express.Multer.File[]} || [];
 
+//     for (const [fieldName, files] of Object.entries(fields)) {
+//   const isPhoto = ['FRONT_VIEW', 'LIVING_ROOM', 'KITCHEN', 'FLOOR_PLAN', 'PRIMARY_ROOM', 'OTHER'].includes(fieldName);
+//   const photoType = isPhoto ? fieldName : undefined;
+
+
+// await Promise.all(
+//   files.map((file, index) => {
+     
+//        mediaUploadQueue.add('upload', {
+//         propertyId: newProperty.id,
+//         file: {
+//           buffer: file.buffer,
+//           originalname: file.originalname,
+//         },
+//         meta: {
+//           order: index, // optional
+//           type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
+//           photoType: photoType || null,
+//         },
+//       });
+
+//     }))
+
+
+// }
+
     for (const [fieldName, files] of Object.entries(fields)) {
-  const isPhoto = ['FRONT_VIEW', 'LIVING_ROOM', 'KITCHEN', 'FLOOR_PLAN', 'PRIMARY_ROOM', 'OTHER'].includes(fieldName);
+  const isPhoto = [
+     "KITCHEN",
+    "FLOOR_PLAN",
+    "PRIMARY_ROOM",
+    "OTHER",
+    "FRONT_VIEW",
+    "LIVING_ROOM",
+    ].includes(fieldName);
+
+    
   const photoType = isPhoto ? fieldName : undefined;
 
 
-await Promise.all(
-  files.map((file, index) => {
-     
-       mediaUploadQueue.add('upload', {
+
+  for (const file  of files) {
+
+   await mediaUploadQueue.add('upload', {
         propertyId: newProperty.id,
         file: {
           buffer: file.buffer,
           originalname: file.originalname,
         },
         meta: {
-          order: index, // optional
+          // order: index, // optional
           type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
           photoType: photoType || null,
         },
       });
 
-    }))
-
+}
 
 }
+
 
 
     new CustomResponse(200, true, "Property updated. Media is updating in background.", res, {

@@ -11,7 +11,6 @@ export const mediaWorker = new Worker(
   async job => {
     const { propertyId, file, meta } = job.data;
 
-
     const result = await new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         { resource_type: 'auto', folder: 'property-media' },
@@ -31,10 +30,13 @@ export const mediaWorker = new Worker(
         propertyId,
         url: media.secure_url,
         publicId: media.public_id,
-        type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
+        // type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
+        type: meta.type,
         format: media.format,
         sizeInKB: media.bytes / 1024,
-        order: meta.order,
+        // order: meta.order,
+        photoType: meta.photoType,
+        altText: meta.type
     },
     });
 

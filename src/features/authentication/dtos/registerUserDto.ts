@@ -1,4 +1,5 @@
-import { UserRole } from "@prisma/client";
+import {  UserRole } from "@prisma/client";
+
 
 export interface RegisterDTO {
   username: string;
@@ -16,9 +17,12 @@ export interface UserResponseDTO {
   phone_number: string;
   fullname: string;
   is_verified: boolean;
+  suspended: boolean;
   createdAt: Date;
   avatar: string | null;
-   role: UserRole
+  role: UserRole,
+  kyc: any,
+
 }
 
 export interface VerifyEmailDto {

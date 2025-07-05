@@ -1,4 +1,4 @@
-import { formatDistanceToNow ,format} from "date-fns";
+import { format} from "date-fns";
 import { Prisma } from "../../../lib/prisma";
 import { ActivityHistoryDto, RewardDetailsDto, RewardDetailsResponseDto, RewardsResponseDto, RewardsSummaryDto, WithdrawalRequestDto } from "../dtos/reward.dto";
 import {  NotFoundError } from "../../../lib/appError";
@@ -79,8 +79,7 @@ export class RewardsService {
         fullname: true,
         email: true,
         phone_number: true,
-        is_verified: true,
-        last_login: true,
+        is_verified: true
       },
     });
 
@@ -93,7 +92,6 @@ export class RewardsService {
       email: user.email || "",
       phone: user.phone_number || "",
       is_verified: user.is_verified || false,
-      lastLogin: user.last_login ? formatDistanceToNow(user.last_login, { addSuffix: true }) : "Never",
     };
 
     // Fetch activity history from rewardHistory

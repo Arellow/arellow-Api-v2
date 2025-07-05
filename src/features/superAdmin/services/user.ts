@@ -58,7 +58,6 @@ export const getUsersService = async (query: UserQueryDTO) => {
         phone_number: true,
         avatar: true,
         role: true,
-        last_login: true,
         // kyc_status: true,
       },
     }),

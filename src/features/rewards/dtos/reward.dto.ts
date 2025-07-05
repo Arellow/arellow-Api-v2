@@ -56,7 +56,6 @@ export interface RewardDetailsDto {
   email: string;
   phone: string;
   is_verified: boolean;
-  lastLogin: string;
 }
 
 export interface ActivityHistoryDto {

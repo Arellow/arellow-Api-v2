@@ -1,16 +1,13 @@
-import { RegisterDTO,UserResponseDTO } from "../dtos/registerUserDto";
+import { RegisterDTO } from "../dtos/registerUserDto";
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
-// import jwt from "jsonwebtoken";
 import { DuplicateError, UnAuthorizedError } from "../../../lib/appError";
 import { emailVerificationMailOption } from "../../../utils/mailer";
-import { mailController, 
-  // nodeMailerController 
-} from "../../../utils/nodemailer";
+import { mailController, } from "../../../utils/nodemailer";
 import { generateToken } from "../../../utils/jwt";
 
 export class AuthService {
-  public static async registerUser(dto: RegisterDTO): Promise<UserResponseDTO> {
+  public static async registerUser(dto: RegisterDTO) {
     const { username, password, email, phone_number, fullname , role} = dto;
 
 
@@ -38,25 +35,18 @@ export class AuthService {
         role,
         fullname,
       },
+      include: {
+        kyc: true
+      }
     });
     const verificationToken = generateToken(newUser.id, newUser.email);
     const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}/verify-email?token=${verificationToken}`;
     const mailOptions = await emailVerificationMailOption(newUser.email, verificationUrl);
-    // await nodeMailerController(mailOptions);
     mailController({from: "noreply@arellow.com", ...mailOptions})
 
+    return newUser;
 
-    return {
-      id: newUser.id,
-      username: newUser.username,
-      email: newUser.email,
-      phone_number: newUser.phone_number,
-      fullname: newUser.fullname,
-      is_verified: newUser.is_verified,
-      createdAt: newUser.createdAt,
-      avatar:newUser.avatar,
-      role:newUser.role
-    };
+
   }
 }
 

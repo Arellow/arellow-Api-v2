@@ -119,7 +119,6 @@ export class UserService {
       is_verified: user.is_verified,
       suspended: user.suspended,
       points: user.points || 0,
-      last_login: user.last_login || null,
       createdAt: user.createdAt,
       propertiesListed: user.propertiesListed || 0,
       propertiesSold: user.propertiesSold || 0,

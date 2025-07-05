@@ -1,6 +1,6 @@
 import express from 'express'
 import { calculateProjectMortgage } from '../controllers/FetchProperties';
-import authenticate, { requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { isSuspended, requireRole } from '../../../middlewares/auth.middleware';
 // import { createPropertyRequest } from '../../requestProperties/controllers/request';
 import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
 import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, 
@@ -31,27 +31,27 @@ propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 // test by flow
 propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
-propertyRoutes.post("/createproperty", authenticate, multipleupload, createNewProperty);
-propertyRoutes.post("/updateproperty/:propertyId", authenticate, multipleupload, updateProperty);
+propertyRoutes.post("/createproperty", authenticate, isSuspended, multipleupload, createNewProperty);
+propertyRoutes.post("/updateproperty/:propertyId", authenticate,  isSuspended,  multipleupload, updateProperty);
 propertyRoutes.get("/featured", featureProperties);
-propertyRoutes.get("/user/archive", authenticate,  getArchivedPropertiesByUser);
+propertyRoutes.get("/user/archive", authenticate, getArchivedPropertiesByUser);
 propertyRoutes.get("/liked", authenticate,  getLikedPropertiesByUser);
 propertyRoutes.get("/user", authenticate,  getPropertiesByUser);
-propertyRoutes.delete("/:id/unarchive", authenticate, unArchiveProperty);
-propertyRoutes.patch("/:id/archive", authenticate, archiveProperty);
+propertyRoutes.delete("/:id/unarchive", authenticate,  isSuspended, unArchiveProperty);
+propertyRoutes.patch("/:id/archive", authenticate,  isSuspended, archiveProperty);
 propertyRoutes.get("/allarchive", requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllArchivedProperties);
 propertyRoutes.get("/:id/detail",singleProperty);
 propertyRoutes.get("/all", requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllProperties);
-propertyRoutes.delete("/:id", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), deleteProperty);
-propertyRoutes.patch("/:id/feature", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), markAsFeatureProperty);
-propertyRoutes.delete("/:id/unfeature", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), unmarkAsFeatureProperty);
-propertyRoutes.patch("/:id/status", authenticate, statusProperty);
-propertyRoutes.patch("/:id/reject", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), rejectProperty);
-propertyRoutes.patch("/:id/approve", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), approveProperty);
+propertyRoutes.delete("/:id", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), deleteProperty);
+propertyRoutes.patch("/:id/feature", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), markAsFeatureProperty);
+propertyRoutes.delete("/:id/unfeature", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), unmarkAsFeatureProperty);
+propertyRoutes.patch("/:id/status", authenticate, isSuspended,  statusProperty);
+propertyRoutes.patch("/:id/reject", authenticate, isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), rejectProperty);
+propertyRoutes.patch("/:id/approve", authenticate, isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), approveProperty);
 
-propertyRoutes.post("/:id/like", authenticate, likeProperty );
-propertyRoutes.delete('/:id/like', authenticate, unLikeProperty );
-propertyRoutes.patch("/:propertyId/media", authenticate,  mediaForProperty);
+propertyRoutes.post("/:id/like", authenticate, isSuspended,  likeProperty );
+propertyRoutes.delete('/:id/like', authenticate, isSuspended,  unLikeProperty );
+propertyRoutes.patch("/:propertyId/media", authenticate, isSuspended,   mediaForProperty);
 
 
 export default propertyRoutes;

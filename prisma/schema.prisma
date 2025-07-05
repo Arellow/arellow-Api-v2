@@ -60,7 +60,7 @@ model UserMedia {
 
 model Kyc {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
-   user   User   @relation(fields: [userId], references: [id])
+   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
   documentType   KycDocumentType
   documentNumber String
@@ -79,11 +79,10 @@ model User {
   password          String
   phone_number      String
   role              UserRole
-  avatar            String?            @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
+  avatar            String             @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified       Boolean            @default(false)
   suspended         Boolean            @default(false)
-  points            Int?
-  last_login        DateTime?
+  points            Int                @default(0)
   rewardHistory     RewardHistory[]
   rewardWithdrawals RewardWithdrawal[]
   companyId         String?            @db.ObjectId
@@ -100,7 +99,7 @@ model User {
   updatedAt          DateTime                   @updatedAt
   Blog               Blog[]
 
-  kyc   Kyc?   
+  kyc   Kyc?  
 }
 
 enum UserRole {

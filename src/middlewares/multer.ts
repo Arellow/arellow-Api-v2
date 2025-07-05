@@ -25,14 +25,15 @@ export const singleupload = multer({
 // Multiple file upload middleware
 
 export const multipleupload = multer({ storage }).fields([
-  { name: "FRONT_VIEW" },
-  { name: "LIVING_ROOM" },
   { name: "KITCHEN" },
   { name: "FLOOR_PLAN" },
   { name: "PRIMARY_ROOM" },
   { name: "OTHER" },
+  { name: "FRONT_VIEW" },
+  { name: "LIVING_ROOM" },
   { name: "VIDEO" },
   { name: "TOUR_3D" }
+  
 ]);
 
 // Interface for file data

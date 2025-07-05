@@ -1,12 +1,4 @@
-export interface ProjectFilterDto {
-  minPrice?: number;
-  maxPrice?: number;
-  propertyType?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  page?: number;
-  limit?: number;
-}
+
 
 export interface ProjectPost {
   id: string;
