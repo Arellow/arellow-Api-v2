@@ -1,15 +1,164 @@
-
 import { Request, Response, NextFunction } from "express";
 import { BlogService } from "../services/blog.service";
-import { BadRequestError, InternalServerError } from "../../../lib/appError";
-import { CreateBlogDto, UpdateBlogDto, BlogFilterDto } from "../dtos/blog.dto";
-import CustomResponse from "../../../utils/helpers/response.util";
-import { singleupload, getDataUri } from "../../../middlewares/multer";
-import { cloudinary } from "../../../configs/cloudinary"; // Updated import
+import { CreateBlogDto, UpdateBlogDto } from "../dtos/blog.dto";
+import { InternalServerError, BadRequestError } from "../../../lib/appError";
+import  CustomResponse  from "../../../utils/helpers/response.util";
+import { getDataUri } from "../../../middlewares/multer";
+import { cloudinary } from "../../../configs/cloudinary";
+import { UserRole } from "@prisma/client";
 
 const blogService = new BlogService();
 
 export const createBlogPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
+  if (!userId) {
+    res.status(401).json({
+      status: "failed",
+      message: "Unauthorized access",
+      succeeded: false,
+    });
+    return;
+  }
+
+  try {
+    let imageUrl: string | null = null;
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file as any);
+        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
+          folder: "Arellow_blog_images",
+          resource_type: "image",
+          allowedFormats: ["jpg", "png", "jpeg"],
+          transformation: [{ width: 500, height: 500, crop: "limit" }],
+        });
+        imageUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        throw new BadRequestError("Failed to upload image to Cloudinary");
+      }
+    } else {
+      console.log("No file uploaded, imageUrl remains null");
+    }
+
+    const rawData = req.body;
+    // Validate required fields
+    if (!rawData.title || !rawData.content) {
+      throw new BadRequestError("Title and content are required");
+    }
+    if (rawData.category !== "INTERNAL" && rawData.category !== "EXTERNAL") {
+      throw new BadRequestError("Category must be 'INTERNAL' or 'EXTERNAL' ");
+    }
+  
+
+    const data: CreateBlogDto = {
+      title: rawData.title as string,
+      content: rawData.content as string,
+      category: rawData.category as "Internal Blog" | "External Blog",
+      imageUrl,
+      author: rawData.author as string || undefined, // Optional author field
+      tags: rawData.tags ? (rawData.tags as string[]) : undefined, // Optional tags field
+      socialMediaLinks: rawData.socialMediaLinks ? (rawData.socialMediaLinks as string[]) : undefined, // Optional social media links field   
+
+    };
+
+    const userRole = (req.user?.role as UserRole) || "BUYER";
+    const isEligibleForFeatured = userRole !== "ADMIN" && userRole !== "SUPER_ADMIN";
+
+    const blog = await blogService.createBlogPost(userId, data, isEligibleForFeatured);
+    new CustomResponse(200, true, "Blog created successfully", res, blog);
+  } catch (error) {
+    console.error("Blog creation error:", error);
+    if (error instanceof Error) {
+      next(new InternalServerError(error.message));
+    } else {
+      next(new InternalServerError("Failed to create blog post."));
+    }
+  }
+};
+
+
+export const publishBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id as string;
+  if (!userId) {
+    res.status(401).json({
+      status: "failed",
+      message: "Unauthorized access",
+      succeeded: false,
+    });
+    return;
+  }
+
+  try {
+    const { id } = req.params;
+    const blog = await blogService.updateBlog(id, userId, { isPublished: true });
+    new CustomResponse(200, true, "Blog published successfully", res, blog);
+  } catch (error) {
+    console.error("Publish blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to publish blog."));
+    }
+  }
+};
+
+
+export const getBlogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogs = await blogService.getBlogs();
+    new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
+  } catch (error) {
+    console.error("Get blogs error:", error);
+    next(new InternalServerError("Failed to retrieve blogs."));
+  }
+};
+
+export const trendingBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogs = await blogService.getBlogs();
+    new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
+  } catch (error) {
+    console.error("Get blogs error:", error);
+    next(new InternalServerError("Failed to retrieve blogs."));
+  }
+};
+
+export const getBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const blog = await blogService.getBlog(id);
+    new CustomResponse(200, true, "Blog retrieved successfully", res, blog);
+  } catch (error) {
+    console.error("Get blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to retrieve blog."));
+    }
+  }
+};
+
+export const updateBlog = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -33,7 +182,7 @@ export const createBlogPost = async (
         const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
           folder: "blog_images",
           resource_type: "image",
-          allowedFormats: ["jpg", "png", "jpeg"], 
+          allowedFormats: ["jpg", "png", "jpeg"],
           transformation: [{ width: 500, height: 500, crop: "limit" }],
         });
         imageUrl = uploadResult.secure_url;
@@ -41,45 +190,37 @@ export const createBlogPost = async (
         console.error("Cloudinary upload error:", uploadError);
         throw new BadRequestError("Failed to upload image to Cloudinary");
       }
-    } else {
-      console.log("No file uploaded, imageUrl remains null");
     }
 
-    // Validate and construct data
+    const { id } = req.params;
     const rawData = req.body;
-    if (!rawData.title || !rawData.content) {
-      throw new BadRequestError("Title and content are required");
-    }
-    if (rawData.category !== "Internal Blog" && rawData.category !== "External Blog") {
-      throw new BadRequestError("Category must be 'Internal Blog' or 'External Blog'");
-    }
-
-    const data: CreateBlogDto = {
-      title: rawData.title as string,
-      content: rawData.content as string,
-      category: rawData.category as "Internal Blog" | "External Blog",
+    const data: UpdateBlogDto = {
+      title: rawData.title,
+      content: rawData.content,
+      category: rawData.category,
       imageUrl,
     };
-    const blog = await blogService.createBlogPost(userId, data);
-    new CustomResponse(200, true, "Blog created successfully", res, blog);
+
+    const blog = await blogService.updateBlog(id, userId, data);
+    new CustomResponse(200, true, "Blog updated successfully", res, blog);
   } catch (error) {
-    console.error("Blog creation error:", error);
-    if (error instanceof Error) {
-      next(new InternalServerError(error.message));
+    console.error("Update blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
     } else {
-      next(new InternalServerError("Failed to create blog post."));
+      next(new InternalServerError("Failed to update blog."));
     }
   }
 };
 
-export const getBlogPosts = async (
+export const deleteBlog = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const userId = req.user?.id as string;
-
   if (!userId) {
+    console.log("Unauthorized access detected");
     res.status(401).json({
       status: "failed",
       message: "Unauthorized access",
@@ -89,134 +230,29 @@ export const getBlogPosts = async (
   }
 
   try {
-    const filter: BlogFilterDto = {
-      category: req.query.category as "Internal Blog" | "External Blog" | "Campaigns",
-      page: req.query.page ? parseInt(req.query.page as string) : 1,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
-    };
-    const blogs = await blogService.getBlogPosts( filter);
-    new CustomResponse(200, true, "Blog fetched successfully", res, blogs);
+    const { id } = req.params;
+    await blogService.deleteBlog(id, userId);
+    new CustomResponse(200, true, "Blog deleted successfully", res);
   } catch (error) {
-    next(new InternalServerError("Failed to fetch blog posts."));
-  }
-};
-
-export const getBlogPost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  const id = req.params.id as string;
-
-  if (!userId || !id) {
-    res.status(400).json({
-      status: "failed",
-      message: "User ID and blog ID are required",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    const blog = await blogService.getBlogPost(id);
-    console.log("Service returned blog:", blog);
-    new CustomResponse(200, true, "Blog fetched successfully", res, blog);
-  } catch (error) {
-    console.error("Blog fetch error:", error);
-    next(new InternalServerError("Failed to fetch blog post."));
-  }
-};
-
-
-export const updateBlogPost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  const id = req.params.id as string;
-
-  console.log("Entering updateBlogPost, req.user:", req.user, "req.body:", req.body, "req.file:", req.file, "req.params.id:", id);
-
-  if (!userId || !id) {
-    res.status(400).json({
-      status: "failed",
-      message: "User ID and blog ID are required",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    let imageUrl: string | null = null; 
-    if (req.file) {
-      try {
-        console.log("Processing file upload, req.file:", req.file);
-        const fileUri = getDataUri(req.file as any);
-        console.log("Generated Data URI (first 50 chars):", fileUri.content.substring(0, 50) + "...");
-        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
-          folder: "blog_images",
-          resource_type: "image",
-          allowedFormats: ["jpg", "png", "jpeg"],
-          transformation: [{ width: 500, height: 500, crop: "limit" }],
-        });
-        imageUrl = uploadResult.secure_url;
-        console.log("Cloudinary upload successful, imageUrl:", imageUrl);
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        throw new Error("Failed to upload image to Cloudinary");
-      }
+    console.error("Delete blog error:", error);
+    if (error instanceof BadRequestError) {
+      next(error);
+    } else {
+      next(new InternalServerError("Failed to delete blog."));
     }
-
-    // Construct data object with only provided fields
-    const data: Partial<UpdateBlogDto> = {};
-    if (req.body.title !== undefined) data.title = req.body.title;
-    if (req.body.content !== undefined) data.content = req.body.content;
-    if (req.body.category !== undefined) data.category = req.body.category;
-    if (imageUrl !== undefined) data.imageUrl = imageUrl; // Only include if a new image is uploaded
-
-    console.log("Constructed data for service:", data);
-
-    if (Object.keys(data).length === 0) {
-      res.status(400).json({
-        status: "failed",
-        message: "No fields provided for update",
-        succeeded: false,
-      });
-      return;
-    }
-
-    const blog = await blogService.updateBlogPost(userId, id, data);
-    console.log("Service returned blog:", blog);
-    new CustomResponse(200, true, "Updated successfully", res, blog);
-  } catch (error) {
-    console.error("Blog update error:", error);
-    next(new InternalServerError("Failed to update blog post."));
   }
 };
 
-export const deleteBlogPost = async (
+export const getFeaturedContributorBlogs = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user?.id as string;
-  const id = req.params.id as string;
-
-  if (!userId || !id) {
-    res.status(400).json({
-      status: "failed",
-      message: "User ID and blog ID are required",
-      succeeded: false,
-    });
-    return;
-  }
-
   try {
-    await blogService.deleteBlogPost(id);
-    new CustomResponse(200, true, "Blog deleted", res);
+    const blogs = await blogService.getFeaturedContributorBlogs();
+    new CustomResponse(200, true, "Featured contributor blogs retrieved successfully", res, blogs);
   } catch (error) {
-    next(new InternalServerError("Failed to delete blog post."));
+    console.error("Get featured contributor blogs error:", error);
+    next(new InternalServerError("Failed to retrieve featured contributor blogs."));
   }
 };

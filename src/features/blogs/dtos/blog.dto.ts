@@ -1,36 +1,45 @@
-import { Prisma } from "@prisma/client";
+import { UserRole } from '@prisma/client';
 
 export interface CreateBlogDto {
   title: string;
   content: string;
-  category: string;
-  imageUrl?: string | null; 
+  category: "Internal Blog" | "External Blog";
+  imageUrl?: string | null;
+  author?: string; 
+  tags?: string[]; 
+   socialMediaLinks?: string[]
 }
 
 export interface UpdateBlogDto {
   title?: string;
+  isPublished?: boolean;
   content?: string;
-  category?: string;
+  category?: "Internal Blog" | "External Blog";
   imageUrl?: string | null;
+   author?: string
 }
 
-export interface BlogFilterDto {
-  category?: "Internal Blog" | "External Blog" | "Campaigns";
-  page?: number;
-  limit?: number;
+export interface FeaturedContributor {
+  id: string;
+  userId: string;
 }
 
 export interface BlogPost {
   id: string;
   title: string;
   content: string;
-  category: string;
-  imageUrl: string | null; 
+  timeToRead?: number; 
+  category: string
+  isPublished: boolean;
+  imageUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  tags?: string[];
+  socialMediaLinks?: string[]
+  author?: string;
+  authorAvatar?: string | null;
+  featuredContributors?: FeaturedContributor[];
 }
 
-export interface BlogResponse {
-  data: BlogPost[];
-  totalCount: number;
-}
+
+
