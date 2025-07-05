@@ -7,6 +7,7 @@ import userAdminRoutes from './userAdmin/routes/userManagement';
 import blogRoutes from './blogs/routes/blog.route';
 import campaignRoutes from './campaign/routes/campaign.route';
 import propertyRoutes from './property/routes/post.route';
+import advertRoutes from './advertiseWithUs/route';
 const appRouter = express.Router();
 
 
@@ -18,6 +19,7 @@ const appRouter = express.Router();
  appRouter.use("/blog",blogRoutes );
  appRouter.use("/campaign",campaignRoutes );
  appRouter.use("/properties",propertyRoutes );
+ appRouter.use("/advertiseMent", advertRoutes);
 
 
 export default appRouter;

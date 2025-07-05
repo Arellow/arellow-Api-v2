@@ -95,6 +95,7 @@ model User {
   mortgage           MortgageCalculationDraft[]
   Campaign           Campaign[]
   preQualifications  PreQualification[]
+  featuredContributors BlogFeaturedContributor[] @relation("UserFeaturedContributors")
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
   Blog               Blog[]
@@ -208,7 +209,7 @@ model Media {
   propertyId String   @db.ObjectId
 
   type      MediaType
-  photoType PhotoType? // Optional if not PHOTO
+  photoType PhotoType? 
 
   url      String
   publicId String
@@ -233,7 +234,7 @@ model RewardHistory {
   description String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
-  propertyId  String   @db.ObjectId // This is a foreign key
+  propertyId  String   @db.ObjectId 
   property    Property @relation(fields: [propertyId], references: [id])
 }
 
@@ -241,7 +242,7 @@ model RewardWithdrawal {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   user              User     @relation(fields: [userId], references: [id])
   userId            String   @db.ObjectId
-  points            Int // amount the user requested to withdraw
+  points            Int 
   bankAccountName   String
   bankAccountNumber String
   bankName          String
@@ -284,7 +285,7 @@ model PropertyRequest {
   budget               Float?
   property_description String?
 
-  status    String   @default("pending") // pending, approved, rejected
+  status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    String?  @db.ObjectId
@@ -308,7 +309,7 @@ model PreQualification {
   employer_name       String?
   level_of_employment String?
   bank_name           String?
-  userId              String   @db.ObjectId // Required for linking to User
+  userId              String   @db.ObjectId
   user                User     @relation(fields: [userId], references: [id])
   createdAt           DateTime @default(now())
 }
@@ -355,16 +356,42 @@ model State {
   image String
 }
 
+
+
 model Blog {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
+  user             User     @relation(fields: [userId], references: [id])
+  title            String
+  content          String
+  author           String
+  imageUrl         String?  @db.String
+  socialMediaLinks String[] @default([]) @db.String
+  tags             String[]  @default(["tech"])
+  featuredContributors BlogFeaturedContributor[] @relation("BlogFeaturedContributors")
+  category         BlogCategory @default(INTERNAL)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isPublished       Boolean @default(false)
+  timeToRead      Int      @default(5) 
+  @@index([userId])
+  @@map("blogs")
+}
+enum BlogCategory {
+  INTERNAL
+  EXTERNAL
+}
+
+model BlogFeaturedContributor {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  content   String
-  category  String   @default("Internal Blog")
-  imageUrl  String?
+  user      User     @relation(fields: [userId], references: [id], name: "UserFeaturedContributors")
+  blogId    String   @db.ObjectId
+  blog      Blog     @relation(fields: [blogId], references: [id], name: "BlogFeaturedContributors")
+  featured  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, blogId])
   @@index([userId])
 }

@@ -3,9 +3,8 @@ import { PropertyService } from "./service";
 import { InternalServerError } from "../../lib/appError";
 import CustomResponse from "../../utils/helpers/response.util";
 import { PreQualificationDto } from "./dto";
-// import { createPreQualificationMailOptions } from "../../utils/mailer";
 import { nodeMailerController } from "../../utils/nodemailer";
-import { createPrequalificationMailOptions } from "utils/mailer";
+import { createPrequalificationMailOptions } from "../../utils/mailer";
 
 const propertyService = new PropertyService();
 
