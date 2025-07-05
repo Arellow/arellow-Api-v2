@@ -2,7 +2,7 @@ import { RegisterDTO,UserResponseDTO } from "../dtos/registerUserDto";
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 // import jwt from "jsonwebtoken";
-import { DuplicateError } from "../../../lib/appError";
+import { DuplicateError, UnAuthorizedError } from "../../../lib/appError";
 import { emailVerificationMailOption } from "../../../utils/mailer";
 import { mailController, 
   // nodeMailerController 
@@ -11,11 +11,16 @@ import { generateToken } from "../../../utils/jwt";
 
 export class AuthService {
   public static async registerUser(dto: RegisterDTO): Promise<UserResponseDTO> {
-    const { username, password, email, phone_number, fullname } = dto;
+    const { username, password, email, phone_number, fullname , role} = dto;
 
-    const emailLower = email.toLowerCase();
+
+    if(role == "SUPER_ADMIN" || role == "ADMIN"){
+      throw new UnAuthorizedError("Forbidden: unauthorise user role", 403);
+    }
+
+
     const existingUser = await Prisma.user.findUnique({
-      where: { email: emailLower },
+      where: { email },
     });
 
     if (existingUser) {
@@ -27,13 +32,11 @@ export class AuthService {
     const newUser = await Prisma.user.create({
       data: {
         username,
-        email: emailLower,
+        email,
         password: hashedPassword,
         phone_number,
-        role:"REALTOR",
+        role,
         fullname,
-        is_verified: false,
-        avatar: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?w=740"
       },
     });
     const verificationToken = generateToken(newUser.id, newUser.email);
@@ -43,14 +46,6 @@ export class AuthService {
     mailController({from: "noreply@arellow.com", ...mailOptions})
 
 
-    // const msg = {
-//   to: 'rahkeem.shlome@fsitip.com', // Change to your recipient
-//   from: 'info@arellow.com', // Change to your verified sender
-//   subject: 'Sending with SendGrid is Fun',
-//   text: 'and easy to do anywhere, even with Node.js',
-//   html: '<strong>and easy to do anywhere, even with Node.js</strong>',
-// }
-
     return {
       id: newUser.id,
       username: newUser.username,
@@ -59,7 +54,17 @@ export class AuthService {
       fullname: newUser.fullname,
       is_verified: newUser.is_verified,
       createdAt: newUser.createdAt,
-      avatar:newUser.avatar
+      avatar:newUser.avatar,
+      role:newUser.role
     };
   }
 }
+
+
+    // const msg = {
+//   to: 'rahkeem.shlome@fsitip.com', // Change to your recipient
+//   from: 'info@arellow.com', // Change to your verified sender
+//   subject: 'Sending with SendGrid is Fun',
+//   text: 'and easy to do anywhere, even with Node.js',
+//   html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+// }
