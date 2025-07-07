@@ -1,8 +1,7 @@
 import express from 'express'
 import { calculateProjectMortgage } from '../controllers/FetchProperties';
 import authenticate, { isSuspended, requireRole } from '../../../middlewares/auth.middleware';
-// import { createPropertyRequest } from '../../requestProperties/controllers/request';
-import { getAllStates, seedNigerianStates } from '../controllers/seedPropImages';
+import { getAllStates } from '../controllers/seedPropImages';
 import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, 
     unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, 
     getPropertiesByUser, mediaForProperty, recentProperties, featureProperties, createNewProperty,
@@ -16,19 +15,22 @@ import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleP
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
+import { createPropertyRequest, propertyRequestDetail, propertyRequests } from '../../requestProperties/controllers/request';
 
 const propertyRoutes= express.Router();
 
-// propertyRoutes.post("/like", authenticate, toggleProjectLike );
-propertyRoutes.post("/seed",seedNigerianStates)
-propertyRoutes.get("/seed",getAllStates)
 propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property
-// propertyRoutes.post("/requestProperty",authenticate,createPropertyRequest);
+propertyRoutes.post("/requestProperty", createPropertyRequest);
+propertyRoutes.get("/requestProperties", propertyRequests);
+propertyRoutes.get("/requestProperty/:id/detail",authenticate, 
+    // requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), 
+    propertyRequestDetail);
 
 
 // test by flow
+propertyRoutes.get("/seed",getAllStates);
 propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
 propertyRoutes.post("/createproperty", authenticate, isSuspended, multipleupload, createNewProperty);

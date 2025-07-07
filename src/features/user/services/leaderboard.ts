@@ -73,7 +73,6 @@ export const getTopRealtorsLeaderboard = async (): Promise<LeaderboardResponse> 
       leaderboard: topRealtors,
     };
   } catch (error) {
-    console.error("[getTopRealtorsLeaderboard] Error:", error);
     throw new InternalServerError("Failed to fetch leaderboard.");
   }
 };

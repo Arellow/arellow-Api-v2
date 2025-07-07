@@ -31,11 +31,10 @@ enum KycDocumentType {
   NATIONALID
 }
 
- enum UserPhotoType {
- PROFILE
+enum UserPhotoType {
+  PROFILE
   KYC
-
- } 
+}
 
 model UserMedia {
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -60,15 +59,16 @@ model UserMedia {
 
 model Kyc {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
-   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @db.ObjectId
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String          @db.ObjectId
   documentType   KycDocumentType
   documentNumber String
   documentPhoto  String
   status         KycStatus       @default(PENDING)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-   @@unique(userId)
+
+  @@unique(userId)
 }
 
 model User {
@@ -89,18 +89,18 @@ model User {
   company           Company?           @relation(fields: [companyId], references: [id])
   likes             UserPropertyLike[]
 
-  properties         Property[]                 @relation("UserProperties")
-  approvedProperties Property[]                 @relation("ApprovedProperties")
-  PropertyRequest    PropertyRequest[]
-  mortgage           MortgageCalculationDraft[]
-  Campaign           Campaign[]
-  preQualifications  PreQualification[]
-  featuredContributors BlogFeaturedContributor[] @relation("UserFeaturedContributors")
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-  Blog               Blog[]
+  properties           Property[]                 @relation("UserProperties")
+  approvedProperties   Property[]                 @relation("ApprovedProperties")
+  // PropertyRequest    PropertyRequest[]
+  mortgage             MortgageCalculationDraft[]
+  Campaign             Campaign[]
+  preQualifications    PreQualification[]
+  featuredContributors BlogFeaturedContributor[]  @relation("UserFeaturedContributors")
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  Blog                 Blog[]
 
-  kyc   Kyc?  
+  kyc Kyc?
 }
 
 enum UserRole {
@@ -118,10 +118,10 @@ enum PropertyStatus {
 }
 
 model Property {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String
-  category     String
+  category     PropertyCategory
   features     String[]
   amenities    Amenity[]
   country      String
@@ -162,6 +162,10 @@ model Property {
 enum SalesStatus {
   SELLING
   SOLD
+}
+
+enum PropertyCategory {
+  RESIDENTIAL
 }
 
 model Amenity {
@@ -209,7 +213,7 @@ model Media {
   propertyId String   @db.ObjectId
 
   type      MediaType
-  photoType PhotoType? 
+  photoType PhotoType?
 
   url      String
   publicId String
@@ -234,7 +238,7 @@ model RewardHistory {
   description String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
-  propertyId  String   @db.ObjectId 
+  propertyId  String   @db.ObjectId
   property    Property @relation(fields: [propertyId], references: [id])
 }
 
@@ -242,7 +246,7 @@ model RewardWithdrawal {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   user              User     @relation(fields: [userId], references: [id])
   userId            String   @db.ObjectId
-  points            Int 
+  points            Int
   bankAccountName   String
   bankAccountNumber String
   bankName          String
@@ -268,28 +272,35 @@ model Subscribe {
 }
 
 model PropertyRequest {
-  id                   String  @id @default(auto()) @map("_id") @db.ObjectId
-  name                 String
-  agent_category       String?
-  email                String
-  phone_number         String
-  country              String  @default("Nigeria")
-  state                String
-  property_location    String
-  neighborhood         String
-  property_category    String
-  property_type        String
-  furnishing_status    String?
-  number_of_bedrooms   Int?
-  number_of_bathrooms  Int?
-  budget               Float?
-  property_description String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  username    String
+  userRole    String
+  email       String
+  phoneNumber String
+  propertyCategory PropertyCategory
+  propertyType     String
+  furnishingStatus String
+  propertyAddress PropertyAddress
+  numberOfBedrooms  Int    @default(0)
+  numberOfBathrooms Int    @default(0)
+  budget            Int    @default(0)
+  description          String?
 
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String?  @db.ObjectId
-  user      User?    @relation(fields: [userId], references: [id])
+  status    PropertyRequestStatus @default(PENDING)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+}
+
+enum PropertyRequestStatus {
+  PENDING
+  ASSIGN
+}
+
+type PropertyAddress {
+  country  String
+  city     String
+  state    String
+  location String
 }
 
 model PreQualification {
@@ -356,27 +367,27 @@ model State {
   image String
 }
 
-
-
 model Blog {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String   @db.ObjectId
-  user             User     @relation(fields: [userId], references: [id])
-  title            String
-  content          String
-  author           String
-  imageUrl         String?  @db.String
-  socialMediaLinks String[] @default([]) @db.String
-  tags             String[]  @default(["tech"])
+  id                   String                    @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String                    @db.ObjectId
+  user                 User                      @relation(fields: [userId], references: [id])
+  title                String
+  content              String
+  author               String
+  imageUrl             String?                   @db.String
+  socialMediaLinks     String[]                  @default([]) @db.String
+  tags                 String[]                  @default(["tech"])
   featuredContributors BlogFeaturedContributor[] @relation("BlogFeaturedContributors")
-  category         BlogCategory @default(INTERNAL)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  isPublished       Boolean @default(false)
-  timeToRead      Int      @default(5) 
+  category             BlogCategory              @default(INTERNAL)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  isPublished          Boolean                   @default(false)
+  timeToRead           Int                       @default(5)
+
   @@index([userId])
   @@map("blogs")
 }
+
 enum BlogCategory {
   INTERNAL
   EXTERNAL

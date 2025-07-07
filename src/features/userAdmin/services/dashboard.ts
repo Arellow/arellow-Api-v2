@@ -61,8 +61,8 @@ export class DashboardService {
         this.countProperty({ where: { userId, salesStatus: "SOLD", createdAt: { gte: lastMonthStart, lt: lastMonthEnd } } }),
         this.countProperty({ where: { userId, status: PropertyStatus.REJECTED, createdAt: { gte: thisMonthStart, lt: thisMonthEnd } } }),
         this.countProperty({ where: { userId, status: PropertyStatus.REJECTED, createdAt: { gte: lastMonthStart, lt: lastMonthEnd } } }),
-        this.countPropertyRequest({ where: { userId, createdAt: { gte: thisMonthStart, lt: thisMonthEnd } } }),
-        this.countPropertyRequest({ where: { userId, createdAt: { gte: lastMonthStart, lt: lastMonthEnd } } }),
+        this.countPropertyRequest({ where: { status: "ASSIGN" } }),
+        this.countPropertyRequest({ where: { status: "PENDING" } }),
       ]);
 
       return {

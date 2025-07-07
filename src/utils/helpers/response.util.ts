@@ -19,13 +19,13 @@ export default class CustomResponse {
 
   private sendResponse(res: ExpressResponse) {
     if (this.data) {
-      return res.status(this.code).send({
+      return res.status(this.code).json({
         success: this.success,
         message: this.message,
         data: this.data
       });
     } else {
-      return res.status(this.code).send({
+      return res.status(this.code).json({
         success: this.success,
         message: this.message
       });

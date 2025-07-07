@@ -1,16 +1,6 @@
-// import app from "./app";
 import logger from "./middlewares/logger.middleware";
 import { PORT } from "./utils/constants.util";
-
-
-
-
-
-// export default app;
-
-
 import 'dotenv/config';
-// import './types/express';
 import express from "express";
 import indexMiddleware from "./middlewares/index.middleware";
 import swaggerUi from "swagger-ui-express";
@@ -23,8 +13,11 @@ indexMiddleware(app);
 
 app.use("/arellow-swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use("/", (req, res,) => {
+app.use("/", async(req, res) => {
+
+
     res.send("welcome to arellow home");
+
 });
 
 // Custom error handling middleware - moved after routes

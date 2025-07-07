@@ -1,8 +1,6 @@
-import { InternalServerError } from "../../../lib/appError";
-import { Prisma } from "../../../lib/prisma";
-import { Request, Response, NextFunction } from "express";
 
-// Define the State interface based on the Prisma schema
+import { Request, Response, } from "express";
+
 interface State {
   name: string;
   image: string;
@@ -50,48 +48,6 @@ const NIGERIAN_STATES: State[] = [
   { name: "FCT", image: "https://www.shutterstock.com/image-photo/abuja-fctnigeria-may-13th-2018-260nw-1090600706.jpg" },
 ];
 
-// Type for the createMany response (Prisma returns count)
-interface CreateManyResponse {
-  count: number;
-}
-
-//Seed Nigerian states
-export const seedNigerianStates = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // Check if states already exist (idempotency)
-    const existing = await Prisma.state.findMany();
-    if (existing && existing.length >= NIGERIAN_STATES.length) {
-      res.status(200).json({
-        status: "success",
-        message: "States already seeded.",
-        data: existing,
-        succeeded: true,
-      });
-      return;
-    }
-
-    const stateObjects: State[] = NIGERIAN_STATES.map(({ name, image }) => ({ name, image }));
-
-    // Insert states (skip duplicates)
-    const created: CreateManyResponse = await Prisma.state.createMany({
-      data: stateObjects,
-    });
-
-    res.status(201).json({
-      status: "success",
-      message: "Nigerian states seeded successfully.",
-      data: created,
-      succeeded: true,
-    });
-  } catch (error) {
-    console.error("seedNigerianStates error:", error);
-    throw new InternalServerError( "Something went wrong while seeding states");
-  }
-};
 
 //Get all states
 export const getAllStates = async (
@@ -99,10 +55,9 @@ export const getAllStates = async (
   res: Response
 ): Promise<void> => {
   try {
-    const states: State[] = await Prisma.state.findMany();
-    res.status(200).json({ success: true, data: states });
+
+    res.status(200).json({ success: true, data: NIGERIAN_STATES });
   } catch (error) {
-    console.error("Error fetching states:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

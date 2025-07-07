@@ -12,7 +12,7 @@ import { updateUserSchema } from "../../../validations/user.validation";
 import { getRealtorsLeaderboard } from "../controllers/leaderboard";
 
 const usersRoutes = Router();
-usersRoutes.get("/leaderboard/:userId", authenticate, getRealtorsLeaderboard);
+usersRoutes.get("/leaderboard", getRealtorsLeaderboard);
 
 usersRoutes.get("/:userId", getUserById);
 usersRoutes.patch(
