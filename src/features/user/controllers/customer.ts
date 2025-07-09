@@ -7,9 +7,9 @@ import { KycStatus, Prisma as prisma } from "@prisma/client";
 import { swrCache } from "../../../lib/cache";
 
 
-export const createKyc = async (req: Request, res: Response, next: NextFunction) => {
+export const createCustomerSupport = async (req: Request, res: Response, next: NextFunction) => {
 
-    const { documentType, documentNumber } = req.body;
+    const { issueCategory, description } = req.body;
 
     try {
 
@@ -20,32 +20,7 @@ export const createKyc = async (req: Request, res: Response, next: NextFunction)
             return next(new InternalServerError("Please verify your email to continue this process.", 401));
         }
 
-
-        const kyc = await Prisma.kyc.findUnique({
-            where: { userId }
-        });
-
-
-        if (kyc && kyc.status == 'VERIFIED') {
-            return next(new InternalServerError("Credential was verify", 403));
-        }
-
-        if (kyc && kyc.status == 'PENDING') {
-            return next(new InternalServerError("Verification still in process", 403));
-        }
-
-        if(kyc){
-            // allso delete avatar
-            await Prisma.kyc.deleteMany({
-            where: { userId }
-        });
-        }
-
-        
-
-
         const documentPhoto = "";
-
 
         // await Prisma.kyc.create({
         //     data: {
@@ -74,7 +49,7 @@ export const createKyc = async (req: Request, res: Response, next: NextFunction)
 }
 
 
-export const kycDetail = async (req: Request, res: Response, next: NextFunction) => {
+export const customerSupportDetail = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
     const cacheKey = `kyc:${id}`;
@@ -115,7 +90,7 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
 
 };
 
-export const userKycs = async (req: Request, res: Response, next: NextFunction) => {
+export const customerSupports = async (req: Request, res: Response, next: NextFunction) => {
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -188,45 +163,45 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
 
 
 
-export const changeKycStatus = async (req: Request, res: Response, next: NextFunction) => {
+// export const changeKycStatus = async (req: Request, res: Response, next: NextFunction) => {
 
-    const { id } = req.params;
-     const { status } = req.body;
+//     const { id } = req.params;
+//      const { status } = req.body;
 
-    try {
+//     try {
 
-        const kyc = await Prisma.kyc.findUnique({
-            where: { id }
-        });
-
-
-        if(!kyc){
-            return next(new InternalServerError("Kyc invalid", 403));
-        }
+//         const kyc = await Prisma.kyc.findUnique({
+//             where: { id }
+//         });
 
 
-        if (status == 'VERIFIED') {
-            // return next(new InternalServerError("Credential was verify", 403));
-        }
-
-        if (status == 'FAILED') {
-            // return next(new InternalServerError("Verification still in process", 403));
-        }
-
-        await Prisma.kyc.update({
-           where: { id },
-            data: {
-                status
-            }
-        });
+//         if(!kyc){
+//             return next(new InternalServerError("Kyc invalid", 403));
+//         }
 
 
-        await redis.del("kyc:*");
+//         if (status == 'VERIFIED') {
+//             // return next(new InternalServerError("Credential was verify", 403));
+//         }
 
-        new CustomResponse(200, true, "successfully", res,);
-    } catch (error) {
-        next(new InternalServerError("Internal server error", 500));
-    }
+//         if (status == 'FAILED') {
+//             // return next(new InternalServerError("Verification still in process", 403));
+//         }
+
+//         await Prisma.kyc.update({
+//            where: { id },
+//             data: {
+//                 status
+//             }
+//         });
 
 
-}
+//         await redis.del("kyc:*");
+
+//         new CustomResponse(200, true, "successfully", res,);
+//     } catch (error) {
+//         next(new InternalServerError("Internal server error", 500));
+//     }
+
+
+// }

@@ -117,8 +117,19 @@ export function requireRole(...allowedRoles: UserRole[]) {
        return
     }
 
-    next();
+    if(user.role == "SUPER_ADMIN"){
+       next();
+    }  else {
+      // this will be change to admin permission
+      next();
+    }
+     
   };
 }
 
 // 
+const PERMISSIONS = {
+  KYC: ["create", "read", "update", "delete"],
+  PROPERTY: ["create", "read", "update", "delete"],
+}
+

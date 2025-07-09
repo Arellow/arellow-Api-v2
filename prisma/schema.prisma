@@ -111,6 +111,20 @@ enum UserRole {
   BUYER
 }
 
+
+model AdminPermission { 
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  action       actionRole[]
+  resource     String[]
+}
+
+enum actionRole {
+  KYC
+  PROPERTY
+  USER
+}
+
+
 enum PropertyStatus {
   PENDING
   APPROVED

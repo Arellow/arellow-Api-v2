@@ -6,12 +6,18 @@ import {
   updateUserRole,
   suspendUser,
 } from "../controllers/user";
-import authenticate, { isAdmin } from "../../../middlewares/auth.middleware";
+import authenticate, { isAdmin, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
 import { getRealtorsLeaderboard } from "../controllers/leaderboard";
+import { changeKycStatus, createKyc, kycDetail, userKycs } from "../controllers/kyc";
+import { UserRole } from "@prisma/client";
 
 const usersRoutes = Router();
+usersRoutes.post("/kyc",  authenticate,  createKyc);
+usersRoutes.get("/kycs", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), userKycs);
+usersRoutes.get("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  kycDetail);
+usersRoutes.patch("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  changeKycStatus);
 usersRoutes.get("/leaderboard", getRealtorsLeaderboard);
 
 usersRoutes.get("/:userId", getUserById);

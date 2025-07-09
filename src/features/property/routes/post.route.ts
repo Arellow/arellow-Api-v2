@@ -23,10 +23,8 @@ propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property
 propertyRoutes.post("/requestProperty", createPropertyRequest);
-propertyRoutes.get("/requestProperties", propertyRequests);
-propertyRoutes.get("/requestProperty/:id/detail",authenticate, 
-    // requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), 
-    propertyRequestDetail);
+propertyRoutes.get("/requestProperties", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertyRequests);
+propertyRoutes.get("/requestProperty/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  propertyRequestDetail);
 
 
 // test by flow
