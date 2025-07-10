@@ -34,6 +34,7 @@ enum KycDocumentType {
 enum UserPhotoType {
   PROFILE
   KYC
+  TICKET
 }
 
 model UserMedia {
@@ -55,6 +56,8 @@ model UserMedia {
   format   String?
 
   createdAt DateTime @default(now())
+  Ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+  ticketId  String?  @db.ObjectId
 }
 
 model Kyc {
@@ -100,7 +103,9 @@ model User {
   updatedAt            DateTime                   @updatedAt
   Blog                 Blog[]
 
-  kyc Kyc?
+  kyc             Kyc?
+  tickets         Ticket[]
+  AdminPermission AdminPermission?
 }
 
 enum UserRole {
@@ -111,11 +116,14 @@ enum UserRole {
   BUYER
 }
 
+model AdminPermission {
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  action   actionRole[]
+  resource String[]
+  userId   String       @db.ObjectId
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-model AdminPermission { 
-  id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  action       actionRole[]
-  resource     String[]
+  @@unique(userId)
 }
 
 enum actionRole {
@@ -124,6 +132,25 @@ enum actionRole {
   USER
 }
 
+model Ticket {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  category     String
+  slug         String
+  description  String
+  ticketPhotos UserMedia[]
+  status       ticketStatus @default(ONGOING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ticketStatus {
+  ONGOING
+  RESOLVED
+}
 
 enum PropertyStatus {
   PENDING
@@ -286,19 +313,19 @@ model Subscribe {
 }
 
 model PropertyRequest {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  username    String
-  userRole    String
-  email       String
-  phoneNumber String
-  propertyCategory PropertyCategory
-  propertyType     String
-  furnishingStatus String
-  propertyAddress PropertyAddress
-  numberOfBedrooms  Int    @default(0)
-  numberOfBathrooms Int    @default(0)
-  budget            Int    @default(0)
-  description          String?
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  username          String
+  userRole          String
+  email             String
+  phoneNumber       String
+  propertyCategory  PropertyCategory
+  propertyType      String
+  furnishingStatus  String
+  propertyAddress   PropertyAddress
+  numberOfBedrooms  Int              @default(0)
+  numberOfBathrooms Int              @default(0)
+  budget            Int              @default(0)
+  description       String?
 
   status    PropertyRequestStatus @default(PENDING)
   createdAt DateTime              @default(now())

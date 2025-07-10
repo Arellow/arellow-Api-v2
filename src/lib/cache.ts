@@ -31,3 +31,20 @@ async function revalidate<T>(key: string, fetcher: () => Promise<T>, ttl: number
     console.warn("Revalidation failed:", err);
   }
 }
+
+
+
+export async function deleteMatchingKeys(pattern: string) {
+  const stream = redis.scanStream({ match: pattern });
+  const pipeline = redis.pipeline();
+
+  stream.on('data', (keys: string[]) => {
+    if (keys.length) {
+      keys.forEach((key) => pipeline.del(key));
+    }
+  });
+
+  stream.on('end', async () => {
+    await pipeline.exec();
+  });
+}

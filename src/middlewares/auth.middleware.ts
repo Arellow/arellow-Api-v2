@@ -67,6 +67,15 @@ export const isSuspended = (req: Request, res: Response, next: NextFunction): vo
   next();
 };
 
+export const isVerify = (req: Request, res: Response, next: NextFunction): void => {
+  const is_user_verified = req.user?.is_verified!;
+  // if (!is_user_verified) {
+  //   res.status(403).json({ success: false, message: "Unauthorized: User email not verify" });
+  //   return;
+  // }
+  next();
+};
+
 export const requireKyc = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id;
 

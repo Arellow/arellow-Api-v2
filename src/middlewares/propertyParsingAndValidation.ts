@@ -18,8 +18,11 @@ export function parseArrayFields(fields: string[]): RequestHandler {
   };
 }
 
+
+
 export function validateSchema(schema: ObjectSchema): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
+
     const { error } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -32,3 +35,4 @@ export function validateSchema(schema: ObjectSchema): RequestHandler {
     next();
   };
 }
+

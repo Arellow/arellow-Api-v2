@@ -430,6 +430,8 @@ export const sendForgetPasswordMailOption = async (
   return mailOptions;
 };
 
+
+
 export const emailVerificationMailOption = async (
   email: string,
   verificationLink: any
@@ -480,6 +482,197 @@ export const emailVerificationMailOption = async (
     `
   };
 };
+
+
+export const createTicketMailOption = async ({  email,
+  userName,
+  ticketNumber,
+  subject,
+  date,}:
+{  email: string,
+  userName: string,
+  ticketNumber: string,
+  subject: string,
+  date: string,}
+) => {
+  return {
+    // from: process.env.SMTP_EMAIL,
+    to: email,
+    subject: "Support Ticket Confirmation",
+    html: `
+    <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Support Ticket Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    /* Responsive adjustments */
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 100% !important;
+        padding: 10px !important;
+      }
+      .content {
+        font-size: 16px !important;
+      }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding: 20px 0;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" class="container" style="background-color:#ffffff; border-radius:8px; padding: 20px; width:600px; max-width:100%;">
+          <tr>
+            <td align="center" style="padding-bottom: 20px; border-bottom:1px solid #ddd;">
+              <h1 style="color:#1a73e8; margin:0;">Support Ticket Received</h1>
+              <p style="margin: 5px 0 0 0; color:#555;">Thank you for contacting us</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content" style="padding: 20px; color:#333; font-size: 14px; line-height: 1.6;">
+              <p>Hi <strong>${userName}</strong>,</p>
+              <p>We’ve received your request and a member of our support team will review it shortly. Here are the ticket details:</p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:10px; margin-top:15px;">
+                <tr>
+                  <td style="padding:10px;">
+                    <p><strong>Ticket Number:</strong> ${ticketNumber}</p>
+                    <p><strong>Subject:</strong> ${subject}</p>
+                    <p><strong>Status:</strong> Open</p>
+                    <p><strong>Submitted:</strong> ${date}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p>If you need to update your request, just reply to this email. We aim to respond within 24 hours.</p>
+
+              <p>Best regards,<br>
+              <strong>Arellow Support Team</strong></p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="font-size:12px; color:#888; padding: 20px 10px 0 10px; border-top:1px solid #ddd;">
+              &copy; 2025 Arellow Inc. &nbsp;|&nbsp;
+              <a href="mailto:support@arellow.com" style="color:#888; text-decoration:none;">support@arellow.com</a>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
+    
+    
+    `
+    
+  };
+};
+
+export const replyTicketMailOption = async ({  email,
+    user_name, 
+    ticket_id, 
+    ticket_subject,
+    ticket_status,
+    support_reply,
+    agent_name
+}:
+{  email: string,
+ user_name: string, 
+    ticket_id: string, 
+    ticket_subject: string,
+    ticket_status: string,
+    support_reply: string,
+    agent_name: string
+}
+) => {
+  return {
+    // from: process.env.SMTP_EMAIL,
+    to: email,
+    subject: "Support Ticket Reply",
+    html: `
+    <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Support Ticket Reply</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 100% !important;
+        padding: 10px !important;
+      }
+      .content {
+        font-size: 16px !important;
+      }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding: 20px 0;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" class="container" style="background-color:#ffffff; border-radius:8px; padding: 20px; width:600px; max-width:100%;">
+          <tr>
+            <td align="center" style="padding-bottom: 20px; border-bottom:1px solid #ddd;">
+              <h1 style="color:#1a73e8; margin:0;">Ticket Update: ${ticket_subject}</h1>
+              <p style="margin: 5px 0 0 0; color:#555;">Ticket ${ticket_id} | Status: ${ticket_status}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content" style="padding: 20px; color:#333; font-size: 14px; line-height: 1.6;">
+              <p>Hi <strong>${user_name}</strong>,</p>
+
+              <p>We’ve reviewed your support request and here’s our response:</p>
+
+              <blockquote style="background-color: #f9f9f9; border-left: 4px solid #1a73e8; margin: 20px 0; padding: 15px;">
+                ${support_reply}
+              </blockquote>
+
+              <p>If you have further questions or need clarification, feel free to reply to this email. We’re here to help!</p>
+
+              <p>Thanks for your patience,<br>
+              <strong>${agent_name}</strong><br>
+              Customer Service <br>
+              Arellow Support Team</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="font-size:12px; color:#888; padding: 20px 10px 0 10px; border-top:1px solid #ddd;">
+              &copy; ${new Date().getFullYear()} arellow Inc. &nbsp;|&nbsp;
+              <a href="mailto:support@arellow.com" style="color:#888; text-decoration:none;">support@arellow.com</a>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
+    
+    `
+    
+    
+  };
+};
+
 
 export const suspendedAccountMailOption = async (
   email: string,
