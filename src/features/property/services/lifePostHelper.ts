@@ -36,7 +36,11 @@ export const likePostHelper = async(userId:string) => {
             }
           },
         });
+
+
+        console.log({likes})
     
-    return  likes.map((like) => like.property);
+    // return  likes.map((like) => like.property);
+    return likes;
 
 }

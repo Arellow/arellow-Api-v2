@@ -5,7 +5,7 @@ import dotenv from 'dotenv'
 import { Prisma } from "../../../lib/prisma";
 import { redis } from "../../../lib/redis";
 import { Prisma as prisma, PropertyCategory } from "@prisma/client";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 dotenv.config();
 
 
@@ -56,7 +56,7 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
       }
     })
 
-    await redis.del("propertyRequests:*");
+    await deleteMatchingKeys("propertyRequests:*");
 
 
     new CustomResponse(201, true, "Property request created successfully", res,);
@@ -129,34 +129,18 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
   }
 
   try {
-    const upperSearch = (search as string).toUpperCase();
 
+      const matchedCategory = getValidCategory(search);
 
     const filters = search
       ? {
         OR: [
-          { propertyCategory: upperSearch as PropertyCategory }, // enum match
-          // { propertyType: upperSearch as PropertyType },    
-          {
-            propertyAddress: {
-              country: { contains: search, mode: "insensitive" },
-            },
-          },
-          {
-            propertyAddress: {
-              state: { contains: search, mode: "insensitive" },
-            },
-          },
-          {
-            propertyAddress: {
-              city: { contains: search, mode: "insensitive" },
-            },
-          },
-          {
-            propertyAddress: {
-              location: { contains: search, mode: "insensitive" },
-            },
-          },
+          matchedCategory ? { propertyCategory: matchedCategory } : null,
+        { propertyType: { contains: search, mode: "insensitive" } },
+        { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
+        { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
+        { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
+        { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } },
         ].filter(Boolean) as prisma.PropertyRequestWhereInput[],
       }
       : {};
@@ -197,6 +181,17 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
     new CustomResponse(200, true, "Fetched successfully", res, result);
   } catch (error) {
+    console.log(error)
     next(new InternalServerError("Internal server error", 500));
   }
 };
+
+
+function getValidCategory(value: string): PropertyCategory | null {
+  const lowerValue = value.toLowerCase();
+  return (
+    Object.values(PropertyCategory).find(
+      (category) => category.toLowerCase().includes(lowerValue)
+    ) ?? null
+  );
+}

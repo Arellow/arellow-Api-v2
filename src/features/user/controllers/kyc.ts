@@ -4,7 +4,7 @@ import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { redis } from "../../../lib/redis";
 import { Kyc, KycDocumentType, KycStatus, Prisma as prisma } from "@prisma/client";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { getDataUri } from "../../../middlewares/multer";
 import axios from "axios";
 
@@ -403,8 +403,7 @@ export const changeKycStatus = async (req: Request, res: Response, next: NextFun
             }
         });
 
-
-        await redis.del("kyc:*");
+         await deleteMatchingKeys("kyc:*");
 
         new CustomResponse(200, true, "successfully", res,);
     } catch (error) {

@@ -205,9 +205,26 @@ enum SalesStatus {
   SOLD
 }
 
+
 enum PropertyCategory {
-  RESIDENTIAL
+  Apartment
+  Bungalow
+  Duplex
+  Detached_House         @map("Detached House")
+  Semi_detached_House    @map("Semi-detached House")
+  Mansion
+  Penthouse
+  Studio_Apartment       @map("Studio Apartment")
+  Shared_Apartment       @map("Shared Apartment")
+  Serviced_Apartment     @map("Serviced Apartment")
+  Co_living_Space        @map("Co-living Space")
+  Office_Space           @map("Office Space")
+  Commercial_Property    @map("Commercial Property")
+  Warehouse
+  Short_let              @map("Short-let")
+  Hostel_Student_Housing @map("Hostel / Student Housing")
 }
+
 
 model Amenity {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId

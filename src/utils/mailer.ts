@@ -1,7 +1,6 @@
 export const subscribeMailOption = async (email: string) => {
   // const capitalizedRecipientName = username.charAt(0).toUpperCase() + username.slice(1)
   const mailOptions = {
-    from: process.env.SMTP_EMAIL, // sender address
     to: email, // list of receivers
     subject: "Arellow", // Subject line
     html: `
@@ -369,29 +368,6 @@ export const subscribeMailOption = async (email: string) => {
   return mailOptions;
 };
 
-// export const sendForgetPasswordMailOption = async ({ email , username }, resetCode) => {
-//     const mailOptions = {
-//       from: process.env.MAIL_FROM,
-//       to: email,
-//       subject: "Password Reset Code",
-//       html: `
-//         <div style="font-family: Arial, sans-serif; padding: 20px;">
-//           <h2>Password Reset Request</h2>
-//           <p>Hi ${username || "User"},</p>
-//           <p>We received a request to reset your password. Use the 6-digit code below to proceed:</p>
-//           <div style="font-size: 24px; font-weight: bold; color: #333; padding: 10px 0;">
-//             ${resetCode}
-//           </div>
-//           <p>This code will expire in 24 hours. If you didn’t request a password reset, you can ignore this message.</p>
-//           <br />
-//           <p>Thanks,</p>
-//           <p>The Cue Team</p>
-//         </div>
-//       `,
-//     };
-
-//     return mailOptions;
-//   };
 
 interface SendForgetPasswordMailOptionParams {
   email: string;
@@ -437,7 +413,6 @@ export const emailVerificationMailOption = async (
   verificationLink: any
 ) => {
   return {
-    // from: process.env.SMTP_EMAIL,
     to: email,
     subject: "Email Verification",
     html: `
@@ -496,7 +471,6 @@ export const createTicketMailOption = async ({  email,
   date: string,}
 ) => {
   return {
-    // from: process.env.SMTP_EMAIL,
     to: email,
     subject: "Support Ticket Confirmation",
     html: `
@@ -596,7 +570,6 @@ export const replyTicketMailOption = async ({  email,
 }
 ) => {
   return {
-    // from: process.env.SMTP_EMAIL,
     to: email,
     subject: "Support Ticket Reply",
     html: `

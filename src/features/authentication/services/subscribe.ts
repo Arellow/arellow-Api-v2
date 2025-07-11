@@ -1,7 +1,7 @@
 import { Prisma } from "../../../lib/prisma";
 import { BadRequestError, DuplicateError } from "../../../lib/appError";
 import { subscribeMailOption } from "../../../utils/mailer";
-import { nodeMailerController } from "../../../utils/nodemailer";
+import { mailController } from "../../../utils/nodemailer";
 
 export class SubscribeService {
   async subscribe(email?: string | null, phone?: string | null) {
@@ -26,7 +26,7 @@ export class SubscribeService {
 
       // Send welcome email
       const mailOption = await subscribeMailOption(emailLowerCase);
-      await nodeMailerController(mailOption);
+       mailController({from: "info@arellow.com", ...mailOption});
 
       return {
         message: "Successfully subscribed to newsletter",

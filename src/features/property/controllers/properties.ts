@@ -11,7 +11,7 @@ import { MediaType } from '@prisma/client';
 import { mediaUploadQueue } from "../queues/media.queue";
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { likePostHelper } from "../services/lifePostHelper";
 
 type Amenity = {
@@ -1014,15 +1014,15 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
      const cacheKey = `getLikedPropertiesByUser:${userId}`;
 
      const cached = await redis.get(cacheKey);
-  if (cached) {
+  // if (cached) {
 
-    res.status(200).json({
-      success: true,
-      message: "successfully. from cache",
-      data: JSON.parse(cached)
-    });
-    return
-  }
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
 
     // const likes = await Prisma.userPropertyLike.findMany({
     //   where: { userId, },
@@ -1184,8 +1184,6 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
     };
 
 
-
-
     for (const [fieldName, files] of Object.entries(fields)) {
       const isPhoto = [
         "KITCHEN",
@@ -1222,11 +1220,9 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
 
 
-    await redis.del(`getAllProperties:*`);
-
-    await redis.del(`getPropertiesByUser:${userId}:*`);
-    // const cacheKey = `getAllProperties:${JSON.stringify(req.query)}`;
-
+    await deleteMatchingKeys(`getAllProperties:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
+   
 
     new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
       propertyId: newProperty.id
@@ -1235,7 +1231,6 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
-    // console.log(error)
 
   }
 
@@ -1416,10 +1411,10 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
     }
 
 
-    await redis.del(`property:${updatedProperty.id}:*`);
-    await redis.del(`getAllProperties:*`);
+    await deleteMatchingKeys(`property:${updatedProperty.id}:*`);
+    await deleteMatchingKeys(`getAllProperties:*`);
 
-    await redis.del(`getPropertiesByUser:${userId}:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
 
 
 
@@ -1459,10 +1454,10 @@ export const archiveProperty = async (req: Request, res: Response, next: NextFun
       data: { archived: true },
     });
 
-      await redis.del(`property:${id}:*`);
-    await redis.del(`getAllProperties:*`);
+      await deleteMatchingKeys(`property:${id}:*`);
+    await deleteMatchingKeys(`getAllProperties:*`);
 
-    await redis.del(`getPropertiesByUser:${userId}:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
 
     new CustomResponse(200, true, "Property archived", res,);
   } catch (error) {
@@ -1493,10 +1488,10 @@ export const unArchiveProperty = async (req: Request, res: Response, next: NextF
       data: { archived: false },
     });
 
-       await redis.del(`property:${id}:*`);
-    await redis.del(`getAllProperties:*`);
+       await deleteMatchingKeys(`property:${id}:*`);
+    await deleteMatchingKeys(`getAllProperties:*`);
 
-    await redis.del(`getPropertiesByUser:${userId}:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
 
     new CustomResponse(200, true, "Property unarchived", res,);
   } catch (error) {
@@ -1529,7 +1524,7 @@ export const markAsFeatureProperty = async (req: Request, res: Response, next: N
     // 
 
 
-    await redis.del(`featureProperties:*`);
+    await deleteMatchingKeys(`featureProperties:*`);
 
 
     new CustomResponse(200, true, "Property is added to feature", res,);
@@ -1556,7 +1551,7 @@ export const unmarkAsFeatureProperty = async (req: Request, res: Response, next:
       data: { isFeatureProperty: false },
     });
 
-     await redis.del(`featureProperties:*`);
+     await deleteMatchingKeys(`featureProperties:*`);
 
     new CustomResponse(200, true, "Property is remove from feature", res,);
   } catch (error) {
@@ -1665,9 +1660,9 @@ export const approveProperty = async (req: Request, res: Response, next: NextFun
       },
     });
 
-      await redis.del(`property:${id}:*`);
-    await redis.del(`getAllProperties:*`);
-    await redis.del(`getPropertiesByUser:${property.userId}:*`);
+      await deleteMatchingKeys(`property:${id}:*`);
+    await deleteMatchingKeys(`getAllProperties:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${property.userId}:*`);
 
 
     new CustomResponse(200, true, "Property approved", res,);
@@ -1703,9 +1698,9 @@ export const rejectProperty = async (req: Request, res: Response, next: NextFunc
       },
     });
 
-    await redis.del(`property:${id}:*`);
-    await redis.del(`getAllProperties:*`);
-    await redis.del(`getPropertiesByUser:${property.userId}:*`);
+    await deleteMatchingKeys(`property:${id}:*`);
+    await deleteMatchingKeys(`getAllProperties:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${property.userId}:*`);
 
     new CustomResponse(200, true, "Property rejected", res,);
   } catch (error) {
@@ -1756,7 +1751,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
 
      await redis.set(cacheKey, JSON.stringify(properties), "EX", 60);
 
-    new CustomResponse(200, true, "Property liked", res,);
+    new CustomResponse(200, true, "Property liked", res, properties);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
   }

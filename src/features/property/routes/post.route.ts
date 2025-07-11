@@ -16,6 +16,8 @@ import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleP
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
 import { createPropertyRequest, propertyRequestDetail, propertyRequests } from '../../requestProperties/controllers/request';
+import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
+import { createPropertySchema } from './property.validate';
 
 const propertyRoutes= express.Router();
 
@@ -31,13 +33,13 @@ propertyRoutes.get("/requestProperty/:id/detail", authenticate,  requireRole(Use
 propertyRoutes.get("/seed",getAllStates);
 propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
-propertyRoutes.post("/createproperty", authenticate, isSuspended, multipleupload, createNewProperty);
+propertyRoutes.post("/createproperty", multipleupload, validateSchema(createPropertySchema),  authenticate, isSuspended,  createNewProperty);
 propertyRoutes.post("/updateproperty/:propertyId", authenticate,  isSuspended,  multipleupload, updateProperty);
 propertyRoutes.get("/featured", featureProperties);
 propertyRoutes.get("/user/archive", authenticate, getArchivedPropertiesByUser);
 propertyRoutes.get("/liked", authenticate,  getLikedPropertiesByUser);
 propertyRoutes.get("/user", authenticate,  getPropertiesByUser);
-propertyRoutes.delete("/:id/unarchive", authenticate,  isSuspended, unArchiveProperty);
+propertyRoutes.patch("/:id/unarchive", authenticate,  isSuspended, unArchiveProperty);
 propertyRoutes.patch("/:id/archive", authenticate,  isSuspended, archiveProperty);
 propertyRoutes.get("/allarchive", requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllArchivedProperties);
 propertyRoutes.get("/:id/detail",singleProperty);
