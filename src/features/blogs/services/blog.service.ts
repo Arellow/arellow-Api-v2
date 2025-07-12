@@ -389,4 +389,16 @@ async getBlog(id: string): Promise<BlogPost> {
       throw new InternalServerError("Failed to retrieve featured contributor blogs.");
     }
   }
+
+  async getNumberOfPropertiesListed(): Promise<number> {
+    try {
+      const count = await this.prisma.property.count({
+        // where: { isA: true },
+      });
+      return count;
+    } catch (error) {
+      console.error("[getNumberOfProjectListed] Prisma error:", error);
+      throw new InternalServerError("Failed to retrieve number of blogs listed.");
+    }
+  }
 }
