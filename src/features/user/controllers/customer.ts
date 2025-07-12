@@ -190,21 +190,39 @@ export const customerSupports = async (req: Request, res: Response, next: NextFu
             const [data, total] = await Promise.all([
                 Prisma.ticket.findMany({
                     where: filters,
-                    include: {
-                        ticketPhotos: {
-                            select: {
-                                url: true
-                            }
-                        },
+                    select: {
+                        id: true,
+                        slug: true,
+                        createdAt: true,
+                        title: true,
+                        category : true,
+                        description : true,
+                        status : true,
                         user: {
                             select: {
                                 fullname: true,
                                 email: true,
                                 avatar: true
                             }
-                        }
+                        },
 
                     },
+                    // include: {
+                    //     // ticketPhotos: {
+                    //     //     select: {
+                    //     //         url: true
+                    //     //     }
+                    //     // },
+                    //     user: {
+                    //         select: {
+                    //             fullname: true,
+                    //             email: true,
+                    //             avatar: true
+                    //         }
+                    //     }
+
+                    // },
+                    
                     skip,
                     take: limit,
                     orderBy: { createdAt: "desc" },
