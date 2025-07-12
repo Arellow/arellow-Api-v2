@@ -139,7 +139,7 @@ model Ticket {
   slug         String
   description  String
   ticketPhotos UserMedia[]
-  status       ticketStatus @default(ONGOING)
+  status       ticketStatus @default(PENDING)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -150,6 +150,7 @@ model Ticket {
 enum ticketStatus {
   ONGOING
   RESOLVED
+  PENDING
 }
 
 enum PropertyStatus {

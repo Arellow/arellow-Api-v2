@@ -360,20 +360,26 @@ export const changeTicketStatus = async (req: Request, res: Response, next: Next
         });
 
 
-         const mailOptions = await replyTicketMailOption({
-            email: ticket.user.email,
-             user_name: ticket.user.username, 
-             ticket_id: ticket.slug, 
-             ticket_subject: ticket.title,
-             ticket_status: status,
-             agent_name: admin?.fullname! || admin?.username,
-             support_reply: message
+        if(message){
+
+            const mailOptions = await replyTicketMailOption({
+               email: ticket.user.email,
+                user_name: ticket.user.username, 
+                ticket_id: ticket.slug, 
+                ticket_subject: ticket.title,
+                ticket_status: status,
+                agent_name: admin?.fullname! || admin?.username,
+                support_reply: message
+               
+               });
+    
+               
+               mailController({from: "support@arellow.com", ...mailOptions});
+        }
+
+
             
-            });
-
             await deleteMatchingKeys("ticket:*");
-
-            mailController({from: "support@arellow.com", ...mailOptions});
 
         new CustomResponse(200, true, "successfully", res);
 
