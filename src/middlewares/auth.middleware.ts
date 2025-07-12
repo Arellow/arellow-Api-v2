@@ -116,6 +116,8 @@ export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req?.user; 
 
+    console.log({user})
+
     if (!user) {
        res.status(401).json({ success: false, message: "Unauthorized" });
        return
