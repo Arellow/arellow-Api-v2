@@ -34,7 +34,7 @@ propertyRoutes.get("/seed",getAllStates);
 propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
 propertyRoutes.post("/createproperty", multipleupload, validateSchema(createPropertySchema),  authenticate, isSuspended,  createNewProperty);
-propertyRoutes.post("/updateproperty/:propertyId", authenticate,  isSuspended,  multipleupload, updateProperty);
+propertyRoutes.post("/updateproperty/:propertyId", multipleupload, validateSchema(createPropertySchema),  authenticate,  isSuspended, updateProperty);
 propertyRoutes.get("/featured", featureProperties);
 propertyRoutes.get("/user/archive", authenticate, getArchivedPropertiesByUser);
 propertyRoutes.get("/liked", authenticate,  getLikedPropertiesByUser);

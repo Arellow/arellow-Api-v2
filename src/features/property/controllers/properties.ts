@@ -1011,60 +1011,95 @@ const result = await swrCache(cacheKey, async () => {
 export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-     const cacheKey = `getLikedPropertiesByUser:${userId}`;
+     const cacheKey = `saved:${userId}`;
+
+      const {
+      search,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+        const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
 
      const cached = await redis.get(cacheKey);
-  // if (cached) {
+  if (cached) {
 
-  //   res.status(200).json({
-  //     success: true,
-  //     message: "successfully. from cache",
-  //     data: JSON.parse(cached)
-  //   });
-  //   return
-  // }
+    res.status(200).json({
+      success: true,
+      message: "successfully. from cache",
+      data: JSON.parse(cached)
+    });
+    return
+  };
 
-    // const likes = await Prisma.userPropertyLike.findMany({
-    //   where: { userId, },
-    //   include: {
-    //     property: {
-    //       include: {
-    //         media: {
-    //           select: {
-    //             url: true,
-    //             altText: true,
-    //             type: true,
-    //             photoType: true,
-    //             sizeInKB: true
+        
+    const result = await swrCache(cacheKey, async () => {
+      const [properties, total] = await Promise.all([
+       Prisma.userPropertyLike.findMany({
+      where: { userId, },
+      include: {
+        property: {
+          include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
 
-    //           }
-    //         },
-    //         user: {
-    //           select: {
-    //             email: true,
-    //             fullname: true,
-    //             username: true,
-    //             is_verified: true,
-    //             avatar: true,
-    //             approvedProperties: {
-    //               include: {
-    //                 _count: true
-    //               }
-    //             }
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+                approvedProperties: {
+                  include: {
+                    _count: true
+                  }
+                }
 
-    //           }
-    //         }
-    //       },
-    //     }
-    //   },
-    // });
+              }
+            }
+          },
+        }
+      },
+    }),
+        Prisma.userPropertyLike.count({ where: { userId, }})
+      ]);
 
-    // const properties = likes.map((like) => like.property);
-    const properties = likePostHelper(userId!);
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
 
-     await redis.set(cacheKey, JSON.stringify(properties), "EX", 60);
+        const data = properties.map((like) => like.property) || [];
 
-    new CustomResponse(200, true, "success", res, properties);
+      return {
+        data,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+
+     await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+    new CustomResponse(200, true, "success", res, result);
+
+
   } catch (error) {
     next(new InternalServerError("Failed to fetch liked properties", 500));
   }
@@ -1715,7 +1750,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
   const userId = req.user?.id!;
   const propertyId = req.params.id;
 
-  const cacheKey = `getLikedPropertiesByUser:${userId}`;
+  const cacheKey = `saved:${userId}`;
 
   try {
     // Check if already liked
@@ -1747,11 +1782,9 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
     });
 
 
-       const properties = likePostHelper(userId!);
+    await deleteMatchingKeys(cacheKey);
 
-     await redis.set(cacheKey, JSON.stringify(properties), "EX", 60);
-
-    new CustomResponse(200, true, "Property liked", res, properties);
+    new CustomResponse(200, true, "Property liked", res,);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
   }
@@ -1761,7 +1794,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
 export const unLikeProperty = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id!;
   const propertyId = req.params.id;
-  const cacheKey = `getLikedPropertiesByUser:${userId}`;
+  const cacheKey = `saved:${userId}`;
 
   try {
     // Delete the like relation
@@ -1782,9 +1815,7 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
       data: { likesCount: { decrement: 1 } },
     });
 
-      const properties = likePostHelper(userId!);
-
-     await redis.set(cacheKey, JSON.stringify(properties), "EX", 60);
+    await deleteMatchingKeys(cacheKey);
 
     new CustomResponse(200, true, "Property unliked", res,);
   } catch (error) {

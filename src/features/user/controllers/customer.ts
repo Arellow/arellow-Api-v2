@@ -3,7 +3,7 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { redis } from "../../../lib/redis";
-import {  Prisma as prisma } from "@prisma/client";
+import {  Prisma as prisma, ticketStatus } from "@prisma/client";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mediaUploadQueue } from "../../property/queues/media.queue";
 import { createTicketMailOption, replyTicketMailOption } from "../../../utils/mailer";
@@ -155,10 +155,11 @@ export const customerSupports = async (req: Request, res: Response, next: NextFu
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
+     const {status} = req.query;
 
     const search = (req.query.search as string) || "";
 
-    const cacheKey = `ticket:${page}:${limit}:${search}`;
+    const cacheKey = `ticket:${page}:${limit}:${search}:${status}`;
 
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -172,19 +173,17 @@ export const customerSupports = async (req: Request, res: Response, next: NextFu
     }
 
     try {
-        const upperSearch = (search as string).toUpperCase();
-
 
         const filters = search
             ? {
                 OR: [
-                    // { status: upperSearch as ticketStatus },
+                     status ? { status: status as ticketStatus } : null,
                     { title: { contains: search, mode: "insensitive" }, },
                     { category: { contains: search, mode: "insensitive" }, },
                     { description: { contains: search, mode: "insensitive" }, }
                 ].filter(Boolean) as prisma.TicketWhereInput[],
             }
-            : {};
+            : {...(status ? { status: status as ticketStatus } : {})};
 
         const result = await swrCache(cacheKey, async () => {
 
@@ -241,6 +240,8 @@ export const customerSupports = async (req: Request, res: Response, next: NextFu
 
 export const usercustomerSupportTicket = async (req: Request, res: Response, next: NextFunction) => {
 
+    const {status} = req.query;
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
@@ -248,7 +249,7 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
 
     const search = (req.query.search as string) || "";
 
-    const cacheKey = `ticket:${userId}:${page}:${limit}:${search}`;
+    const cacheKey = `ticket:${userId}:${page}:${limit}:${search}:${status}`;
 
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -262,40 +263,31 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
     }
 
     try {
-        const upperSearch = (search as string).toUpperCase();
-
-
+       
         const filters = search
             ? {
                 userId,
                 OR: [
-                    // { status: upperSearch as ticketStatus },
+                    status ? { status: status as ticketStatus } : null,
                     { title: { contains: search, mode: "insensitive" }, },
                     { category: { contains: search, mode: "insensitive" }, },
                     { description: { contains: search, mode: "insensitive" }, }
                 ].filter(Boolean) as prisma.TicketWhereInput[],
             }
-            : {};
+            : {
+                userId,
+                 ...(status ? { status: status as ticketStatus } : {})
+            };
 
         const result = await swrCache(cacheKey, async () => {
 
             const [data, total] = await Promise.all([
                 Prisma.ticket.findMany({
                     where: filters,
-                    include: {
-                        ticketPhotos: {
-                            select: {
-                                url: true
-                            }
-                        },
-                        user: {
-                            select: {
-                                fullname: true,
-                                email: true,
-                                avatar: true
-                            }
-                        }
-
+                    select: {
+                        createdAt: true,
+                        category: true,
+                        status: true,
                     },
                     skip,
                     take: limit,
