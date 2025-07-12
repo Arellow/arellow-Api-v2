@@ -11,9 +11,9 @@ router.get('/trendingBlogs', trendingBlog);
 router.get('/blogs/featured-contributors', getFeaturedContributorBlogs); 
 
 
-router.post('/blogs', authenticate, singleupload, createBlogPost); 
-router.get('/blogs/:id', getBlog);
-router.put('/blogs/:id', authenticate, updateBlog); 
+router.post('/create', authenticate, singleupload, createBlogPost); 
+router.get('/:id', getBlog);
+router.patch('/:id', authenticate,singleupload, updateBlog); 
 router.delete('/blogs/:id', authenticate, deleteBlog); 
 router.patch('/blogs/:id/publish', authenticate,isAdmin, publishBlog); 
 

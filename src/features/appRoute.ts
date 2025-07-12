@@ -8,6 +8,7 @@ import blogRoutes from './blogs/routes/blog.route';
 import campaignRoutes from './campaign/routes/campaign.route';
 import propertyRoutes from './property/routes/post.route';
 import advertRoutes from './advertiseWithUs/route';
+import mortagageRoutes from './mortgage/routes/mortagage';
 const appRouter = express.Router();
 
 
@@ -20,6 +21,7 @@ const appRouter = express.Router();
  appRouter.use("/campaign",campaignRoutes );
  appRouter.use("/properties",propertyRoutes );
  appRouter.use("/advertiseMent", advertRoutes);
+ appRouter.use("/mortgage", mortagageRoutes);
 
 
 export default appRouter;

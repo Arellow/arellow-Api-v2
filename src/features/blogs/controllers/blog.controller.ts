@@ -131,7 +131,7 @@ export const trendingBlog = async (
   next: NextFunction
 ) => {
   try {
-    const blogs = await blogService.getBlogs();
+    const blogs = await blogService.getTrendingBlogs();
     new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
   } catch (error) {
     console.error("Get blogs error:", error);
