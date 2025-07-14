@@ -196,7 +196,7 @@ export const getUsersController = async (req: Request, res: Response, next: Next
 
 
 export const addAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    const {email, action}: {email:  actionRole, action: string[]}  = req.body;
+    const {email, action}: {email:  string, action: actionRole[]}  = req.body;
 
     const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
 

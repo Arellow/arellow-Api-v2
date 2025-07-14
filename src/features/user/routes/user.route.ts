@@ -5,7 +5,7 @@ import {
   deleteUser,
   suspendUser,
 } from "../controllers/user";
-import authenticate, { isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
+import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
 import { getRealtorsLeaderboard } from "../controllers/leaderboard";
@@ -19,7 +19,7 @@ const usersRoutes = Router();
 usersRoutes.post("/kyc", authenticate, isVerify, documentPhotoupload,  validateSchema(createKycSchema), createKyc);
 usersRoutes.get("/kycs", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), userKycs);
 usersRoutes.get("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  kycDetail);
-usersRoutes.patch("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  changeKycStatus);
+usersRoutes.patch("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  adminRequireRole("KYC"),  changeKycStatus);
 
 usersRoutes.post("/tickets", authenticate, isVerify, multipleupload,  validateSchema(createCustomerSupportSchema), createCustomerSupport);
 usersRoutes.get("/userticket", authenticate, usercustomerSupportTicket);
@@ -30,6 +30,7 @@ usersRoutes.get("/tickets", authenticate,
 usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTicketSchema),
   isVerify, 
   requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  adminRequireRole("SUPPORT"),
   changeTicketStatus);
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
 
