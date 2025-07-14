@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
-import { Prisma as prisma, SalesStatus } from '@prisma/client';
+import { Prisma as prisma, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
 import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
@@ -238,6 +238,139 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
 };
 
+export const propertiesListing = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+   
+    const {
+      search,
+      salesStatus,
+      minPrice,
+      maxPrice,
+      bathrooms,
+      bedrooms,
+      floors,
+      category,
+      state,
+      city,
+      country,
+      neighborhood,
+      features,
+      amenities,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+
+    const cacheKey = `propertyListing:${JSON.stringify(req.query)}`;
+
+
+
+    const filters: prisma.PropertyWhereInput = {
+
+      archived: false,
+      AND: [
+        search
+          ? {
+            OR: [
+              { title: { contains: search as string, mode: 'insensitive' } },
+              { category: { contains: search as string, mode: 'insensitive' } },
+              { city: { contains: search as string, mode: 'insensitive' } },
+              { state: { contains: search as string, mode: 'insensitive' } },
+              { country: { contains: search as string, mode: 'insensitive' } }
+            ]
+          }
+          : undefined,
+
+        bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
+        bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
+        floors ? { floors: parseInt(floors as string) } : undefined,
+        category ? { contains: category as string, mode: 'insensitive' } : undefined,
+        state ? { contains: state as string, mode: 'insensitive' } : undefined,
+        city ? { contains: city as string, mode: 'insensitive' } : undefined,
+        country ? { contains: country as string, mode: 'insensitive' } : undefined,
+        neighborhood ? { contains: neighborhood as string, mode: 'insensitive' } : undefined,
+        amenities ? { contains: amenities as string, mode: 'insensitive' } : undefined,
+        features ? { contains: features as string, mode: 'insensitive' } : undefined,
+
+
+        salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+        minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
+        maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+      ].filter(Boolean) as prisma.PropertyWhereInput[]
+    };
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [properties, total] = await Promise.all([
+        Prisma.property.findMany({
+          where: filters,
+          include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+                approvedProperties: {
+                  include: {
+                    _count: true
+                  }
+                }
+
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.property.count({ where: filters })
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+      return {
+        data: properties,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+
+  }
+
+};
+
 // for admin
 export const getAllProperties = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -268,7 +401,6 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
     const cacheKey = `getAllProperties:${JSON.stringify(req.query)}`;
 
     const filters: prisma.PropertyWhereInput = {
-      archived: false,
       AND: [
         search
           ? {
@@ -1145,6 +1277,13 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
       features,
       amenities,
 
+      
+      isFeatureProperty,
+      yearBuilt,
+      stage,
+      progress,
+      stagePrice 
+
     } = req.body;
 
     const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
@@ -1190,6 +1329,8 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
     };
 
 
+
+
     // Create property
     const newProperty = await Prisma.property.create({
       data: {
@@ -1211,6 +1352,12 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
         floors: Number(floors),
         squareMeters: Number(squareMeters),
         price: Number(price),
+
+        ...(isFeatureProperty && {isFeatureProperty} ),
+        ...(yearBuilt && {yearBuilt} ),
+        ...(stage && {stage} ),
+        ...(progress && {progress} ),
+        ...(stagePrice && {stagePrice: Number(stagePrice)} ),
       },
     });
 
@@ -1260,7 +1407,12 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
    
 
     new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
-      propertyId: newProperty.id
+      propertyId: newProperty.id,
+      // isFeatureProperty,
+      //  yearBuilt,
+      // stage  ,
+      // progress ,
+      // stagePrice 
     });
 
 
@@ -1271,6 +1423,9 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
 
 };
+
+
+
 
 
 export const updateProperty = async (req: Request, res: Response, next: NextFunction) => {
@@ -1302,6 +1457,12 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
       state,
       features,
       amenities,
+
+      isFeatureProperty,
+      yearBuilt,
+      stage,
+      progress,
+      stagePrice 
 
     } = req.body;
 
@@ -1397,6 +1558,13 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
         floors: Number(floors),
         squareMeters: Number(squareMeters),
         price: Number(price),
+
+        ...(isFeatureProperty && {isFeatureProperty} ),
+        ...(yearBuilt && {yearBuilt} ),
+        ...(stage && {stage} ),
+        ...(progress && {progress} ),
+        ...(stagePrice && {stagePrice: Number(stagePrice)} ),
+
       },
     });
 
@@ -1486,7 +1654,7 @@ export const archiveProperty = async (req: Request, res: Response, next: NextFun
 
     await Prisma.property.update({
       where: { id },
-      data: { archived: true },
+      data: { archived: true , status: PropertyStatus.TRASHED},
     });
 
       await deleteMatchingKeys(`property:${id}:*`);
@@ -1644,9 +1812,11 @@ export const statusProperty = async (req: Request, res: Response, next: NextFunc
   const propertyId = req.params.id;
   const { salesStatus } = req.body;
 
-  if (!['SELLING', 'SOLD'].includes(salesStatus)) {
-    return next(new InternalServerError("Invalid salesStatus value, e.g SELLING | SOLD", 400));
-  }
+ 
+
+  const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN"; 
+
+  
   try {
 
     const property = await Prisma.property.findUnique({ where: { id: propertyId } });
@@ -1656,7 +1826,7 @@ export const statusProperty = async (req: Request, res: Response, next: NextFunc
 
 
     // Ownership check:
-    if (property.userId !== userId) {
+    if (!isAdmin && property.userId !== userId) {
 
       return next(new UnAuthorizedError("Forbidden: only owner can update status", 403));
     }

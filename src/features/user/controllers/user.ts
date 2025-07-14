@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/user";
-import { UserSuspendDto, UserUpdateDto, UserUpdateRoleDto } from "../dtos/user.dto";
+import { UserSuspendDto, UserUpdateDto } from "../dtos/user.dto";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { BadRequestError } from "../../../lib/appError";
 const userService = new UserService();
@@ -82,19 +82,5 @@ export const suspendUser = async (
     next(error);
   }
 };
-export const updateUserRole = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.params.userId as string;
-  const data = req.body as UserUpdateRoleDto;
 
-  try {
-    const user = await userService.updateUserRole(userId, data)
-    new CustomResponse(200, true, "User role updated successfully", res, user);
-  } catch (error) {
-    console.error("[updateUserRole] error:", error);
-    next(error);
-  }
-};
+

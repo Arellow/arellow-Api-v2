@@ -119,7 +119,7 @@ enum UserRole {
 model AdminPermission {
   id       String       @id @default(auto()) @map("_id") @db.ObjectId
   action   actionRole[]
-  resource String[]
+  // resource String[]
   userId   String       @db.ObjectId
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -128,8 +128,13 @@ model AdminPermission {
 
 enum actionRole {
   KYC
+  BLOG
   PROPERTY
-  USER
+  PROJECT
+  MORGAGE
+  CAMPAIGN
+  REWARD
+  SUPPORT
 }
 
 model Ticket {
@@ -157,6 +162,7 @@ enum PropertyStatus {
   PENDING
   APPROVED
   REJECTED
+  TRASHED
 }
 
 model Property {
@@ -177,6 +183,10 @@ model Property {
   floors       Int
   squareMeters Int
   price        Float
+  yearBuilt   String?
+  stage       PropertyStage?
+  progress    PropertyProgress?
+  stagePrice Float?
 
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
@@ -204,6 +214,27 @@ model Property {
 enum SalesStatus {
   SELLING
   SOLD
+}
+
+enum PropertyStage {
+  OfPlaneStage         @map("Off-plane stage")
+  CarcassStage    @map("Carcass stage")
+  CompletionStage       @map("Completion stage")
+}
+
+enum PropertyProgress {
+  Zero         @map("0% ongoing")
+  Ten         @map("10% ongoing")
+  Twenty         @map("20% ongoing")
+  Thirty         @map("30% ongoing")
+  Forty         @map("40% ongoing")
+  Fifty         @map("50% ongoing")
+  Sixty         @map("60% ongoing")
+  Seventy         @map("70% ongoing")
+  Eighty         @map("80% ongoing")
+  Ninety         @map("90% ongoing")
+  OneHundred         @map("100% ongoing")
+
 }
 
 
