@@ -3,7 +3,7 @@ import { BadRequestError, InternalServerError, NotFoundError } from "../../../li
 import { Prisma,  } from "../../../lib/prisma";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { nodeMailerController } from "../../../utils/nodemailer";
-import { UserUpdateDto, UserResponseDto, UserUpdateRoleDto, UserSuspendDto } from "../dtos/user.dto";
+import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 
 const prisma = new PrismaClient();
 
@@ -92,20 +92,6 @@ export class UserService {
     }
   }
 
-  async updateUserRole(userId: string, data: UserUpdateRoleDto): Promise<UserResponseDto> {
-    try {
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          role: data.role as UserRole,
-        },
-      });
-      return this.mapToResponse(user);
-    } catch (error) {
-      console.error("[updateUserRole] Prisma error:", error);
-      throw new InternalServerError("Database error when updating user role.");
-    }
-  }
 
   private mapToResponse(user: any): UserResponseDto {
     return {

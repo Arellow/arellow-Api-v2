@@ -1,6 +1,6 @@
 import express from 'express'
 import authenticate, { isAdmin, requireRole } from '../../../middlewares/auth.middleware';
-import { getAllAdmins, getUsersController } from '../controllers/user';
+import { addAdmin, getAllAdmins, getUsersController } from '../controllers/user';
 
 import { getDashboardSummary, getRecentListings, getRewardOverview, getTopRealtors, performQuickAction } from '../controllers/superAdminDashboard';
 import { UserRole } from '@prisma/client';
@@ -8,6 +8,7 @@ import { UserRole } from '@prisma/client';
 const userRoutes =  express.Router();
 //User management routes
 userRoutes.get("/users",authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getUsersController );
+userRoutes.put("/:userId/role", authenticate, addAdmin);
 
 //super admin Dashboard routes
 userRoutes.get("/dashboard/summary",authenticate , getDashboardSummary);

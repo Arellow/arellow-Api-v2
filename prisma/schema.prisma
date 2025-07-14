@@ -119,7 +119,7 @@ enum UserRole {
 model AdminPermission {
   id       String       @id @default(auto()) @map("_id") @db.ObjectId
   action   actionRole[]
-  resource String[]
+  // resource String[]
   userId   String       @db.ObjectId
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -128,8 +128,13 @@ model AdminPermission {
 
 enum actionRole {
   KYC
+  BLOG
   PROPERTY
-  USER
+  PROJECT
+  MORGAGE
+  CAMPAIGN
+  REWARD
+  SUPPORT
 }
 
 model Ticket {

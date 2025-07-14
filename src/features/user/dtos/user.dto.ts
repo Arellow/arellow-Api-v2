@@ -16,9 +16,6 @@ export interface UserUpdateDto {
   avatar?: string;
 }
 
-export interface UserUpdateRoleDto {
-  role: UserRole;
-}
 
 export interface UserSuspendDto {
   reason?: string;

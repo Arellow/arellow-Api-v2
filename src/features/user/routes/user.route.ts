@@ -3,7 +3,6 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-  updateUserRole,
   suspendUser,
 } from "../controllers/user";
 import authenticate, { isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
@@ -47,7 +46,6 @@ usersRoutes.patch(
   updateUser
 );
 
-usersRoutes.put("/:userId/role", authenticate, updateUserRole);
 usersRoutes.put("/:userId/suspend", suspendUser);
 usersRoutes.delete("/:userId", deleteUser);
 

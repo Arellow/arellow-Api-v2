@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserQueryDTO } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { Prisma as prisma, UserRole } from "@prisma/client";
+import { actionRole, Prisma as prisma, UserRole } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
@@ -144,6 +144,7 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                 Prisma.user.findMany({
                     where: filters,
                     select: {
+                        id: true,
                         fullname: true,
                         email: true,
                         phone_number: true,
@@ -200,6 +201,61 @@ export const getUsersController = async (req: Request, res: Response, next: Next
         next(new InternalServerError("Internal server error", 500));
     }
 };
+
+
+export const addAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    const {email, action}: {email:  actionRole, action: string[]}  = req.body;
+
+    const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+
+    try {
+
+         const user = await Prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+      include: {
+        kyc: true
+      }
+    });
+
+     if(!user){
+        return next(new InternalServerError("Not a register user", 403));
+        }
+
+     if(!user.is_verified){
+        return next(new InternalServerError("User email is not verify", 403));
+    }
+
+     if(user.kyc?.status !== "VERIFIED"){
+        return next(new InternalServerError("User kyc is not verify", 403));
+    }
+
+
+
+    await Prisma.adminPermission.create({
+        data: {
+            userId: user.id,
+            action: parsedAction
+        }
+    })
+
+
+
+
+
+
+
+
+
+
+
+        
+    } catch (error) {
+        
+    }
+
+}
+
+
 
 
 // model User {
