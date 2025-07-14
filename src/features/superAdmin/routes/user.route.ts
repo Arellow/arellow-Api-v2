@@ -7,7 +7,7 @@ import { UserRole } from '@prisma/client';
 
 const userRoutes =  express.Router();
 //User management routes
-userRoutes.get("/users",authenticate, isAdmin, getUsersController );
+userRoutes.get("/users",authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getUsersController );
 
 //super admin Dashboard routes
 userRoutes.get("/dashboard/summary",authenticate , getDashboardSummary);
