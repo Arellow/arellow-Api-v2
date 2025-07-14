@@ -34,8 +34,6 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
 
 
-
-
 usersRoutes.get("/leaderboard", getRealtorsLeaderboard);
 
 usersRoutes.get("/:userId", getUserById);

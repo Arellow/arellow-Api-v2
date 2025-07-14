@@ -7,6 +7,8 @@ import { actionRole, Prisma as prisma, UserRole } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
+import { mailController } from "../../../utils/nodemailer";
+import { accountSuspendMailOption } from "../../../utils/mailer";
 
 
 
@@ -18,72 +20,60 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
 
     const search = (req.query.search as string) || "";
 
-    const cacheKey = `admins:${page}:${limit}:${search}`;
+    const cacheKey = `admins:${page}:${limit}:${search ? search : "all"}`;
 
-   
-
-
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-
-        res.status(200).json({
-            success: true,
-            message: "successfully. from cache",
-            data: JSON.parse(cached)
-        });
-        return
-    }
 
     try {
-        // const upperSearch = (search as string).toUpperCase();
-
 
         const filters = search
             ? {
-               role: UserRole.ADMIN,
-                
-                OR: [
-                    // { status: upperSearch as ticketStatus },
-                    { fullname: { contains: search, mode: "insensitive" }, },
-                    { username: { contains: search, mode: "insensitive" }, },
-                    // { description: { contains: search, mode: "insensitive" }, }
-                ].filter(Boolean) as prisma.UserWhereInput[],
+                user: {
+                    OR: [
+                        { fullname: { contains: search, mode: "insensitive" }, },
+                        { username: { contains: search, mode: "insensitive" }, },
+                    ].filter(Boolean) as prisma.UserWhereInput[],
+                }
             }
-            : {role: UserRole.ADMIN,};
+            : {};
 
         const result = await swrCache(cacheKey, async () => {
 
             const [data, total] = await Promise.all([
-                Prisma.user.findMany({
+                Prisma.adminPermission.findMany({
                     where: filters,
-                    // include: {
-                    //     ticketPhotos: {
-                    //         select: {
-                    //             url: true
-                    //         }
-                    //     },
-                    //     user: {
-                    //         select: {
-                    //             fullname: true,
-                    //             email: true,
-                    //             avatar: true
-                    //         }
-                    //     }
+                    include: {
+                        user: {
+                            select: {
+                                fullname: true,
+                                email: true,
+                                avatar: true,
+                                suspended: true
+                            }
+                        }
 
-                    // },
+                    },
                     skip,
                     take: limit,
-                    orderBy: { createdAt: "desc" },
+                    // orderBy: { : "desc" },
                 }),
-                Prisma.user.count({ where: filters }),
+                Prisma.adminPermission.count({ where: filters }),
             ]);
 
             const totalPages = Math.ceil(total / limit);
 
+             const transformedData = data.map(user => {
+                const { ...rest} =  user;
+                return ({
+                ...rest,
+                lastSeen: Date.now(),
+               
+                })
+            });
+
 
 
             return {
-                data,
+                data: transformedData,
                 pagination: {
                     total,
                     page,
@@ -100,7 +90,9 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
 
         new CustomResponse(200, true, "Fetched successfully", res, result);
     } catch (error) {
+        console.error(error)
         next(new InternalServerError("Internal server error", 500));
+        
     }
 };
 
@@ -229,8 +221,6 @@ export const addAdmin = async (req: Request, res: Response, next: NextFunction) 
         return next(new InternalServerError("User kyc is not verify", 403));
     }
 
-
-
     await Prisma.adminPermission.create({
         data: {
             userId: user.id,
@@ -239,55 +229,59 @@ export const addAdmin = async (req: Request, res: Response, next: NextFunction) 
     })
 
 
+    if(user.role !== UserRole.ADMIN){
+        await Prisma.user.update({
+            where: {id: user.id},
+            data: {role: UserRole.ADMIN}
+        })
 
+    }
 
+    await deleteMatchingKeys("admins:*")
 
+     new CustomResponse(200, true, "Admin added", res,);
 
-
-
-
-
-
-        
     } catch (error) {
-        
+        next(new InternalServerError("Internal server error", 500));
     }
 
 }
 
+// 
 
 
+export const suspendAdminStatus = async (req: Request, res: Response, next: NextFunction) => {
 
-// model User {
-//   id                String             @id @default(auto()) @map("_id") @db.ObjectId
-//   email             String             @unique
-//   fullname          String
-//   username          String
-//   password          String
-//   phone_number      String
-//   role              UserRole
-//   avatar            String             @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
-//   is_verified       Boolean            @default(false)
-//   suspended         Boolean            @default(false)
-//   points            Int                @default(0)
-//   rewardHistory     RewardHistory[]
-//   rewardWithdrawals RewardWithdrawal[]
-//   companyId         String?            @db.ObjectId
-//   company           Company?           @relation(fields: [companyId], references: [id])
-//   likes             UserPropertyLike[]
+    const { userId } = req.params;
+     const {  message } = req.body;
 
-//   properties           Property[]                 @relation("UserProperties")
-//   approvedProperties   Property[]                 @relation("ApprovedProperties")
-//   // PropertyRequest    PropertyRequest[]
-//   mortgage             MortgageCalculationDraft[]
-//   Campaign             Campaign[]
-//   preQualifications    PreQualification[]
-//   featuredContributors BlogFeaturedContributor[]  @relation("UserFeaturedContributors")
-//   createdAt            DateTime                   @default(now())
-//   updatedAt            DateTime                   @updatedAt
-//   Blog                 Blog[]
+    try {
 
-//   kyc             Kyc?
-//   tickets         Ticket[]
-//   AdminPermission AdminPermission?
-// }
+        const admin = await Prisma.user.findUnique({where: {id: userId}});
+
+         if(!admin){
+            return next(new InternalServerError("Unauthorise", 403));
+        }
+
+    
+        if(message){
+
+            const mailOptions = await accountSuspendMailOption({
+               email: admin.email,
+               fullname: admin.fullname,
+                suspensionReason: message
+               });
+    
+               mailController({from: "support@arellow.com", ...mailOptions});
+        }
+ 
+        await deleteMatchingKeys("admins:*");
+
+        new CustomResponse(200, true, "successfully", res);
+
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
+    }
+
+
+};
