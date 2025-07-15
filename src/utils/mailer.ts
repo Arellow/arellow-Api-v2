@@ -871,3 +871,111 @@ export const accountSuspendMailOption = async ({
 </body>
 </html>
 `}}
+
+
+
+
+
+export const assignPropertyRequestMailOption = async ({
+  email,
+   realtorName,
+    location,
+    propertyType,
+    bedrooms,
+    budget,
+    furnishingStatus,
+}: {
+    email: string,
+    realtorName: string,
+    location: string,
+    propertyType: string,
+    bedrooms: number,
+    budget: string,
+    furnishingStatus: string
+}
+) => {
+  return {
+    to: email,
+    subject: "New Property Request Opportunity",
+    html:
+    `
+    <!DOCTYPE html>
+<html lang="en" style="margin:0; padding:0;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>New Property Request Opportunity</title>
+</head>
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f4f4f4;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px; background-color:#f4f4f4;">
+    <tr>
+      <td align="center">
+
+        <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#198754; padding:20px; color:#ffffff; text-align:center;">
+              <h2 style="margin:0; font-size:22px;">New Property Request Near You</h2>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333;">
+              <p>Hello <strong>${realtorName}</strong>,</p>
+
+              <p>
+                A client is looking for a property that matches your inventory. You might be able to help!
+              </p>
+
+              <h3 style="margin-top:25px; font-size:18px; color:#198754;">Request Details</h3>
+              <table cellpadding="0" cellspacing="0" width="100%" style="font-size:14px; margin-top:10px;">
+                <tr>
+                  <td style="padding:6px 0; font-weight:bold; width:160px;">Location:</td>
+                  <td style="padding:6px 0;">${location}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-weight:bold;">Type:</td>
+                  <td style="padding:6px 0;"${propertyType}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-weight:bold;">Bedrooms:</td>
+                  <td style="padding:6px 0;">${bedrooms}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-weight:bold;">Budget:</td>
+                  <td style="padding:6px 0;">${budget}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-weight:bold;">Furnishing:</td>
+                  <td style="padding:6px 0;">${furnishingStatus}</td>
+                </tr>
+              </table>
+
+              <p style="margin-top:20px;">
+                If you have a property that matches these requirements, please respond as soon as possible.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f9fa; padding:20px; font-size:12px; color:#666; text-align:center;">
+              This is a property opportunity alert from Arellow homes.<br>
+              To stop receiving these alerts, update your preferences in your account.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+
+    `
+}}

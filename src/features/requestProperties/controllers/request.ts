@@ -4,12 +4,17 @@ import CustomResponse from '../../../utils/helpers/response.util'
 import dotenv from 'dotenv'
 import { Prisma } from "../../../lib/prisma";
 import { redis } from "../../../lib/redis";
-import { Prisma as prisma, PropertyCategory } from "@prisma/client";
+import { AssignmentStatus, Prisma as prisma, PropertyCategory } from "@prisma/client";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
+import { assignPropertyRequestMailOption } from "../../../utils/mailer";
+import { mailController } from "../../../utils/nodemailer";
+import { formatInky } from "../../../utils/constants.util";
 dotenv.config();
 
 
 export const createPropertyRequest = async (req: Request, res: Response, next: NextFunction) => {
+
+  const user = req?.user
   const {
     username,
     userRole,
@@ -51,42 +56,82 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
         },
         numberOfBedrooms: Number(numberOfBedrooms),
         numberOfBathrooms: Number(numberOfBathrooms),
-        budget:  Number(budget),
-        description
+        budget: Number(budget),
+        description,
+
+        ...(user && {
+          createdBy: {
+            connect: { id: user.id }
+          }
+        }),
+
       }
-    })
+    });
+
 
     await deleteMatchingKeys("propertyRequests:*");
 
 
-    new CustomResponse(201, true, "Property request created successfully", res,);
+    new CustomResponse(201, true, "Property request created successfully", res, user);
   } catch (error) {
     // console.error("Property request creation error:", error);
     next(new InternalServerError("Failed to create property request."));
   }
 };
 
+
 export const propertyRequestDetail = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  const user = req?.user
 
-  const cacheKey = `propertyRequestDetail:${id}`;
+  const cacheKey = `propertyRequests:${id}`;
 
   const cached = await redis.get(cacheKey);
-  if (cached) {
+  // if (cached) {
 
-    res.status(200).json({
-      success: true,
-      message: "successfully. from cache",
-      data: JSON.parse(cached)
-    });
-    return
-  }
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
 
   try {
 
     // find single
     const property = await Prisma.propertyRequest.findUnique({
-      where: { id }
+      where: { id },
+      select: {
+        propertyAddress: true,
+
+         ...(user && {
+          email: true,
+          phoneNumber: true,
+          userRole: true,
+          createdBy: {
+            select: {
+              id: true,
+              fullname: true,
+              propertyRequests: true,
+              address: {
+                select: {
+                  state: true
+                }
+              }
+
+            }
+          },
+          developerAssignments: {
+            include: {
+              developer: {
+                select: {fullname: true,}
+              }
+            }
+          }
+        }),
+
+      }
     });
 
 
@@ -115,7 +160,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
   const search = (req.query.search as string) || "";
 
-  const cacheKey = `propertyRequests:${page}:${limit}:${search}`;
+  const cacheKey = `propertyRequests:${page}:${limit}:${search || "all"}`;
 
   const cached = await redis.get(cacheKey);
   if (cached) {
@@ -130,51 +175,51 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
   try {
 
-      const matchedCategory = getValidCategory(search);
+    const matchedCategory = getValidCategory(search);
 
     const filters = search
       ? {
         OR: [
           matchedCategory ? { propertyCategory: matchedCategory } : null,
-        { propertyType: { contains: search, mode: "insensitive" } },
-        { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
-        { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
-        { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
-        { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } },
+          { propertyType: { contains: search, mode: "insensitive" } },
+          { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
+          { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
+          { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
+          { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } },
         ].filter(Boolean) as prisma.PropertyRequestWhereInput[],
       }
       : {};
 
 
-       const result = await swrCache(cacheKey, async () => {
-
-    
-
-    const [data, total] = await Promise.all([
-      Prisma.propertyRequest.findMany({
-        where: filters,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-      }),
-      Prisma.propertyRequest.count({ where: filters }),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
+    const result = await swrCache(cacheKey, async () => {
 
 
-    return {
-      data,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        canGoNext: page < totalPages,
-        canGoPrev: page > 1,
-      },
-    }
-   })
+
+      const [data, total] = await Promise.all([
+        Prisma.propertyRequest.findMany({
+          where: filters,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+        }),
+        Prisma.propertyRequest.count({ where: filters }),
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+
+      return {
+        data,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages,
+          canGoNext: page < totalPages,
+          canGoPrev: page > 1,
+        },
+      }
+    })
 
 
     await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
@@ -195,3 +240,147 @@ function getValidCategory(value: string): PropertyCategory | null {
     ) ?? null
   );
 }
+
+
+
+
+
+type TTransferPropertyRequest = {
+  developerIds: string[];
+  comment: string;
+  sendmail: boolean
+};
+
+export const assignDevelopers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id: requestId } = req.params;
+  const { developerIds, comment, sendmail }:TTransferPropertyRequest = req.body;
+  const assignedById = req?.user?.id;
+
+  try {
+    if (!Array.isArray(developerIds) || developerIds.length === 0) {
+      return res.status(400).json({ success: false, message: "No developers provided." });
+    }
+
+    const existingAssignments = await Prisma.developerAssignment.findMany({
+      where: { propertyRequestId: requestId },
+      include: { developer: { select: { id: true, email: true, fullname: true } } }
+    });
+
+    const existingDeveloperMap = new Map(
+      existingAssignments.map(a => [a.developer.id, a.developer])
+    );
+
+    const existingDeveloperIds = [...existingDeveloperMap.keys()];
+
+    
+    const toDelete = existingDeveloperIds.filter(id => !developerIds.includes(id));
+    const toAdd = developerIds.filter(id => !existingDeveloperIds.includes(id));
+
+    if (toDelete.length > 0) {
+      await Prisma.developerAssignment.updateMany({
+        where: {
+          propertyRequestId: requestId,
+          developerId: { in: toDelete }
+        },
+        data: {
+          status: "CLOSED",
+          comment: "property was found",
+          responseAt: new Date()
+        }
+      });
+    }
+
+    const newAssignments = toAdd.map((developerId: string) => ({
+      propertyRequestId: requestId,
+      developerId,
+      assignedById,
+      comment,
+      status: AssignmentStatus.IN_PROGRESS,
+      
+    }));
+
+    if (newAssignments.length > 0) {
+      await Prisma.developerAssignment.createMany({
+        data: newAssignments
+      });
+    }
+  
+
+   const response =  await Prisma.propertyRequest.update({
+      where: {id: requestId}, 
+      data: {
+        adminStatus: "ASSIGNED",
+        userStatus: "IN_PROGRESS",
+      }
+    })
+
+
+    if(sendmail){
+      const addedMails = toAdd.map(async (developerId) => {
+        const developer = await Prisma.user.findUnique({
+          where: { id: developerId },
+          select: { email: true, fullname: true }
+        });
+  
+        if (developer?.email) {
+  
+        const mailOptions = await assignPropertyRequestMailOption({
+        email: response.email,
+        realtorName: response.username,
+        location: response.propertyAddress.location,
+        propertyType: response.propertyType,
+        bedrooms: response.numberOfBedrooms,
+        budget: formatInky(response.budget?.toString()),
+        furnishingStatus: response.furnishingStatus,
+      });
+      mailController({ from: "noreply@arellow.com", ...mailOptions });
+        }
+      });
+  
+      await Promise.allSettled([...addedMails]);
+    }
+
+
+ await deleteMatchingKeys("propertyRequests:*");
+      new CustomResponse(200, true, "Developer assignments successfully", res);
+  } catch (error) {
+    next(new InternalServerError("Failed to update assignments."));
+  }
+};
+
+
+
+export const updateDeveloperAssignment = async (req: Request, res: Response, next: NextFunction) => {
+  const { id: propertyRequestId } = req.params;
+
+  try {
+    await Prisma.developerAssignment.updateMany({
+      where: {propertyRequestId },
+      data: {
+        status: "CLOSED",
+        comment: "property found",
+        responseAt: new Date()
+      }
+    });
+
+    await Prisma.propertyRequest.update({
+      where: {id: propertyRequestId }, 
+      data: {
+        adminStatus: "CLOSED",
+        userStatus: "SEEN",
+      }
+    })
+
+
+     await deleteMatchingKeys("propertyRequests:*");
+    new CustomResponse(200, true, "updated successfully", res);
+
+  
+  } catch (error) {
+    next(new InternalServerError("Failed to update developer assignment."));
+  }
+};

@@ -4,6 +4,36 @@ import { actionRole, UserRole} from "@prisma/client";
 import { Prisma } from "../lib/prisma";
 
 
+export  async function isLoginUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ success: false, message: "No token provided or malformed token please login" });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = verifyToken(token);
+    const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
+
+    if (user) {
+      // res.status(401).json({ success: false, message: "Invalid user." });
+      req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended};
+    }
+
+
+    next();
+  } catch (err) {
+    res.status(401).json({ success: false, message: "Invalid or expired token" });
+  }
+}
+
+
 export default async function authenticate(
   req: Request,
   res: Response,

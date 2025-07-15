@@ -85,6 +85,7 @@ model User {
   avatar            String             @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified       Boolean            @default(false)
   suspended         Boolean            @default(false)
+  address          PropertyAddress?
   points            Int                @default(0)
   rewardHistory     RewardHistory[]
   rewardWithdrawals RewardWithdrawal[]
@@ -106,6 +107,14 @@ model User {
   kyc             Kyc?
   tickets         Ticket[]
   AdminPermission AdminPermission?
+
+
+  propertyRequests     PropertyRequest[]   @relation("PropertyRequest_createdBy")
+  // transferredbyRequests  PropertyRequest[]   @relation("TransferredBy")
+  // developerAssignments DeveloperAssignment[]
+
+  developerAssignments       DeveloperAssignment[] @relation("DeveloperAssigned")
+  developerAssignmentsCreated DeveloperAssignment[] @relation("DeveloperAssignedBy")
 }
 
 enum UserRole {
@@ -376,14 +385,55 @@ model PropertyRequest {
   budget            Int              @default(0)
   description       String?
 
-  status    PropertyRequestStatus @default(PENDING)
+  createdBy         User?               @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])
+  createdById       String?             @db.ObjectId
+
+  developerAssignments DeveloperAssignment[]
+
+  userStatus   PropertyRequestUserStatus   @default(PENDING)
+  adminStatus  PropertyRequestAdminStatus  @default(PENDING)
   createdAt DateTime              @default(now())
   updatedAt DateTime              @updatedAt
 }
 
-enum PropertyRequestStatus {
+
+model DeveloperAssignment {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+
+  propertyRequest  PropertyRequest  @relation(fields: [propertyRequestId], references: [id])
+  propertyRequestId String          @db.ObjectId
+
+  developer        User             @relation("DeveloperAssigned", fields: [developerId], references: [id])
+  developerId      String           @db.ObjectId
+
+  assignedBy       User?            @relation("DeveloperAssignedBy", fields: [assignedById], references: [id])
+  assignedById     String?          @db.ObjectId
+
+  assignedAt       DateTime         @default(now())
+  responseAt       DateTime?
+  status           AssignmentStatus @default(IN_PROGRESS)
+  comment          String?
+
+  @@index([propertyRequestId, developerId], name: "assignment_request_developer_unique")
+}
+
+
+enum AssignmentStatus {
+  IN_PROGRESS
+  CLOSED
+}
+
+
+enum PropertyRequestAdminStatus {
   PENDING
-  ASSIGN
+  ASSIGNED
+  CLOSED
+}
+
+enum PropertyRequestUserStatus {
+  PENDING
+  IN_PROGRESS
+  SEEN
 }
 
 type PropertyAddress {

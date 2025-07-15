@@ -71,9 +71,7 @@ export const createCustomerSupport = async (req: Request, res: Response, next: N
         
 
          const mailOptions = await createTicketMailOption({
-            // email: "axle.wake@fsitip.com",
-            email: "andrewchidiebere@arellow.com",
-            // email: ticket.user.email,
+            email: ticket.user.email,
              userName: ticket.user.username, 
              subject: title,
              date: dayjs(ticket.createdAt).format("MMMM D, YYYY @ h:m A"),
