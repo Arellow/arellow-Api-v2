@@ -14,7 +14,8 @@ dotenv.config();
 
 export const createPropertyRequest = async (req: Request, res: Response, next: NextFunction) => {
 
-  const user = req?.user
+  const user = req?.user;
+
   const {
     username,
     userRole,
@@ -39,12 +40,14 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
   try {
 
 
-    await Prisma.propertyRequest.create({
+    const isLogin = await Prisma.user.findUnique({ where: { id: user?.id } });
+
+   const response = await Prisma.propertyRequest.create({
       data: {
-        username,
-        userRole,
-        email,
-        phoneNumber,
+        username: isLogin ?  isLogin.fullname : username,
+        userRole: isLogin ?  isLogin.role : userRole,
+        email: isLogin ?  isLogin.email : email,
+        phoneNumber: isLogin ?  isLogin.phone_number : phoneNumber,
         propertyCategory,
         propertyType,
         furnishingStatus,
@@ -72,7 +75,7 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
     await deleteMatchingKeys("propertyRequests:*");
 
 
-    new CustomResponse(201, true, "Property request created successfully", res, user);
+    new CustomResponse(201, true, "Property request created successfully", res, response.id);
   } catch (error) {
     // console.error("Property request creation error:", error);
     next(new InternalServerError("Failed to create property request."));
@@ -87,52 +90,68 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
   const cacheKey = `propertyRequests:${id}`;
 
   const cached = await redis.get(cacheKey);
-  // if (cached) {
-
-  //   res.status(200).json({
-  //     success: true,
-  //     message: "successfully. from cache",
-  //     data: JSON.parse(cached)
-  //   });
-  //   return
-  // }
+  if (cached) {
+    res.status(200).json({
+      success: true,
+      message: "successfully. from cache",
+      data: JSON.parse(cached)
+    });
+    return
+  }
 
   try {
 
-    // find single
-    const property = await Prisma.propertyRequest.findUnique({
-      where: { id },
+    const baseSelect = {
+  propertyAddress: true,
+  propertyCategory: true,
+  propertyType: true,
+  furnishingStatus: true,
+  numberOfBedrooms: true,
+  numberOfBathrooms: true,
+  budget: true,
+  description: true,
+};
+
+
+const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
+  email: true,
+  phoneNumber: true,
+  userRole: true,
+  createdBy: {
+    select: {
+      id: true,
+      fullname: true,
+       _count: {
       select: {
-        propertyAddress: true,
-
-         ...(user && {
-          email: true,
-          phoneNumber: true,
-          userRole: true,
-          createdBy: {
-            select: {
-              id: true,
-              fullname: true,
-              propertyRequests: true,
-              address: {
-                select: {
-                  state: true
-                }
-              }
-
-            }
-          },
-          developerAssignments: {
-            include: {
-              developer: {
-                select: {fullname: true,}
-              }
-            }
-          }
-        }),
-
+        propertyRequests: true
       }
-    });
+    },
+      address: {
+        select: {
+          state: true
+        }
+      }
+    }
+  },
+  developerAssignments: {
+    include: {
+      developer: {
+        select: {
+          fullname: true,
+        }
+      }
+    }
+  }
+} : {};
+
+
+    const property = await Prisma.propertyRequest.findUnique({
+  where: { id },
+  select: {
+    ...baseSelect,
+    ...adminSelect
+  }
+});
 
 
 

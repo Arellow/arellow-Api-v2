@@ -18,6 +18,7 @@ import { ResendVerificationController } from "../controllers/resendVerification"
 import { SubscribeService } from "../services/subscribe";
 import { SubscribeController } from "../controllers/subscribe";
 import authenticate from "../../../middlewares/auth.middleware";
+import { countriesRequest} from "../controllers/countries";
 
 const authRouter = express.Router();
 
@@ -90,5 +91,7 @@ authRouter.post(
   authenticate,
   LogoutController.logout
 );
+
+authRouter.get("/countries", countriesRequest);
 
 export default authRouter;
