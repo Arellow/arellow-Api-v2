@@ -6,10 +6,11 @@ import { BadRequestError, UnAuthorizedError } from "../../../lib/appError";
 
 export class AuthService {
   static async login({ email, password }: LoginDto) {
-
+   
     if (!email || !password) {
       throw new BadRequestError("Email and password are required.");
     }
+   
 
     const user = await Prisma.user.findUnique({
       where: { email: email.toLowerCase() },

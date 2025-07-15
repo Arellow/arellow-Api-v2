@@ -10,7 +10,6 @@ export class AuthService {
   public static async registerUser(dto: RegisterDTO) {
     const { username, password, email, phone_number, fullname , role} = dto;
 
-
     if(role == "SUPER_ADMIN" || role == "ADMIN"){
       throw new UnAuthorizedError("Forbidden: unauthorise user role", 403);
     }
@@ -29,7 +28,7 @@ export class AuthService {
     const newUser = await Prisma.user.create({
       data: {
         username,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         phone_number,
         role,
