@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
-import { UserRole} from "@prisma/client";
+import { actionRole, UserRole} from "@prisma/client";
 import { Prisma } from "../lib/prisma";
 
 
@@ -69,10 +69,10 @@ export const isSuspended = (req: Request, res: Response, next: NextFunction): vo
 
 export const isVerify = (req: Request, res: Response, next: NextFunction): void => {
   const is_user_verified = req.user?.is_verified!;
-  // if (!is_user_verified) {
-  //   res.status(403).json({ success: false, message: "Unauthorized: User email not verify" });
-  //   return;
-  // }
+  if (!is_user_verified) {
+    res.status(403).json({ success: false, message: "Unauthorized: User email not verify" });
+    return;
+  }
   next();
 };
 
@@ -116,8 +116,6 @@ export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req?.user; 
 
-    console.log({user})
-
     if (!user) {
        res.status(401).json({ success: false, message: "Unauthorized" });
        return
@@ -128,19 +126,58 @@ export function requireRole(...allowedRoles: UserRole[]) {
        return
     }
 
-    if(user.role == "SUPER_ADMIN"){
-       next();
-    }  else {
-      // this will be change to admin permission
-      next();
-    }
+    return next()
      
   };
 }
 
-// 
-const PERMISSIONS = {
-  KYC: ["create", "read", "update", "delete"],
-  PROPERTY: ["create", "read", "update", "delete"],
-}
+
+export const adminRequireRole = (...allowedRoles: actionRole[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = req?.user;
+
+
+    if(user?.role == UserRole.SUPER_ADMIN){
+        return next();
+    }
+
+   
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    try {
+      const adminPermission = await Prisma.adminPermission.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (!adminPermission || !adminPermission.action.length) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: no admin permissions found",
+        });
+      }
+
+      const hasAccess = adminPermission.action.some((role) =>
+        allowedRoles.includes(role)
+      );
+
+      if (!hasAccess) {
+        return res
+          .status(403)
+          .json({ success: false, message: "Forbidden: insufficient role" });
+      }
+
+  
+      return next();
+    } catch (error) {
+      // console.error("adminRequireRole error:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  };
+};
+
 

@@ -789,3 +789,85 @@ export const createPrequalificationMailOptions = async (
     `,
   };
 };
+
+
+
+
+
+export const accountSuspendMailOption = async ({
+  email,
+  suspensionReason,
+  fullname,
+}: {
+  email: string,
+  suspensionReason: string,
+  fullname: string,
+}
+) => {
+  return {
+    to: email,
+    subject: "Email Verification",
+    html: `
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Account Suspension</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; }
+
+    @media screen and (max-width: 600px) {
+      .main { width: 100% !important; padding: 20px !important; }
+      .content { font-size: 16px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;">
+    <tr>
+      <td align="center">
+        <table class="main" width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; margin: 40px auto; padding: 40px; border-radius: 6px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+          <tr>
+            <td align="center" style="padding-bottom: 20px;">
+              <img src="https://www.arellow.com/_next/static/media/landingLogo.9a48eee9.svg" alt="Your Company Logo" width="150" style="display:block;">
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#333333; font-size:18px; font-weight:bold; padding-bottom: 10px;">
+              Account Suspension Notice
+            </td>
+          </tr>
+          <tr>
+            <td class="content" style="color:#555555; font-size:16px; line-height:1.6;">
+              Hello <strong>${fullname}</strong>,
+              <br><br>
+              We regret to inform you that your account has been <strong>suspended</strong>.
+              <br><br>
+              <strong>Reason:</strong> ${suspensionReason}
+              <br><br>
+              If you believe this was done in error or you'd like to appeal the decision, please contact our support team.
+              <br><br>
+              <a href="https://arellow.com/support" style="background-color:#e53935; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:4px; display:inline-block;">Contact Support</a>
+              <br><br>
+              We appreciate your understanding.
+              <br><br>
+              Sincerely,<br>
+              <strong>Arellow Team</strong>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-top: 30px; font-size:12px; color:#999999;">
+              © ${new Date().getFullYear()} Arellow, All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`}}
