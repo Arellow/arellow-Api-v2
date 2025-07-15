@@ -7,7 +7,8 @@ export interface RegisterDTO {
   email: string;
   phone_number: string;
   fullname: string;
-  role: UserRole
+  role: UserRole,
+  country: string
 }
 
 export interface UserResponseDTO {

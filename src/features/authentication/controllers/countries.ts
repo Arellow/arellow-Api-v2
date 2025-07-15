@@ -255,7 +255,7 @@ export const CountriesCode = [
 export const countriesRequest = async (req: Request, res: Response, next: NextFunction) => {
 
     try{
-     new CustomResponse(200, true, "Property request created successfully", res, CountriesCode);
+     new CustomResponse(200, true, "successfully", res, CountriesCode);
 
    } catch (error) {
      next(new InternalServerError("Failed"));

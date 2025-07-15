@@ -13,7 +13,8 @@ function registerInput(input: RegisterDTO) {
     email: input.email?.trim().toLowerCase(),
     phone_number: input.phone_number?.trim(),
     fullname: input.fullname?.trim(),
-    role: input.role
+    role: input.role,
+    country: input.country
   };
 }
 

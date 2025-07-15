@@ -3,6 +3,7 @@ import Joi from 'joi';
 
 export const registerSchema = Joi.object({
   username: Joi.string().required().min(3).max(30),
+  country: Joi.string().required().min(3),
   fullname: Joi.string().required().min(2).max(100),
   email: Joi.string().required().email(),
   role: Joi.string().valid(...Object.values(UserRole)),
