@@ -1,6 +1,6 @@
 import express from 'express'
 import { calculateProjectMortgage } from '../controllers/FetchProperties';
-import authenticate, { adminRequireRole, isSuspended, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isLoginUser, isSuspended, requireRole } from '../../../middlewares/auth.middleware';
 import { getAllStates } from '../controllers/seedPropImages';
 import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty, 
     unArchiveProperty, unLikeProperty , deleteProperty, statusProperty, getLikedPropertiesByUser, 
@@ -16,18 +16,20 @@ import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleP
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
-import { createPropertyRequest, propertyRequestDetail, propertyRequests } from '../../requestProperties/controllers/request';
+import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propertyRequests, updateDeveloperAssignment } from '../../requestProperties/controllers/request';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-import { changeStatusSchema, createFeaturePropertySchema, createPropertySchema } from './property.validate';
+import { changeStatusSchema, createFeaturePropertySchema, createPropertyRequestSchema, createPropertySchema } from './property.validate';
 
 const propertyRoutes= express.Router();
 
 propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property
-propertyRoutes.post("/requestProperty", createPropertyRequest);
+propertyRoutes.post("/requestProperty", validateSchema(createPropertyRequestSchema),  isLoginUser, createPropertyRequest);
 propertyRoutes.get("/requestProperties", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertyRequests);
 propertyRoutes.get("/requestProperty/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  propertyRequestDetail);
+propertyRoutes.post("/requestProperty/:id/assign-developers", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  assignDevelopers);
+propertyRoutes.patch("/requestProperty/:id/assign-developers", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  updateDeveloperAssignment);
 
 
 // test by flow
