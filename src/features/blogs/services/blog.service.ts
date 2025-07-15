@@ -117,7 +117,9 @@ export class BlogService {
         user: { select: { fullname: true, avatar: true } },
         featuredContributors: true,
       },
+      where: { isPublished: true },
       orderBy: { createdAt: "desc" },
+      take: 4, 
     });
 
     return blogs.map((blog) => ({
@@ -149,14 +151,56 @@ export class BlogService {
     throw new InternalServerError("Failed to retrieve blogs.");
   }
 }
-
   async getBlogs(): Promise<BlogPost[]> {
   try {
     const blogs = await this.prisma.blog.findMany({
       include: {
         user: { select: { fullname: true, avatar: true } },
         featuredContributors: true,
-      }
+      },
+      where: { isPublished: true },
+      take: 6,
+    });
+
+    return blogs.map((blog) => ({
+      id: blog.id,
+      title: blog.title,
+      content: blog.content,
+      isPublished: blog.isPublished,
+      tags: blog.tags || [],
+      category: blog.category === "INTERNAL" ? "Internal Blog" : "External Blog",
+      imageUrl: blog.imageUrl,
+      createdAt: blog.createdAt,
+      updatedAt: blog.updatedAt,
+      author: blog.author || "Anonymous",
+      authorAvatar: blog.user.avatar || null,
+      socialMediaLinks: blog.socialMediaLinks || [], 
+      timeToRead: blog.timeToRead || 0, 
+      featuredContributors: blog.featuredContributors.map((fc) => ({
+        id: fc.id,
+        userId: fc.userId,
+        userFullname: blog.user.fullname , 
+        userAvatar: blog.user.avatar || null,
+      
+
+
+      })),
+    }));
+  } catch (error) {
+    console.error("[getBlogs] Prisma error:", error);
+    throw new InternalServerError("Failed to retrieve blogs.");
+  }
+}
+  async getTrendingBlogs(): Promise<BlogPost[]> {
+  try {
+    const blogs = await this.prisma.blog.findMany({
+      include: {
+        user: { select: { fullname: true, avatar: true } },
+        featuredContributors: true,
+      },
+      where: { isPublished: true },
+      orderBy: { createdAt: "desc" },
+      take: 10, 
     });
 
     return blogs.map((blog) => ({
@@ -312,6 +356,7 @@ async getBlog(id: string): Promise<BlogPost> {
           featuredContributors: {
             some: {}, // Ensures blogs have at least one featured contributor
           },
+          isPublished: true, // Only fetch published blogs
         },
         include: {
           user: { select: { fullname: true, avatar: true } },
@@ -342,6 +387,18 @@ async getBlog(id: string): Promise<BlogPost> {
     } catch (error) {
       console.error("[getFeaturedContributorBlogs] Prisma error:", error);
       throw new InternalServerError("Failed to retrieve featured contributor blogs.");
+    }
+  }
+
+  async getNumberOfPropertiesListed(): Promise<number> {
+    try {
+      const count = await this.prisma.property.count({
+        // where: { isA: true },
+      });
+      return count;
+    } catch (error) {
+      console.error("[getNumberOfProjectListed] Prisma error:", error);
+      throw new InternalServerError("Failed to retrieve number of blogs listed.");
     }
   }
 }

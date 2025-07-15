@@ -131,7 +131,7 @@ export const trendingBlog = async (
   next: NextFunction
 ) => {
   try {
-    const blogs = await blogService.getBlogs();
+    const blogs = await blogService.getTrendingBlogs();
     new CustomResponse(200, true, "Blogs retrieved successfully", res, blogs);
   } catch (error) {
     console.error("Get blogs error:", error);
@@ -256,3 +256,17 @@ export const getFeaturedContributorBlogs = async (
     next(new InternalServerError("Failed to retrieve featured contributor blogs."));
   }
 };
+
+export const getTheNumberOfProperties = async (
+  req: Request,   
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const blogsCount = await blogService.getNumberOfPropertiesListed();
+    new CustomResponse(200, true, "Number of blogs retrieved successfully", res, { count: blogsCount });
+  } catch (error) {
+    console.error("Get number of blogs error:", error);
+    next(new InternalServerError("Failed to retrieve the number of blogs."));
+  }
+}
