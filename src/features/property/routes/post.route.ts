@@ -16,7 +16,7 @@ import { approveProperty, archiveProperty, likeProperty, rejectProperty, singleP
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
-import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propertyRequests, updateDeveloperAssignment } from '../../requestProperties/controllers/request';
+import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propertyRequestDetailOther, propertyRequests, propertyAssigns, updateDeveloperAssignment } from '../../requestProperties/controllers/request';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { changeStatusSchema, createFeaturePropertySchema, createPropertyRequestSchema, createPropertySchema } from './property.validate';
 
@@ -26,8 +26,10 @@ propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
 
 //Request property
 propertyRoutes.post("/requestProperty", validateSchema(createPropertyRequestSchema),  isLoginUser, createPropertyRequest);
-propertyRoutes.get("/requestProperties", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertyRequests);
-propertyRoutes.get("/requestProperty/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  propertyRequestDetail);
+propertyRoutes.get("/assignProperties", authenticate, propertyAssigns);
+propertyRoutes.get("/requestProperties", authenticate, propertyRequests);
+propertyRoutes.get("/assignProperty/:id/detail", authenticate, propertyRequestDetailOther);
+propertyRoutes.get("/requestProperty/:id/detail", authenticate, propertyRequestDetail);
 propertyRoutes.post("/requestProperty/:id/assign-developers", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  assignDevelopers);
 propertyRoutes.patch("/requestProperty/:id/assign-developers", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  updateDeveloperAssignment);
 

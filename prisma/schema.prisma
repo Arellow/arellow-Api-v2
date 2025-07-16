@@ -110,8 +110,6 @@ model User {
 
 
   propertyRequests     PropertyRequest[]   @relation("PropertyRequest_createdBy")
-  // transferredbyRequests  PropertyRequest[]   @relation("TransferredBy")
-  // developerAssignments DeveloperAssignment[]
 
   developerAssignments       DeveloperAssignment[] @relation("DeveloperAssigned")
   developerAssignmentsCreated DeveloperAssignment[] @relation("DeveloperAssignedBy")

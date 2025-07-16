@@ -2,7 +2,6 @@ import { Queue } from 'bullmq';
 import { redisConnection } from '../../../lib/redis';
 
 
-export const mediaUploadQueue = new Queue('mediaUpload', {
+export const emailQueue = new Queue('email', {
   connection: redisConnection,
 });
-

@@ -6,9 +6,8 @@ import { Prisma } from "../../../lib/prisma";
 import { redis } from "../../../lib/redis";
 import { AssignmentStatus, Prisma as prisma, PropertyCategory } from "@prisma/client";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { assignPropertyRequestMailOption } from "../../../utils/mailer";
-import { mailController } from "../../../utils/nodemailer";
 import { formatInky } from "../../../utils/constants.util";
+import { emailQueue } from "../queues/email.queue";
 dotenv.config();
 
 
@@ -42,12 +41,12 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
 
     const isLogin = await Prisma.user.findUnique({ where: { id: user?.id } });
 
-   const response = await Prisma.propertyRequest.create({
+    const response = await Prisma.propertyRequest.create({
       data: {
-        username: isLogin ?  isLogin.fullname : username,
-        userRole: isLogin ?  isLogin.role : userRole,
-        email: isLogin ?  isLogin.email : email,
-        phoneNumber: isLogin ?  isLogin.phone_number : phoneNumber,
+        username: isLogin ? isLogin.fullname : username,
+        userRole: isLogin ? isLogin.role : userRole,
+        email: isLogin ? isLogin.email : email,
+        phoneNumber: isLogin ? isLogin.phone_number : phoneNumber,
         propertyCategory,
         propertyType,
         furnishingStatus,
@@ -102,56 +101,56 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
   try {
 
     const baseSelect = {
-  propertyAddress: true,
-  propertyCategory: true,
-  propertyType: true,
-  furnishingStatus: true,
-  numberOfBedrooms: true,
-  numberOfBathrooms: true,
-  budget: true,
-  description: true,
-};
+      propertyAddress: true,
+      propertyCategory: true,
+      propertyType: true,
+      furnishingStatus: true,
+      numberOfBedrooms: true,
+      numberOfBathrooms: true,
+      budget: true,
+      description: true,
+    };
 
 
-const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
-  email: true,
-  phoneNumber: true,
-  userRole: true,
-  createdBy: {
-    select: {
-      id: true,
-      fullname: true,
-       _count: {
-      select: {
-        propertyRequests: true
-      }
-    },
-      address: {
+    const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
+      email: true,
+      phoneNumber: true,
+      userRole: true,
+      createdBy: {
         select: {
-          state: true
-        }
-      }
-    }
-  },
-  developerAssignments: {
-    include: {
-      developer: {
-        select: {
+          id: true,
           fullname: true,
+          _count: {
+            select: {
+              propertyRequests: true
+            }
+          },
+          address: {
+            select: {
+              state: true
+            }
+          }
+        }
+      },
+      developerAssignments: {
+        include: {
+          developer: {
+            select: {
+              fullname: true,
+            }
+          }
         }
       }
-    }
-  }
-} : {};
+    } : {};
 
 
     const property = await Prisma.propertyRequest.findUnique({
-  where: { id },
-  select: {
-    ...baseSelect,
-    ...adminSelect
-  }
-});
+      where: { id },
+      select: {
+        ...baseSelect,
+        ...adminSelect
+      }
+    });
 
 
 
@@ -171,43 +170,153 @@ const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
 
 };
 
+
+export const propertyRequestDetailOther = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+
+  const cacheKey = `propertyRequests:${id}:other`;
+
+  // const cached = await redis.get(cacheKey);
+  // if (cached) {
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
+
+  try {
+
+
+    const property = await Prisma.developerAssignment.findUnique({
+      where: { id },
+      select: {
+        status: true,
+        comment: true,
+        propertyRequest: {
+          select: {
+            propertyAddress: true,
+           propertyCategory: true,
+           propertyType: true,
+          furnishingStatus: true,
+          numberOfBedrooms: true,
+          numberOfBathrooms: true,
+          budget: true,
+          description: true
+          }
+        }
+      }
+    });
+
+
+
+    if (!property) {
+      return next(new InternalServerError("Property request not found", 404));
+    }
+
+
+    await redis.set(cacheKey, JSON.stringify(property), "EX", 60);
+
+
+    new CustomResponse(200, true, "successfully", res, property);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+
+};
+
+
+
+
 export const propertyRequests = async (req: Request, res: Response, next: NextFunction) => {
+    const {
+      propertyType,
+      country,
+      state,
+      status,
+     
+    } = req.query;
 
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
+  const user = req?.user
 
   const search = (req.query.search as string) || "";
 
-  const cacheKey = `propertyRequests:${page}:${limit}:${search || "all"}`;
+    const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}:self`;
 
-  const cached = await redis.get(cacheKey);
-  if (cached) {
 
-    res.status(200).json({
-      success: true,
-      message: "successfully. from cache",
-      data: JSON.parse(cached)
-    });
-    return
-  }
+  // const cached = await redis.get(cacheKey);
+  // if (cached) {
+
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
 
   try {
 
     const matchedCategory = getValidCategory(search);
 
-    const filters = search
-      ? {
-        OR: [
-          matchedCategory ? { propertyCategory: matchedCategory } : null,
-          { propertyType: { contains: search, mode: "insensitive" } },
-          { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
-          { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
-          { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
-          { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } },
-        ].filter(Boolean) as prisma.PropertyRequestWhereInput[],
-      }
-      : {};
+    const filters: prisma.PropertyRequestWhereInput = {
+
+      createdById: (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? undefined : user?.id,
+
+      AND: [
+        search
+          ? {
+            OR: [
+              matchedCategory ? { propertyCategory: matchedCategory } : null,
+              { propertyType: { contains: search, mode: "insensitive" } },
+              { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
+              { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
+              { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
+              { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } },
+            ]
+          }
+          : undefined,
+            status ? { status: status as AssignmentStatus } : undefined,
+
+          country ? { propertyAddress: { is: { country: { contains: country, mode: "insensitive" } } } } : undefined,
+          state ? { propertyAddress: { is: { state: { contains: state, mode: "insensitive" } } } } : undefined,
+           propertyType ? { propertyType: { contains: propertyType, mode: "insensitive" } } : undefined,
+      ].filter(Boolean) as prisma.PropertyRequestWhereInput[]
+    };
+
+
+
+
+    const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
+      username: true,
+      email: true,
+      phoneNumber: true,
+      userRole: true,
+      budget: true,
+      adminStatus: true,
+      createdById: true,
+
+
+    } : {
+      propertyCategory: true,
+      propertyType: true,
+      budget: true,
+      propertyAddress: true,
+      createdAt: true,
+      userStatus: true,
+      createdById: true,
+      // developerAssignments: {
+      //   where: { developerId: user?.id },
+      //   select: {
+      //     status: true
+      //   }
+      // }
+
+    }
 
 
     const result = await swrCache(cacheKey, async () => {
@@ -217,11 +326,128 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
       const [data, total] = await Promise.all([
         Prisma.propertyRequest.findMany({
           where: filters,
+          select: {
+            ...adminSelect,
+          },
           skip,
           take: limit,
           orderBy: { createdAt: "desc" },
         }),
         Prisma.propertyRequest.count({ where: filters }),
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+
+      return {
+        data,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages,
+          canGoNext: page < totalPages,
+          canGoPrev: page > 1,
+        },
+      }
+    })
+
+
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+    new CustomResponse(200, true, "Fetched successfully", res, result);
+  } catch (error) {
+    console.log(error)
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
+export const propertyAssigns = async (req: Request, res: Response, next: NextFunction) => {
+
+
+    const {
+      propertyType,
+      country,
+      state,
+      status,
+     
+    } = req.query;
+
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
+  const user = req?.user;
+
+  const search = (req.query.search as string) || "";
+
+  const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}`;
+
+  // const cached = await redis.get(cacheKey);
+  // if (cached) {
+
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
+
+  try {
+
+    const matchedCategory = getValidCategory(search);
+
+    const filters: prisma.DeveloperAssignmentWhereInput = {
+      developerId: user?.id,
+      AND: [
+        search
+          ? {
+            OR: [
+              matchedCategory ? {propertyRequest: { propertyCategory: matchedCategory }} : null,
+              {propertyRequest: { propertyType: { contains: search, mode: "insensitive" } }},
+              {propertyRequest: { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } }},
+              {propertyRequest: { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } }},
+              {propertyRequest: { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } }},
+              {propertyRequest: { propertyAddress: { is: { location: { contains: search, mode: "insensitive" } } } }},
+            ]
+          }
+          : undefined,
+
+          status ? { status: status as AssignmentStatus } : undefined,
+
+          country ? {propertyRequest: { propertyAddress: { is: { country: { contains: country, mode: "insensitive" } } } } } : undefined,
+          state ? {propertyRequest: { propertyAddress: { is: { state: { contains: state, mode: "insensitive" } } } } }: undefined,
+           propertyType ? {propertyRequest: { propertyType: { contains: propertyType, mode: "insensitive" } } } : undefined,
+
+      ].filter(Boolean) as prisma.DeveloperAssignmentWhereInput[]
+    };
+
+    const result = await swrCache(cacheKey, async () => {
+
+
+
+      const [data, total] = await Promise.all([
+        Prisma.developerAssignment.findMany({
+          where: filters,
+          select: {
+            id: true,
+            status: true,
+            propertyRequest: {
+              select: {
+                  propertyCategory: true,
+                 propertyType: true,
+              budget: true,
+             propertyAddress: true,
+               createdAt: true,
+              }
+            }
+          },
+          skip,
+          take: limit,
+          orderBy: { assignedAt: "desc" },
+        }),
+        Prisma.developerAssignment.count({ where: filters }),
       ]);
 
       const totalPages = Math.ceil(total / limit);
@@ -276,7 +502,7 @@ export const assignDevelopers = async (
   next: NextFunction
 ) => {
   const { id: requestId } = req.params;
-  const { developerIds, comment, sendmail }:TTransferPropertyRequest = req.body;
+  const { developerIds, comment, sendmail }: TTransferPropertyRequest = req.body;
   const assignedById = req?.user?.id;
 
   try {
@@ -295,7 +521,7 @@ export const assignDevelopers = async (
 
     const existingDeveloperIds = [...existingDeveloperMap.keys()];
 
-    
+
     const toDelete = existingDeveloperIds.filter(id => !developerIds.includes(id));
     const toAdd = developerIds.filter(id => !existingDeveloperIds.includes(id));
 
@@ -319,7 +545,7 @@ export const assignDevelopers = async (
       assignedById,
       comment,
       status: AssignmentStatus.IN_PROGRESS,
-      
+
     }));
 
     if (newAssignments.length > 0) {
@@ -327,10 +553,10 @@ export const assignDevelopers = async (
         data: newAssignments
       });
     }
-  
 
-   const response =  await Prisma.propertyRequest.update({
-      where: {id: requestId}, 
+
+    const response = await Prisma.propertyRequest.update({
+      where: { id: requestId },
       data: {
         adminStatus: "ASSIGNED",
         userStatus: "IN_PROGRESS",
@@ -338,34 +564,34 @@ export const assignDevelopers = async (
     })
 
 
-    if(sendmail){
+    if (sendmail) {
       const addedMails = toAdd.map(async (developerId) => {
         const developer = await Prisma.user.findUnique({
           where: { id: developerId },
           select: { email: true, fullname: true }
         });
-  
+
         if (developer?.email) {
-  
-        const mailOptions = await assignPropertyRequestMailOption({
-        email: response.email,
-        realtorName: response.username,
-        location: response.propertyAddress.location,
-        propertyType: response.propertyType,
-        bedrooms: response.numberOfBedrooms,
-        budget: formatInky(response.budget?.toString()),
-        furnishingStatus: response.furnishingStatus,
-      });
-      mailController({ from: "noreply@arellow.com", ...mailOptions });
+          await emailQueue.add("send-email", {
+            email: response.email,
+            realtorName: response.username,
+            location: response.propertyAddress.location,
+            propertyType: response.propertyType,
+            bedrooms: response.numberOfBedrooms,
+            budget: formatInky(response.budget?.toString()),
+            furnishingStatus: response.furnishingStatus,
+          from: "noreply@arellow.com"
+
+          })
         }
       });
-  
-      await Promise.allSettled([...addedMails]);
+   
+      await Promise.allSettled([...addedMails,]);
     }
 
 
- await deleteMatchingKeys("propertyRequests:*");
-      new CustomResponse(200, true, "Developer assignments successfully", res);
+    await deleteMatchingKeys("propertyRequests:*");
+    new CustomResponse(200, true, "Developer assignments successfully", res);
   } catch (error) {
     next(new InternalServerError("Failed to update assignments."));
   }
@@ -378,7 +604,7 @@ export const updateDeveloperAssignment = async (req: Request, res: Response, nex
 
   try {
     await Prisma.developerAssignment.updateMany({
-      where: {propertyRequestId },
+      where: { propertyRequestId },
       data: {
         status: "CLOSED",
         comment: "property found",
@@ -387,7 +613,7 @@ export const updateDeveloperAssignment = async (req: Request, res: Response, nex
     });
 
     await Prisma.propertyRequest.update({
-      where: {id: propertyRequestId }, 
+      where: { id: propertyRequestId },
       data: {
         adminStatus: "CLOSED",
         userStatus: "SEEN",
@@ -395,10 +621,10 @@ export const updateDeveloperAssignment = async (req: Request, res: Response, nex
     })
 
 
-     await deleteMatchingKeys("propertyRequests:*");
+    await deleteMatchingKeys("propertyRequests:*");
     new CustomResponse(200, true, "updated successfully", res);
 
-  
+
   } catch (error) {
     next(new InternalServerError("Failed to update developer assignment."));
   }

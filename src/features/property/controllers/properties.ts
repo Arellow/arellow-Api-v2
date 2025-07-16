@@ -1425,9 +1425,6 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 };
 
 
-
-
-
 export const updateProperty = async (req: Request, res: Response, next: NextFunction) => {
 
   try {
@@ -1702,8 +1699,6 @@ export const unArchiveProperty = async (req: Request, res: Response, next: NextF
   }
 
 };
-
-
 
 
 // uncheck
@@ -1995,7 +1990,6 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
 
 
 // untest route
-
 export const mediaForProperty = async (req: Request, res: Response, next: NextFunction) => {
   const { propertyId } = req.params;
   const files = req.files as Express.Multer.File[];

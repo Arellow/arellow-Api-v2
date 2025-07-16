@@ -11,9 +11,6 @@ export const mediaWorker = new Worker(
   async job => {
     const { propertyId, file, meta } = job.data;
 
-    console.log({meta})
-
-
     const result = await new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         { resource_type: 'auto', folder: meta?.photoType == "TICKET" ? 'ticket-media' : 'property-media' },

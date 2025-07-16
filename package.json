@@ -8,7 +8,8 @@
     "dev": "nodemon --exec ts-node api/index.ts",
     "build": "tsc && prisma generate && prisma db push",
     "prisma:generate": "prisma generate",
-    "worker": "ts-node src/features/property/workers/media.worker.ts"
+    "worker": "ts-node src/features/property/workers/media.worker.ts",
+    "worker-email": "ts-node src/features/requestProperties/workers/emailWorker.ts"
   },
   "keywords": [],
   "author": "",

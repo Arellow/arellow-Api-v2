@@ -938,7 +938,7 @@ export const assignPropertyRequestMailOption = async ({
                 </tr>
                 <tr>
                   <td style="padding:6px 0; font-weight:bold;">Type:</td>
-                  <td style="padding:6px 0;"${propertyType}</td>
+                  <td style="padding:6px 0;">${propertyType}</td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0; font-weight:bold;">Bedrooms:</td>
