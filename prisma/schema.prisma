@@ -22,7 +22,7 @@ model Company {
 enum KycStatus {
   PENDING
   VERIFIED
-  FAILED
+  REJECTED
 }
 
 enum KycDocumentType {
@@ -64,14 +64,29 @@ model Kyc {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String          @db.ObjectId
-  documentType   KycDocumentType
+  documentType   KycDocumentType @default(NIN)
+  NIN            NIN_Data?
   documentNumber String
+  statueText     String?
   documentPhoto  String
+  tryCount       Int             @default(0)
   status         KycStatus       @default(PENDING)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@unique(userId)
+}
+
+type NIN_Data {
+  nin        String
+  firstname  String
+  lastname   String
+  middlename String
+  phone      String
+  gender     String
+  birthdate  String
+  photo      String
+  address    String
 }
 
 model User {
@@ -85,7 +100,7 @@ model User {
   avatar            String             @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified       Boolean            @default(false)
   suspended         Boolean            @default(false)
-  address          PropertyAddress?
+  address           PropertyAddress?
   points            Int                @default(0)
   rewardHistory     RewardHistory[]
   rewardWithdrawals RewardWithdrawal[]
@@ -108,10 +123,9 @@ model User {
   tickets         Ticket[]
   AdminPermission AdminPermission?
 
+  propertyRequests PropertyRequest[] @relation("PropertyRequest_createdBy")
 
-  propertyRequests     PropertyRequest[]   @relation("PropertyRequest_createdBy")
-
-  developerAssignments       DeveloperAssignment[] @relation("DeveloperAssigned")
+  developerAssignments        DeveloperAssignment[] @relation("DeveloperAssigned")
   developerAssignmentsCreated DeveloperAssignment[] @relation("DeveloperAssignedBy")
 }
 
@@ -124,11 +138,11 @@ enum UserRole {
 }
 
 model AdminPermission {
-  id       String       @id @default(auto()) @map("_id") @db.ObjectId
-  action   actionRole[]
+  id     String       @id @default(auto()) @map("_id") @db.ObjectId
+  action actionRole[]
   // resource String[]
-  userId   String       @db.ObjectId
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String       @db.ObjectId
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique(userId)
 }
@@ -190,10 +204,10 @@ model Property {
   floors       Int
   squareMeters Int
   price        Float
-  yearBuilt   String?
-  stage       PropertyStage?
-  progress    PropertyProgress?
-  stagePrice Float?
+  yearBuilt    String?
+  stage        PropertyStage?
+  progress     PropertyProgress?
+  stagePrice   Float?
 
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
@@ -224,26 +238,24 @@ enum SalesStatus {
 }
 
 enum PropertyStage {
-  OfPlaneStage         @map("Off-plane stage")
+  OfPlaneStage    @map("Off-plane stage")
   CarcassStage    @map("Carcass stage")
-  CompletionStage       @map("Completion stage")
+  CompletionStage @map("Completion stage")
 }
 
 enum PropertyProgress {
-  Zero         @map("0% ongoing")
-  Ten         @map("10% ongoing")
-  Twenty         @map("20% ongoing")
-  Thirty         @map("30% ongoing")
-  Forty         @map("40% ongoing")
-  Fifty         @map("50% ongoing")
-  Sixty         @map("60% ongoing")
-  Seventy         @map("70% ongoing")
-  Eighty         @map("80% ongoing")
-  Ninety         @map("90% ongoing")
-  OneHundred         @map("100% ongoing")
-
+  Zero       @map("0% ongoing")
+  Ten        @map("10% ongoing")
+  Twenty     @map("20% ongoing")
+  Thirty     @map("30% ongoing")
+  Forty      @map("40% ongoing")
+  Fifty      @map("50% ongoing")
+  Sixty      @map("60% ongoing")
+  Seventy    @map("70% ongoing")
+  Eighty     @map("80% ongoing")
+  Ninety     @map("90% ongoing")
+  OneHundred @map("100% ongoing")
 }
-
 
 enum PropertyCategory {
   Apartment
@@ -263,7 +275,6 @@ enum PropertyCategory {
   Short_let              @map("Short-let")
   Hostel_Student_Housing @map("Hostel / Student Housing")
 }
-
 
 model Amenity {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -383,44 +394,41 @@ model PropertyRequest {
   budget            Int              @default(0)
   description       String?
 
-  createdBy         User?               @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])
-  createdById       String?             @db.ObjectId
+  createdBy   User?   @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])
+  createdById String? @db.ObjectId
 
   developerAssignments DeveloperAssignment[]
 
-  userStatus   PropertyRequestUserStatus   @default(PENDING)
-  adminStatus  PropertyRequestAdminStatus  @default(PENDING)
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  userStatus  PropertyRequestUserStatus  @default(PENDING)
+  adminStatus PropertyRequestAdminStatus @default(PENDING)
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
 }
 
-
 model DeveloperAssignment {
-  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  propertyRequest  PropertyRequest  @relation(fields: [propertyRequestId], references: [id])
+  propertyRequest   PropertyRequest @relation(fields: [propertyRequestId], references: [id])
   propertyRequestId String          @db.ObjectId
 
-  developer        User             @relation("DeveloperAssigned", fields: [developerId], references: [id])
-  developerId      String           @db.ObjectId
+  developer   User   @relation("DeveloperAssigned", fields: [developerId], references: [id])
+  developerId String @db.ObjectId
 
-  assignedBy       User?            @relation("DeveloperAssignedBy", fields: [assignedById], references: [id])
-  assignedById     String?          @db.ObjectId
+  assignedBy   User?   @relation("DeveloperAssignedBy", fields: [assignedById], references: [id])
+  assignedById String? @db.ObjectId
 
-  assignedAt       DateTime         @default(now())
-  responseAt       DateTime?
-  status           AssignmentStatus @default(IN_PROGRESS)
-  comment          String?
+  assignedAt DateTime         @default(now())
+  responseAt DateTime?
+  status     AssignmentStatus @default(IN_PROGRESS)
+  comment    String?
 
   @@index([propertyRequestId, developerId], name: "assignment_request_developer_unique")
 }
-
 
 enum AssignmentStatus {
   IN_PROGRESS
   CLOSED
 }
-
 
 enum PropertyRequestAdminStatus {
   PENDING

@@ -1,10 +1,16 @@
-import { KycDocumentType, ticketStatus } from '@prisma/client';
+import {ticketStatus } from '@prisma/client';
 import Joi from 'joi';
 
 
 export const createKycSchema = Joi.object({
-  documentNumber: Joi.string().required().min(3).max(30),
-  documentType: Joi.string().required().valid(...Object.values(KycDocumentType)),
+ documentNumber: Joi.string()
+    .length(11)
+    .required()
+    .messages({
+      'string.length': 'idNumber must be exactly 11 characters',
+      'any.required': 'documentNumber is required',
+      'string.base': 'documentNumber must be a string',
+    }),
 });
 
 export const changeTicketSchema = Joi.object({

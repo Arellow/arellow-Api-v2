@@ -11,10 +11,12 @@ function registerInput(input: RegisterDTO) {
     username: input.username?.trim(),
     password: input.password?.trim(),
     email: input.email?.trim().toLowerCase(),
-    phone_number: input.phone_number?.trim(),
+    phone_number: {
+      phone:input.phone_number.phone?.trim(),
+      country: input.phone_number.country.trim()
+    },
     fullname: input.fullname?.trim(),
     role: input.role,
-    country: input.country
   };
 }
 

@@ -86,7 +86,7 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
   const { id } = req.params;
   const user = req?.user
 
-  const cacheKey = `propertyRequests:${id}`;
+  const cacheKey = `propertyRequests:${id}:${user}`;
 
   const cached = await redis.get(cacheKey);
   if (cached) {
@@ -116,6 +116,7 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
       email: true,
       phoneNumber: true,
       userRole: true,
+      adminStatus: true,
       createdBy: {
         select: {
           id: true,
@@ -133,14 +134,14 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
         }
       },
       developerAssignments: {
-        include: {
-          developer: {
-            select: {
-              fullname: true,
+          select: {
+            developer: {
+              select: {
+                fullname: true
+              }
             }
           }
         }
-      }
     } : {};
 
 
@@ -148,10 +149,9 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
       where: { id },
       select: {
         ...baseSelect,
-        ...adminSelect
+        ...adminSelect,
       }
     });
-
 
 
     if (!property) {
@@ -171,7 +171,7 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
 };
 
 
-export const propertyRequestDetailOther = async (req: Request, res: Response, next: NextFunction) => {
+export const propertyAssignDetail = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   const cacheKey = `propertyRequests:${id}:other`;
@@ -225,8 +225,6 @@ export const propertyRequestDetailOther = async (req: Request, res: Response, ne
   }
 
 };
-
-
 
 
 export const propertyRequests = async (req: Request, res: Response, next: NextFunction) => {
@@ -485,9 +483,6 @@ function getValidCategory(value: string): PropertyCategory | null {
     ) ?? null
   );
 }
-
-
-
 
 
 type TTransferPropertyRequest = {

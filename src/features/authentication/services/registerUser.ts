@@ -8,7 +8,7 @@ import { generateToken } from "../../../utils/jwt";
 
 export class AuthService {
   public static async registerUser(dto: RegisterDTO) {
-    const { username, password, email, phone_number, fullname , role, country} = dto;
+    const { username, password, email, phone_number, fullname , role,} = dto;
 
     if(role == "SUPER_ADMIN" || role == "ADMIN"){
       throw new UnAuthorizedError("Forbidden: unauthorise user role", 403);
@@ -30,11 +30,11 @@ export class AuthService {
         username,
         email,
         password: hashedPassword,
-        phone_number,
+        phone_number: phone_number.phone,
         role,
         fullname,
         address: {
-          country,
+          country: phone_number.country,
           city: "",
           location: "",
           state: ""

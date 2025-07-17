@@ -5,10 +5,12 @@ export interface RegisterDTO {
   username: string;
   password: string;
   email: string;
-  phone_number: string;
+  phone_number: {
+    phone: string;
+    country: string
+  }
   fullname: string;
   role: UserRole,
-  country: string
 }
 
 export interface UserResponseDTO {

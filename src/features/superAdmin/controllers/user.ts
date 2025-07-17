@@ -141,6 +141,7 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                         email: true,
                         phone_number: true,
                         role: true,
+                        address: true,
                         kyc: {
                             select: {
                                 status: true
@@ -165,7 +166,6 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                 const {properties, ...rest} =  user;
                 return ({
                 ...rest,
-                location: "lagos",
                 lastSeen: Date.now(),
                  approvedPropertyCount: user.properties.length,
                 })
@@ -246,9 +246,6 @@ export const addAdmin = async (req: Request, res: Response, next: NextFunction) 
     }
 
 }
-
-// 
-
 
 export const suspendAdminStatus = async (req: Request, res: Response, next: NextFunction) => {
 

@@ -23,7 +23,7 @@ export  async function isLoginUser(
 
     if (user) {
       // res.status(401).json({ success: false, message: "Invalid user." });
-      req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended};
+      req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
     }
 
 
@@ -56,7 +56,7 @@ export default async function authenticate(
       return;
     }
 
-    req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended};
+    req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
 
     next();
   } catch (err) {
@@ -165,16 +165,15 @@ export function requireRole(...allowedRoles: UserRole[]) {
 export const adminRequireRole = (...allowedRoles: actionRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = req?.user;
+  
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
 
 
     if(user?.role == UserRole.SUPER_ADMIN){
         return next();
-    }
-
-   
-
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     try {
