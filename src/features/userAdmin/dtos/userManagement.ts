@@ -29,10 +29,10 @@ export interface PropertyResponseDto {
   features: string[];
   amenities: string[];
   neighborhood?: string | null;
-  number_of_bedrooms?: number | null;
-  number_of_bathrooms?: number | null;
+  number_of_bedrooms?: string | null;
+  number_of_bathrooms?: string | null;
   number_of_floors?: number | null;
-  square?: number | null;
+  square?: string | null;
   price?: number | null;
   longitude?: string | null;
   latitude?: string | null;

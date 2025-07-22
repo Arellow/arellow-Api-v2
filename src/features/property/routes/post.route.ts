@@ -63,7 +63,9 @@ propertyRoutes.get("/allarchive",  authenticate,  requireRole(UserRole.ADMIN, Us
 propertyRoutes.get("/:id/detail",singleProperty);
 propertyRoutes.get("/all", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllProperties);
 propertyRoutes.get("/listing", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertiesListing);
-propertyRoutes.delete("/:id", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), deleteProperty);
+propertyRoutes.delete("/:id", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), 
+adminRequireRole("PROPERTY"),
+ deleteProperty);
 propertyRoutes.patch("/:id/feature", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"),  markAsFeatureProperty);
 propertyRoutes.delete("/:id/unfeature", authenticate,  isSuspended,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), unmarkAsFeatureProperty);
 propertyRoutes.patch("/:id/status", validateSchema(changeStatusSchema), authenticate, isSuspended,    requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  adminRequireRole("PROPERTY"),   statusProperty);

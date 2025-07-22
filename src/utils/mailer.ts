@@ -979,3 +979,130 @@ export const assignPropertyRequestMailOption = async ({
 
     `
 }}
+
+
+export const kycRejectiontMailOption = async ({
+  email,
+   userName,
+    rejectionReason,
+}: {
+    email: string,
+    userName: string,
+    rejectionReason: string,
+}
+) => {
+  return {
+    to: email,
+    subject: "KYC Rejected",
+    html:`
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KYC Rejected</title>
+  <style>
+    /* Reset & Compatibility */
+    body, table, td, a {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    table {
+      border-collapse: collapse !important;
+    }
+    body {
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0;
+      padding: 0;
+    }
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
+
+    /* Mobile responsiveness */
+    @media screen and (max-width: 600px) {
+      .main {
+        width: 100% !important;
+      }
+      .content {
+        padding: 20px !important;
+      }
+    }
+  </style>
+</head>
+<body style="background-color: #f6f8fa; margin: 0; padding: 0;">
+  <center>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f6f8fa;">
+      <tr>
+        <td align="center">
+          <table width="600" class="main" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff; margin: 20px auto; border-radius: 8px; overflow: hidden;">
+            <!-- Header -->
+            <tr>
+              <td bgcolor="#ff4d4f" align="center" style="padding: 20px 40px; color: #ffffff; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold;">
+                KYC Verification Failed
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td class="content" style="padding: 30px 40px; font-family: Arial, sans-serif; font-size: 16px; color: #333333; line-height: 1.6;">
+                <p>Dear ${userName},</p>
+                <p>We regret to inform you that your KYC verification has been rejected.</p>
+
+                <!-- Reason -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+                  <tr>
+                    <td bgcolor="#ffeaea" style="padding: 15px; border-left: 5px solid #ff4d4f; color: #b30000; font-weight: bold;">
+                      Rejection Reason: ${rejectionReason}
+                    </td>
+                  </tr>
+                </table>
+
+                <p>Please review the reason above and submit your documents again to proceed.</p>
+
+
+                <p>If you need assistance, feel free to contact our support team.</p>
+
+                <p>Thank you,<br>Arellow Team</p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" bgcolor="#f6f8fa" style="padding: 20px; font-family: Arial, sans-serif; font-size: 12px; color: #999999;">
+                &copy; 2025 arellow homes. All rights reserved.<br>
+                <a href="#" style="color: #999999; text-decoration: underline;">Privacy Policy</a> | <a href="#" style="color: #999999; text-decoration: underline;">Contact Support</a>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>
+
+    `
+   
+}}
+
+
+

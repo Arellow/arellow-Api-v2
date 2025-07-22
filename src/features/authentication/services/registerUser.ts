@@ -41,7 +41,11 @@ export class AuthService {
         }
       },
       include: {
-        kyc: true
+        kyc: {
+          select: {
+            status: true
+          }
+        }
       }
     });
     const verificationToken = generateToken(newUser.id, newUser.email);

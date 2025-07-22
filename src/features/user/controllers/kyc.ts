@@ -8,6 +8,10 @@ import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { getDataUri } from "../../../middlewares/multer";
 import axios from "axios";
 import bcrypt from "bcryptjs";
+import { User } from "../../../types/custom";
+import { deleteImage, processImage } from "../../../utils/imagesprocess";
+import { mailController } from "../../../utils/nodemailer";
+import { kycRejectiontMailOption } from "../../../utils/mailer";
 
 interface IRequest {
     documentType: KycDocumentType,
@@ -24,15 +28,20 @@ export const createKyc = async (
 ) => {
     const { documentNumber } = req.body as IRequest;
 
-
-
     try {
 
         const userId = req.user?.id!;
+        const fullName = req.user?.fullname?.trim().split(' ');
 
-        const kyc = await Prisma.kyc.findUnique({
-            where: { userId }
-        });
+        const hashedDocumentNumber = await bcrypt.hash(documentNumber, 10);
+        const maskedDocumentNumber = documentNumber.slice(-4);
+
+        if (!fullName || fullName.length < 2) {
+            return next(new InternalServerError('Update full name to continue', 400));
+        }
+
+
+        const kyc = await Prisma.kyc.findUnique({ where: { userId } });
 
 
         if (kyc && kyc.status == 'VERIFIED') {
@@ -43,14 +52,13 @@ export const createKyc = async (
             return next(new InternalServerError("Verification still in process", 403));
         }
 
-
-        if (kyc && kyc.tryCount === 3) {
-            return next(new InternalServerError("Maximum verification reach contact support", 403));
+        if (kyc && kyc.tryCount >= 3) {
+            return next(new InternalServerError("Maximum verification attempts reached. Contact support.", 403));
         }
 
 
         if (!req.file) {
-            return next(new InternalServerError('Face recognition is required', 401));
+            return next(new InternalServerError('Invalid photo provided', 400));
         }
 
 
@@ -59,118 +67,196 @@ export const createKyc = async (
             return next(new InternalServerError('Invalid photo provided', 400));
         }
 
-        const base64 = fileUri.content.split(',')[1];
+      
 
-        if (!base64) {
-            return next(new InternalServerError('Invalid photo provided', 400));
-        }
-
-        if (kyc) {
-            // allso delete avatar
-            await Prisma.kyc.deleteMany({
-                where: { userId }
-            });
-        }
-
-
-        const documentPhoto = fileUri;
-
-        const tokenOptions = {
-            method: 'POST',
-            url: 'https://api.qoreid.com/token',
-            headers: { accept: 'text/plain', 'content-type': 'application/json' },
-            data: { clientId: process.env.QORE_clientId, secret: process.env.QORE_secret }
-        };
-
-        const getToken = await axios.request(tokenOptions);
-
-        if (!getToken.data.accessToken) {
-            return next(new InternalServerError('This service is not available at the moment try again later.', 400));
-        }
-
-        let fullName;
-
-        if (!req.user?.fullname) {
-            return next(new InternalServerError('update fullname to continue', 400));
-        }
-
-        fullName = req.user?.fullname.split(" ");
-
-        const hasheddocumentNumber = await bcrypt.hash(documentNumber, 10);
-
-
-        const optionsKyc = {
-            method: 'POST',
-            url: `https://api.qoreid.com/v1/ng/identities/nin/${documentNumber}`,
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                authorization: `Bearer ${getToken.data.accessToken}`
-            },
-            data: { firstname: fullName[0], lastname: fullName[1] }
-        };
-
-        axios.request(optionsKyc).then(async (result) => {
-
-            const hashednin = await bcrypt.hash(result.data.nin.nin, 10);
-
-            console.log({ response: result.data })
-
-            //      const keyReponse = await Prisma.kyc.create({
-            //     data: {
-            //         userId,
-            //         documentType: "NIN",
-            //         status: "PENDING",
-            //         NIN: {
-            //             nin: hashednin,
-            //             firstname: result.nin.firstname,
-            //             lastname: result.nin.lastname,
-            //             middlename: result.nin.middlename,
-            //             phone: result.nin.phone,
-            //             gender: result.nin.gender,
-            //             birthdate: result.nin.birthdate,
-            //             photo: result.nin.photo,
-            //             address: result.nin.address
-            //         },
-            //         documentNumber: hasheddocumentNumber,
-            //         documentPhoto: documentPhoto.content
-            //     }
-            // })
-
-            // // Increment trying count
-            // await Prisma.kyc.update({
-            //     where: { id: keyReponse.id },
-            //     data: { tryCount: { increment: 1 } },
-            // });
-
-        }).catch(async (error) => {
-
-            const keyReponse = await Prisma.kyc.create({
-                data: {
-                    userId,
-                    documentType: "NIN",
-                    status: "PENDING",
-                    statueText: error.response?.data?.message,
-                    documentNumber: hasheddocumentNumber,
-                    documentPhoto: documentPhoto.content
-                }
-            })
-
-            // Increment trying count
-            await Prisma.kyc.update({
-                where: { id: keyReponse.id },
-                data: { tryCount: { increment: 1 } },
-            });
-
+        // Get QoreID access token
+        const tokenResp = await axios.post('https://api.qoreid.com/token', {
+            clientId: process.env.QORE_clientId,
+            secret: process.env.QORE_secret
         });
+
+        const accessToken = tokenResp.data?.accessToken;
+        if (!accessToken) {
+            const message = ['ADMIN', 'SUPER_ADMIN'].includes(req.user?.role!)
+                ? 'QoreID unavailable'
+                : 'Verification failed. Try again later';
+
+            return next(new InternalServerError(message, 400));
+        }
+
+           if (kyc) {
+                await deleteImage(kyc.documentPhoto)
+            }
+
+
+
+        let documentPhoto: string;
+
+try {
+    documentPhoto = await processImage({
+        folder: "kyc_container",
+        image: req.file,
+        photoType: "KYC",
+        type: "PHOTO"
+    });
+
+    if (!documentPhoto) {
+        return next(new InternalServerError('Failed to process photo', 500));
+    }
+} catch (e) {
+    return next(new InternalServerError('Photo processing failed', 500));
+}
+
+
+        try {
+
+            const identityResp = await axios.post(
+                `https://api.qoreid.com/v1/ng/identities/nin/${documentNumber}`,
+                { firstname: fullName[0], lastname: fullName[1] },
+                {
+                    headers: {
+                        authorization: `Bearer ${accessToken}`,
+                        'content-type': 'application/json'
+                    }
+                }
+            );
+
+            
+
+            if (identityResp?.data?.status?.status === 'id_mismatch') {
+
+                if (kyc) {
+                  await Prisma.kyc.update({
+                        where: { id: kyc.id },
+                        data: {
+                            status: "REJECTED",
+                            statueText: "Mismatch",
+                            documentNumber: maskedDocumentNumber,
+                            documentPhoto,
+                            tryCount: {increment: 1}
+                        }
+                    })
+
+
+                } else {
+                    await Prisma.kyc.create({
+                        data: {
+                            userId,
+                            documentType: "NIN",
+                            status: "REJECTED",
+                            statueText: "Mismatch",
+                            documentNumber: maskedDocumentNumber,
+                            documentPhoto,
+                            tryCount: 1
+                        }
+                    })
+
+                }
+
+                throw new Error('id_mismatch');
+
+            }
+
+            const ninData = identityResp.data?.nin;
+
+         
+
+
+             const kycPayload = {
+                userId,
+                documentType: KycDocumentType.NIN,
+                status: KycStatus.PENDING,
+                documentNumber: maskedDocumentNumber,
+                documentPhoto,
+                tryCount: kyc ? undefined : 1,
+                NIN: {
+                    nin: hashedDocumentNumber,
+                    firstname: ninData?.firstname,
+                    lastname: ninData?.lastname,
+                    middlename: ninData?.middlename,
+                    phone: ninData?.phone,
+                    gender: ninData?.gender,
+                    birthdate: ninData?.birthdate,
+                    photo: ninData?.photo,
+                    address: ninData?.address
+                }
+            };
+
+
+            if (kyc) {
+               await Prisma.kyc.update({
+                    where: { id: kyc.id },
+                    data: {
+                        ...kycPayload,
+                        tryCount: {increment: 1},
+                    }
+                });
+
+            } else {
+               await Prisma.kyc.create({ data: kycPayload });
+
+            }
+
+
+        } catch (error: any) {
+
+            if (error.message === 'id_mismatch') {
+                return next(new InternalServerError('ID mismatch, please verify your fullname and NIN', 400));
+            }
+
+            if (error.response?.statusText === 'Not Found') {
+
+
+                if (kyc) {
+                  await Prisma.kyc.update({
+                        where: { id: kyc.id },
+                        data: {
+                            status: "REJECTED",
+                            statueText: error.response?.data?.message,
+                            documentNumber: maskedDocumentNumber,
+                            documentPhoto,
+                             tryCount: {increment: 1}
+                        }
+                    });
+
+                } else {
+                    await Prisma.kyc.create({
+                        data: {
+                            userId,
+                            documentType: "NIN",
+                            status: "REJECTED",
+                            statueText: error.response?.data?.message,
+                            documentNumber: maskedDocumentNumber,
+                            documentPhoto,
+                            tryCount:1
+                        }
+                    });
+                }
+
+                return next(new InternalServerError(error.response?.data?.message, error.response?.status));
+            }
+
+            const status = error.response?.status || 500;
+            let errormessage = error.response?.data?.message || 'verification failed';
+
+         const message = getErrorMessage(req.user!, errormessage);
+
+            return next(new InternalServerError(message, status));
+
+        }
+
+
 
         await redis.del(`kyc:*`);
         return new CustomResponse(200, true, 'Submitted', res);
+
     } catch (error: any) {
         const status = error.response?.status || 500;
-        const message =
-            error.response?.data?.message || 'Face verification failed';
-        return next(new InternalServerError(message, status));
+        let errormessage = error.response?.data?.message || 'verification failed';
+
+         const message = getErrorMessage(req.user!, errormessage);
+
+        next(new InternalServerError(message, status));
     }
 };
 
@@ -182,21 +268,36 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
     const cacheKey = `kyc:${id}`;
 
     const cached = await redis.get(cacheKey);
-    // if (cached) {
+    if (cached) {
 
-    //     res.status(200).json({
-    //         success: true,
-    //         message: "successfully. from cache",
-    //         data: JSON.parse(cached)
-    //     });
-    //     return
-    // }
+        res.status(200).json({
+            success: true,
+            message: "successfully. from cache",
+            data: JSON.parse(cached)
+        });
+        return
+    }
 
     try {
 
         // find single
         const user = await Prisma.kyc.findUnique({
-            where: { id }
+            where: { id },
+            select: {
+                userId: true,
+                NIN: true,
+                documentPhoto: true,
+                status: true,
+                statueText: true,
+                user: {
+                    select: {
+                        createdAt: true,
+                        phone_number: true,
+                        email: true
+                    }
+
+                }
+            }
         });
 
 
@@ -223,6 +324,7 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
         type,
         status,
 
+
     } = req.query;
 
     const page = parseInt(req.query.page as string) || 1;
@@ -230,11 +332,15 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
     const skip = (page - 1) * limit;
 
     const search = (req.query.search as string) || "";
+    const filterTime = req.query.filterTime || "";
 
-    const cacheKey = `kyc:${page}:${limit}:${search}:${type || ""}:${status || ""}`;
+    const cacheKey = `kyc:${page}:${limit}:${search}:${type || ""}:${status || ""}:${filterTime}`;
 
 
     const now = new Date();
+    let dateFilter: prisma.DateTimeFilter | undefined;
+
+    // const now = new Date();
     const startOfThisWeek = new Date(now);
     startOfThisWeek.setHours(0, 0, 0, 0);
     startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
@@ -246,6 +352,58 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
     const startOfLastWeek = new Date(endOfLastWeek);
     startOfLastWeek.setDate(endOfLastWeek.getDate() - 6);
     startOfLastWeek.setHours(0, 0, 0, 0);
+
+
+
+    switch (filterTime) {
+        case "this_week": {
+            const startOfThisWeek = new Date(now);
+            startOfThisWeek.setHours(0, 0, 0, 0);
+            startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
+            dateFilter = { gte: startOfThisWeek };
+            break;
+        }
+
+        case "last_week": {
+            const startOfThisWeek = new Date(now);
+            startOfThisWeek.setHours(0, 0, 0, 0);
+            startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
+
+            const endOfLastWeek = new Date(startOfThisWeek);
+            endOfLastWeek.setSeconds(-1);
+
+            const startOfLastWeek = new Date(endOfLastWeek);
+            startOfLastWeek.setDate(endOfLastWeek.getDate() - 6);
+            startOfLastWeek.setHours(0, 0, 0, 0);
+
+            dateFilter = { gte: startOfLastWeek, lte: endOfLastWeek };
+            break;
+        }
+
+        case "today": {
+            const startOfToday = new Date(now);
+            startOfToday.setHours(0, 0, 0, 0);
+            dateFilter = { gte: startOfToday };
+            break;
+        }
+
+        case "this_month": {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            dateFilter = { gte: startOfMonth };
+            break;
+        }
+
+        case "last_month": {
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); // last day of previous month
+            endOfLastMonth.setHours(23, 59, 59, 999);
+            dateFilter = { gte: startOfLastMonth, lte: endOfLastMonth };
+            break;
+        }
+
+        default:
+            dateFilter = undefined;
+    }
 
 
     try {
@@ -263,12 +421,18 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
 
                 status ? { status: status as KycStatus } : undefined,
                 type ? { documentType: type as KycDocumentType } : undefined,
+                dateFilter ? { createdAt: dateFilter } : undefined,
             ].filter(Boolean) as prisma.KycWhereInput[]
         };
 
         const result = await swrCache(cacheKey, async () => {
 
-            const [data, total, totalSubmitted, totalVerified, totalPending, totalRejected, totalSubmittedThisWeek, totalSubmittedLastWeek] = await Promise.all([
+            const [data, total, totalSubmitted, totalVerified, totalPending, totalRejected,
+                totalSubmittedThisWeek, totalSubmittedLastWeek,
+                totalVerifiedThisWeek, totalVerifiedLastWeek,
+                totalPendingThisWeek, totalPendingLastWeek,
+                totalRejectedThisWeek, totalRejectedLastWeek,
+            ] = await Promise.all([
                 Prisma.kyc.findMany({
                     where: filters,
                     select: {
@@ -312,9 +476,12 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
                         },
                     },
                 }),
-                // totalSubmitted stat
+
+
+                // totalVerified stat
                 Prisma.kyc.count({
                     where: {
+                        status: "VERIFIED",
                         createdAt: {
                             gte: startOfThisWeek,
                         },
@@ -322,15 +489,18 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
                 }),
                 Prisma.kyc.count({
                     where: {
+                        status: "VERIFIED",
                         createdAt: {
                             gte: startOfLastWeek,
                             lte: endOfLastWeek,
                         },
                     },
                 }),
-                // totalSubmitted stat
+
+                // totalPending stat
                 Prisma.kyc.count({
                     where: {
+                        status: "PENDING",
                         createdAt: {
                             gte: startOfThisWeek,
                         },
@@ -338,15 +508,18 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
                 }),
                 Prisma.kyc.count({
                     where: {
+                        status: "PENDING",
                         createdAt: {
                             gte: startOfLastWeek,
                             lte: endOfLastWeek,
                         },
                     },
                 }),
-                // totalSubmitted stat
+
+                // totalRejected stat
                 Prisma.kyc.count({
                     where: {
+                        status: "REJECTED",
                         createdAt: {
                             gte: startOfThisWeek,
                         },
@@ -354,12 +527,15 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
                 }),
                 Prisma.kyc.count({
                     where: {
+                        status: "REJECTED",
                         createdAt: {
                             gte: startOfLastWeek,
                             lte: endOfLastWeek,
                         },
                     },
                 }),
+
+
 
             ]);
 
@@ -367,27 +543,47 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
 
             // const percentageThisWeek = totalSubmitted > 0 ? (totalSubmittedThisWeek / totalSubmitted) * 100 : 0;
 
-const totalSubmittedSubmissionChange = totalSubmittedLastWeek > 0 ? ((totalSubmittedThisWeek - totalSubmittedLastWeek) / totalSubmittedLastWeek) * 100 : totalSubmittedThisWeek > 0 ? 100 : 0;
 
-const totalSubmittedTrend = totalSubmittedThisWeek > totalSubmittedLastWeek ? "positive" : totalSubmittedThisWeek < totalSubmittedLastWeek ? "negative" : "neutral";
+            // total submitted
+            const totalSubmittedSubmissionChange = totalSubmittedLastWeek > 0 ? ((totalSubmittedThisWeek - totalSubmittedLastWeek) / totalSubmittedLastWeek) * 100 : totalSubmittedThisWeek > 0 ? 100 : 0;
+            const totalSubmittedTrend = totalSubmittedThisWeek > totalSubmittedLastWeek ? "positive" : totalSubmittedThisWeek < totalSubmittedLastWeek ? "negative" : "neutral";
+
+            // totalVerified
+            const totalVerifiedSubmissionChange = totalVerifiedLastWeek > 0 ? ((totalVerifiedThisWeek - totalVerifiedLastWeek) / totalVerifiedLastWeek) * 100 : totalVerifiedThisWeek > 0 ? 100 : 0;
+            const totalVerifiedTrend = totalVerifiedThisWeek > totalVerifiedLastWeek ? "positive" : totalVerifiedThisWeek < totalVerifiedLastWeek ? "negative" : "neutral";
+
+            // totalPending
+            const totalPendingSubmissionChange = totalPendingLastWeek > 0 ? ((totalPendingThisWeek - totalPendingLastWeek) / totalPendingLastWeek) * 100 : totalPendingThisWeek > 0 ? 100 : 0;
+            const totalPendingTrend = totalPendingThisWeek > totalPendingLastWeek ? "positive" : totalPendingThisWeek < totalPendingLastWeek ? "negative" : "neutral";
+
+            // totalRejected
+            const totalRejectedSubmissionChange = totalRejectedLastWeek > 0 ? ((totalRejectedThisWeek - totalRejectedLastWeek) / totalRejectedLastWeek) * 100 : totalRejectedThisWeek > 0 ? 100 : 0;
+            const totalRejectedTrend = totalRejectedThisWeek > totalRejectedLastWeek ? "positive" : totalRejectedThisWeek < totalRejectedLastWeek ? "negative" : "neutral";
 
 
             return {
                 data,
                 stats: {
                     totalSubmitted: {
-                        totalSubmitted,
-                        percentage: Number(totalSubmittedSubmissionChange.toFixed(4)),
+                        count: totalSubmitted,
+                        percentage: Number(totalSubmittedSubmissionChange.toFixed(2)),
                         trend: totalSubmittedTrend
                     },
                     totalVerified: {
-                        totalVerified
+                        count: totalVerified,
+                        percentage: Number(totalVerifiedSubmissionChange.toFixed(2)),
+                        trend: totalVerifiedTrend
+
                     },
                     totalPending: {
-                        totalPending
+                        count: totalPending,
+                        percentage: Number(totalPendingSubmissionChange.toFixed(2)),
+                        trend: totalPendingTrend
                     },
                     totalRejected: {
-                        totalRejected
+                        count: totalRejected,
+                        percentage: Number(totalRejectedSubmissionChange.toFixed(2)),
+                        trend: totalRejectedTrend
                     },
                 },
                 pagination: {
@@ -410,10 +606,61 @@ const totalSubmittedTrend = totalSubmittedThisWeek > totalSubmittedLastWeek ? "p
     }
 };
 
-export const changeKycStatus = async (req: Request, res: Response, next: NextFunction) => {
+export const rejectKyc = async (req: Request, res: Response, next: NextFunction) => {
 
     const { id } = req.params;
-    const { status } = req.body;
+    const { rejectionReason } = req.body;
+
+    try {
+
+        const kyc = await Prisma.kyc.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        username: true
+                    }
+                }
+            }
+        });
+
+
+        if (!kyc) {
+            return next(new InternalServerError("Kyc invalid", 403));
+        }
+
+        await Prisma.kyc.update({
+            where: { id },
+            data: {
+                status: "REJECTED"
+            }
+        });
+
+        // 
+
+        const mailOptions = await kycRejectiontMailOption({
+                       email: kyc.user.email,
+                        userName: kyc.user.username, 
+                        rejectionReason
+                       });
+            
+                       
+            mailController({from: "support@arellow.com", ...mailOptions});
+
+        await deleteMatchingKeys("kyc:*");
+
+        new CustomResponse(200, true, "successfully", res,);
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
+    }
+
+
+}
+
+export const approvedKyc = async (req: Request, res: Response, next: NextFunction) => {
+
+    const { id } = req.params;
 
     try {
 
@@ -427,18 +674,15 @@ export const changeKycStatus = async (req: Request, res: Response, next: NextFun
         }
 
 
-        if (status == 'VERIFIED') {
-            // return next(new InternalServerError("Credential was verify", 403));
-        }
-
-        if (status == 'FAILED') {
-            // return next(new InternalServerError("Verification still in process", 403));
+        if (kyc.status == 'VERIFIED') {
+            return next(new InternalServerError("Credential was verify", 403));
         }
 
         await Prisma.kyc.update({
             where: { id },
             data: {
-                status
+                status: "VERIFIED",
+                statueText: null,
             }
         });
 
@@ -453,11 +697,7 @@ export const changeKycStatus = async (req: Request, res: Response, next: NextFun
 }
 
 
-// function getValidCategory(value: string): KycStatus | null {
-//   const lowerValue = value.toLowerCase();
-//   return (
-//     Object.values(KycStatus).find(
-//       (category) => category.toLowerCase().includes(lowerValue)
-//     ) ?? null
-//   );
-// }
+
+const getErrorMessage = (user: User, fallback: string) => {
+  return ['ADMIN', 'SUPER_ADMIN'].includes(user.role) ? fallback : 'Verification failed';
+}

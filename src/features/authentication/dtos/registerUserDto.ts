@@ -24,7 +24,7 @@ export interface UserResponseDTO {
   createdAt: Date;
   avatar: string | null;
   role: UserRole,
-  kyc: any,
+  kyc?: any,
 
 }
 

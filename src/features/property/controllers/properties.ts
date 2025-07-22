@@ -12,7 +12,6 @@ import { mediaUploadQueue } from "../queues/media.queue";
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { likePostHelper } from "../services/lifePostHelper";
 
 type Amenity = {
   name: string;
@@ -1347,10 +1346,12 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
         state,
         features: propertyFeatures,
         location: propertyLocation,
-        bedrooms: Number(bedrooms),
-        bathrooms: Number(bathrooms),
+
+        bedrooms: bedrooms,
+        bathrooms: bathrooms,
+        squareMeters: squareMeters,
+
         floors: Number(floors),
-        squareMeters: Number(squareMeters),
         price: Number(price),
 
         ...(isFeatureProperty && {isFeatureProperty} ),
@@ -1417,6 +1418,7 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
 
   } catch (error) {
+    console.log({error})
     next(new InternalServerError("Internal server error", 500));
 
   }
@@ -1506,6 +1508,11 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
       lng: Number(parsedLocation.lng)
     };
 
+      const property = await Prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) {
+      return next(new InternalServerError("Property not found", 404));
+    }
+
 
 
 
@@ -1550,10 +1557,12 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
         state,
         features: propertyFeatures,
         location: propertyLocation,
-        bedrooms: Number(bedrooms),
-        bathrooms: Number(bathrooms),
+
+        bedrooms: bedrooms,
+        bathrooms: bathrooms,
+        squareMeters: squareMeters,
+
         floors: Number(floors),
-        squareMeters: Number(squareMeters),
         price: Number(price),
 
         ...(isFeatureProperty && {isFeatureProperty} ),
@@ -1761,15 +1770,18 @@ export const unmarkAsFeatureProperty = async (req: Request, res: Response, next:
 
 // isFeatureProperty
 export const deleteProperty = async (req: Request, res: Response, next: NextFunction) => {
-  const { propertyId } = req.params;
+  const { id: propertyId } = req.params;
   try {
 
+      const property = await Prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) {
+      return next(new InternalServerError("Property not found", 404));
+    }
 
     //  Delete old media
     const oldMedia = await Prisma.media.findMany({
       where: { propertyId },
     });
-
 
     // Delete from Cloudinary
     for (const media of oldMedia) {
@@ -1782,19 +1794,21 @@ export const deleteProperty = async (req: Request, res: Response, next: NextFunc
       }
     }
 
-
     // Delete from DB
     await Prisma.media.deleteMany({ where: { propertyId } });
 
     await Prisma.userPropertyLike.deleteMany({ where: { propertyId } });
+    await Prisma.amenity.deleteMany({ where: { propertyId } });
 
     await Prisma.property.delete({ where: { id: propertyId } });
 
-
+ await deleteMatchingKeys(`getAllProperties:*`);
+ await deleteMatchingKeys(`property:*`);
 
     new CustomResponse(200, true, "Property deleted permanently", res,);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
+
   }
 
 };

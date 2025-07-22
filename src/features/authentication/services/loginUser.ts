@@ -14,7 +14,11 @@ export class AuthService {
     const user = await Prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: {
-        kyc: true
+        kyc: {
+          select: {
+            status: true
+          }
+        }
       }
     });
 

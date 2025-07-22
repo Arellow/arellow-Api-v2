@@ -9,7 +9,7 @@ import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
 import { getRealtorsLeaderboard } from "../controllers/leaderboard";
-import { changeKycStatus, createKyc, kycDetail, userKycs } from "../controllers/kyc";
+import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs } from "../controllers/kyc";
 import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload } from "../../../middlewares/multer";
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
@@ -19,7 +19,8 @@ const usersRoutes = Router();
 usersRoutes.post("/kyc", authenticate, isVerify, documentPhotoupload,  validateSchema(createKycSchema), createKyc);
 usersRoutes.get("/kycs", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), userKycs);
 usersRoutes.get("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  kycDetail);
-usersRoutes.patch("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  adminRequireRole("KYC"),  changeKycStatus);
+usersRoutes.patch("/kyc/:id/approve", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  adminRequireRole("KYC"),  approvedKyc);
+usersRoutes.patch("/kyc/:id/reject", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  adminRequireRole("KYC"),  rejectKyc);
 
 usersRoutes.post("/tickets", authenticate, isVerify, multipleupload,  validateSchema(createCustomerSupportSchema), createCustomerSupport);
 usersRoutes.get("/userticket", authenticate, usercustomerSupportTicket);

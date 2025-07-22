@@ -1,4 +1,4 @@
-import pLimit from 'p-limit';
+
 import { getDataUri } from '../middlewares/multer';
 import { cloudinary } from '../configs/cloudinary';
 import { Prisma } from '../lib/prisma';
@@ -14,6 +14,8 @@ type TprocessImage = {
 
 
 export async function processImages({images = [],folder , photoType }: TprocessImage) {
+
+  const pLimit = (await import('p-limit')).default;
   
 const limit = pLimit(3);
 
@@ -66,7 +68,7 @@ const photoUrls = await Promise.all(imagesToUpload)
   return photoUrls;
 }
 
-export async function deleteImage(photoUrl: string){
+export const deleteImage = async(photoUrl: string) => {
 
   if(photoUrl){
     const isAvatarSaved =  await Prisma.userMedia.findFirst({

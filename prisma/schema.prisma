@@ -199,10 +199,11 @@ model Property {
   neighborhood String
   location     GeoPoint
 
-  bedrooms     Int
-  bathrooms    Int
+  bedrooms     String
+  bathrooms    String
+  squareMeters String
+  
   floors       Int
-  squareMeters Int
   price        Float
   yearBuilt    String?
   stage        PropertyStage?
@@ -281,7 +282,7 @@ model Amenity {
   name       String
   photoUrl   String
   propertyId String   @db.ObjectId
-  property   Property @relation(fields: [propertyId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model UserPropertyLike {
@@ -317,7 +318,7 @@ enum PhotoType {
 
 model Media {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  property   Property @relation(fields: [propertyId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId String   @db.ObjectId
 
   type      MediaType

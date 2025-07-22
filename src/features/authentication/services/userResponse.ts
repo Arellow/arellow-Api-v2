@@ -8,18 +8,18 @@ export const userResponse = async({ res, user, message }: { res: Response, user:
     const token = generateToken(user.id, user.email);
 
 
-    const refreshToken = generateRefreshToken(user.id, user.email);
+    // const refreshToken = generateRefreshToken(user.id, user.email);
 
-    if(!res.headersSent){
+    // if(!res.headersSent){
 
-    res.removeHeader("Authorization");
-    res.removeHeader("x-refresh-token");
+    // res.removeHeader("Authorization");
+    // res.removeHeader("x-refresh-token");
 
-    }
+    // }
 
 
-    res.setHeader("Authorization", `Bearer ${token}`);
-    res.setHeader("x-refresh-token", refreshToken);
+    // res.setHeader("Authorization", `Bearer ${token}`);
+    // res.setHeader("x-refresh-token", refreshToken);
 
 
     const response = {
