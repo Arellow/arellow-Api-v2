@@ -8,6 +8,7 @@ import { AssignmentStatus, Prisma as prisma, PropertyCategory } from "@prisma/cl
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { formatInky } from "../../../utils/constants.util";
 import { emailQueue } from "../queues/email.queue";
+import { User } from "../../../types/custom";
 dotenv.config();
 
 
@@ -246,16 +247,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
     const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}:self`;
 
 
-  // const cached = await redis.get(cacheKey);
-  // if (cached) {
-
-  //   res.status(200).json({
-  //     success: true,
-  //     message: "successfully. from cache",
-  //     data: JSON.parse(cached)
-  //   });
-  //   return
-  // }
+       const isAdmin = getIsAdmin(req.user!);
 
   try {
 
@@ -263,7 +255,9 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
     const filters: prisma.PropertyRequestWhereInput = {
 
-      createdById: (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? undefined : user?.id,
+      createdBy: {
+            id: isAdmin ? undefined : user?.id,
+          },
 
       AND: [
         search
@@ -289,7 +283,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
 
 
-    const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
+    const adminSelect = isAdmin ? {
       username: true,
       email: true,
       phoneNumber: true,
@@ -355,7 +349,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
     new CustomResponse(200, true, "Fetched successfully", res, result);
   } catch (error) {
-    console.log(error)
+    // console.log(error)
     next(new InternalServerError("Internal server error", 500));
   }
 };
@@ -397,7 +391,7 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
     const matchedCategory = getValidCategory(search);
 
     const filters: prisma.DeveloperAssignmentWhereInput = {
-      developerId: user?.id,
+      developer: {id: user?.id},
       AND: [
         search
           ? {
@@ -469,7 +463,6 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
 
     new CustomResponse(200, true, "Fetched successfully", res, result);
   } catch (error) {
-    console.log(error)
     next(new InternalServerError("Internal server error", 500));
   }
 };
@@ -624,3 +617,8 @@ export const updateDeveloperAssignment = async (req: Request, res: Response, nex
     next(new InternalServerError("Failed to update developer assignment."));
   }
 };
+
+
+const getIsAdmin = (user: User, ) => {
+    return ['ADMIN', 'SUPER_ADMIN'].includes(user.role);
+}
