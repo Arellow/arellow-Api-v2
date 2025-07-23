@@ -67,7 +67,7 @@ export const createKyc = async (
             return next(new InternalServerError('Invalid photo provided', 400));
         }
 
-      
+
 
         // Get QoreID access token
         const tokenResp = await axios.post('https://api.qoreid.com/token', {
@@ -84,28 +84,28 @@ export const createKyc = async (
             return next(new InternalServerError(message, 400));
         }
 
-           if (kyc) {
-                await deleteImage(kyc.documentPhoto)
-            }
+        if (kyc) {
+            await deleteImage(kyc.documentPhoto)
+        }
 
 
 
         let documentPhoto: string;
 
-try {
-    documentPhoto = await processImage({
-        folder: "kyc_container",
-        image: req.file,
-        photoType: "KYC",
-        type: "PHOTO"
-    });
+        try {
+            documentPhoto = await processImage({
+                folder: "kyc_container",
+                image: req.file,
+                photoType: "KYC",
+                type: "PHOTO"
+            });
 
-    if (!documentPhoto) {
-        return next(new InternalServerError('Failed to process photo', 500));
-    }
-} catch (e) {
-    return next(new InternalServerError('Photo processing failed', 500));
-}
+            if (!documentPhoto) {
+                return next(new InternalServerError('Failed to process photo', 500));
+            }
+        } catch (e) {
+            return next(new InternalServerError('Photo processing failed', 500));
+        }
 
 
         try {
@@ -121,19 +121,19 @@ try {
                 }
             );
 
-            
+
 
             if (identityResp?.data?.status?.status === 'id_mismatch') {
 
                 if (kyc) {
-                  await Prisma.kyc.update({
+                    await Prisma.kyc.update({
                         where: { id: kyc.id },
                         data: {
                             status: "REJECTED",
                             statueText: "Mismatch",
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
-                            tryCount: {increment: 1}
+                            tryCount: { increment: 1 }
                         }
                     })
 
@@ -159,10 +159,10 @@ try {
 
             const ninData = identityResp.data?.nin;
 
-         
 
 
-             const kycPayload = {
+
+            const kycPayload = {
                 userId,
                 documentType: KycDocumentType.NIN,
                 status: KycStatus.PENDING,
@@ -184,16 +184,16 @@ try {
 
 
             if (kyc) {
-               await Prisma.kyc.update({
+                await Prisma.kyc.update({
                     where: { id: kyc.id },
                     data: {
                         ...kycPayload,
-                        tryCount: {increment: 1},
+                        tryCount: { increment: 1 },
                     }
                 });
 
             } else {
-               await Prisma.kyc.create({ data: kycPayload });
+                await Prisma.kyc.create({ data: kycPayload });
 
             }
 
@@ -208,14 +208,14 @@ try {
 
 
                 if (kyc) {
-                  await Prisma.kyc.update({
+                    await Prisma.kyc.update({
                         where: { id: kyc.id },
                         data: {
                             status: "REJECTED",
                             statueText: error.response?.data?.message,
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
-                             tryCount: {increment: 1}
+                            tryCount: { increment: 1 }
                         }
                     });
 
@@ -228,7 +228,7 @@ try {
                             statueText: error.response?.data?.message,
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
-                            tryCount:1
+                            tryCount: 1
                         }
                     });
                 }
@@ -239,7 +239,7 @@ try {
             const status = error.response?.status || 500;
             let errormessage = error.response?.data?.message || 'verification failed';
 
-         const message = getErrorMessage(req.user!, errormessage);
+            const message = getErrorMessage(req.user!, errormessage);
 
             return next(new InternalServerError(message, status));
 
@@ -254,7 +254,7 @@ try {
         const status = error.response?.status || 500;
         let errormessage = error.response?.data?.message || 'verification failed';
 
-         const message = getErrorMessage(req.user!, errormessage);
+        const message = getErrorMessage(req.user!, errormessage);
 
         next(new InternalServerError(message, status));
     }
@@ -640,13 +640,13 @@ export const rejectKyc = async (req: Request, res: Response, next: NextFunction)
         // 
 
         const mailOptions = await kycRejectiontMailOption({
-                       email: kyc.user.email,
-                        userName: kyc.user.username, 
-                        rejectionReason
-                       });
-            
-                       
-            mailController({from: "support@arellow.com", ...mailOptions});
+            email: kyc.user.email,
+            userName: kyc.user.username,
+            rejectionReason
+        });
+
+
+        mailController({ from: "support@arellow.com", ...mailOptions });
 
         await deleteMatchingKeys("kyc:*");
 
@@ -699,5 +699,5 @@ export const approvedKyc = async (req: Request, res: Response, next: NextFunctio
 
 
 const getErrorMessage = (user: User, fallback: string) => {
-  return ['ADMIN', 'SUPER_ADMIN'].includes(user.role) ? fallback : 'Verification failed';
+    return ['ADMIN', 'SUPER_ADMIN'].includes(user.role) ? fallback : 'Verification failed';
 }

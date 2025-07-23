@@ -297,8 +297,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
       budget: true,
       adminStatus: true,
       createdById: true,
-
-
+      
     } : {
       propertyCategory: true,
       propertyType: true,
@@ -325,6 +324,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
         Prisma.propertyRequest.findMany({
           where: filters,
           select: {
+            id: true,
             ...adminSelect,
           },
           skip,
