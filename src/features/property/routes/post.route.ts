@@ -93,7 +93,8 @@ propertyRoutes.post("/updatefeatureproperty/:propertyId", multipleupload, (req, 
     next()
 },
     validateSchema(createPropertySchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
-propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
+
+    propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
     (req, res, next) => {
 
         const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
