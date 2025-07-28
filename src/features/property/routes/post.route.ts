@@ -44,6 +44,7 @@ propertyRoutes.post("/createfeatureproperty", multipleupload, (req,res, next) =>
     next()
 },
 validateSchema(createFeaturePropertySchema),  authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"),  createNewProperty);
+
 propertyRoutes.post("/createproperty", multipleupload, validateSchema(createPropertySchema),  authenticate, isSuspended,  createNewProperty);
 
 propertyRoutes.post("/updatefeatureproperty/:propertyId", multipleupload,(req,res, next) => {

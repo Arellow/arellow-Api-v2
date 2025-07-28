@@ -23,12 +23,16 @@ export const createPropertySchema = Joi.object({
   bathrooms: Joi.string().required().min(1),
   squareMeters: Joi.string().required().min(1),
 
-  floors: Joi.number().integer().min(1).required(),
+  // floors: Joi.number().integer().min(1).required(),
+  // price: Joi.number().positive().required(),
+  floors: Joi.string().required().min(1),
+  price: Joi.string().required().min(1),
 
-  price: Joi.number().positive().required(),
   location: Joi.object({
-    lat: Joi.number().positive().required(),
-    lng: Joi.number().positive().required()
+    lat: Joi.string().required().min(1),
+    lng: Joi.string().required().min(1)
+    // lat: Joi.number().positive().required(),
+    // lng: Joi.number().positive().required()
   }),
 
 });
@@ -51,16 +55,36 @@ export const createFeaturePropertySchema = Joi.object({
   city: Joi.string().required().min(1),
   neighborhood: Joi.string().required().min(1),
 
-  bedrooms: Joi.number().integer().min(1).required(),
-  bathrooms: Joi.number().integer().min(1).required(),
-  floors: Joi.number().integer().min(1).required(),
-  squareMeters: Joi.number().integer().min(1).required(),
+  // bedrooms: Joi.number().integer().min(1).required(),
+  // bathrooms: Joi.number().integer().min(1).required(),
+  // floors: Joi.number().integer().min(1).required(),
+  // squareMeters: Joi.number().integer().min(1).required(),
 
-  price: Joi.number().positive().required(),
+  // price: Joi.number().positive().required(),
+  // location: Joi.object({
+  //   lat: Joi.number().positive().required(),
+  //   lng: Joi.number().positive().required()
+  // }),
+  // start
+
+  bedrooms: Joi.string().required().min(1),
+  bathrooms: Joi.string().required().min(1),
+  squareMeters: Joi.string().required().min(1),
+
+  // floors: Joi.number().integer().min(1).required(),
+  // price: Joi.number().positive().required(),
+  floors: Joi.string().required().min(1),
+  price: Joi.string().required().min(1),
+
   location: Joi.object({
-    lat: Joi.number().positive().required(),
-    lng: Joi.number().positive().required()
+    lat: Joi.string().required().min(1),
+    lng: Joi.string().required().min(1)
+    // lat: Joi.number().positive().required(),
+    // lng: Joi.number().positive().required()
   }),
+
+
+  // end
 
   isFeatureProperty: Joi.boolean().required(),
   yearBuilt: Joi.string().required().min(1),
