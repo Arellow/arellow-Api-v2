@@ -1386,16 +1386,21 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
 
         await mediaUploadQueue.add('upload', {
           propertyId: newProperty.id,
-          file: {
-            buffer: file.buffer,
-            originalname: file.originalname,
-          },
+          // file: {
+          //   buffer: file.buffer,
+          //   originalname: file.originalname,
+          // },
+           filePath: file.path,
           meta: {
             // order: index, // optional
             type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
             photoType: photoType || null,
           },
-        });
+        },{
+          removeOnFail: {count: 3},
+          removeOnComplete: true
+        }
+      );
 
       }
 
@@ -1602,19 +1607,37 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
 
       for (const file of files) {
 
-        await mediaUploadQueue.add('upload', {
+        // await mediaUploadQueue.add('upload', {
+        //   propertyId: updatedProperty.id,
+        //   file: {
+        //     buffer: file.buffer,
+        //     originalname: file.originalname,
+        //   },
+        //   meta: {
+        //     // order: index, // optional
+        //     type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
+        //     photoType: photoType || null,
+        //   },
+        // });
+
+
+         await mediaUploadQueue.add('upload', {
           propertyId: updatedProperty.id,
-          file: {
-            buffer: file.buffer,
-            originalname: file.originalname,
-          },
+          // file: {
+          //   buffer: file.buffer,
+          //   originalname: file.originalname,
+          // },
+           filePath: file.path,
           meta: {
             // order: index, // optional
             type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
             photoType: photoType || null,
           },
-        });
-
+        },{
+          removeOnFail: {count: 3},
+          removeOnComplete: true
+        }
+      );
       }
 
     }

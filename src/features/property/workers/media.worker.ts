@@ -1,4 +1,5 @@
 import { Worker } from 'bullmq';
+import fs from 'fs';
 // import { redisConnection } from '../queues/redis';
 // import { MediaType } from '@prisma/client';
 import { Readable } from 'stream';
@@ -9,10 +10,11 @@ import { Prisma } from '../../../lib/prisma';
 export const mediaWorker = new Worker(
   'mediaUpload',
   async job => {
-    const { propertyId, file, meta } = job.data;
+    const { propertyId, filePath, meta } = job.data;
 
-    const result = await new Promise((resolve, reject) => {
-      const upload = cloudinary.uploader.upload_stream(
+    try {
+       const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
         { resource_type: 'auto', folder: meta?.photoType == "TICKET" ? 'ticket-media' : 'property-media' },
         (err, result) => {
           if (err) reject(err);
@@ -20,10 +22,11 @@ export const mediaWorker = new Worker(
         }
       );
 
-      Readable.from(Buffer.from(file.buffer)).pipe(upload);
+      // Readable.from(Buffer.from(file.buffer)).pipe(upload);
+       fs.createReadStream(filePath).pipe(uploadStream);
     });
 
-    const media = result as any;
+    const media = uploadResult as any;
 
     if(meta?.photoType == "TICKET"){
        await Prisma.userMedia.create({
@@ -61,7 +64,20 @@ export const mediaWorker = new Worker(
     }
 
 
+    // Clean up temp file
+    await fs.promises.unlink(filePath);
+
+    // Remove job from Redis
+    await job.remove();
+
     return media;
+      
+    } catch (error) {
+      throw error;
+      
+    }
+
+
   },
   { connection: {
       host: process.env.REDIS_HOST,
@@ -73,3 +89,14 @@ export const mediaWorker = new Worker(
     // redisConnection
     , concurrency: 5 } // 5 files at once
 );
+
+
+mediaWorker.on('progress', (job, progress) => {
+  // update Redis or DB with progress
+  console.log({progress})
+});
+
+mediaWorker.on('completed', (job, result) => {
+  // notify user of completion
+  console.log({result})
+});

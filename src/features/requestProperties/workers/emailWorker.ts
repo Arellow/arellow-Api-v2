@@ -10,6 +10,8 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 export const worker = new Worker("email", async (job) => {
   const { email, realtorName, location, propertyType, bedrooms , budget, furnishingStatus, from} = job.data;
 
+  try {
+
   const mailOptions = await assignPropertyRequestMailOption({
              email,
              realtorName,
@@ -23,7 +25,16 @@ export const worker = new Worker("email", async (job) => {
 
     const respond = sgMail.send({ from, ...mailOptions });
 
+     await job.remove();
+
     return respond;
+
+    } catch (error) {
+      throw error;
+      
+    }
+
+
 
 }, { connection: {
         host: process.env.REDIS_HOST,

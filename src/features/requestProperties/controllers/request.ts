@@ -570,6 +570,9 @@ export const assignDevelopers = async (
             furnishingStatus: response.furnishingStatus,
           from: "noreply@arellow.com"
 
+          }, {
+          removeOnFail: {count: 3},
+          removeOnComplete: true
           })
         }
       });
