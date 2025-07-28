@@ -20,6 +20,10 @@ import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propert
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { changeStatusSchema, createFeaturePropertySchema, createPropertyRequestSchema, createPropertySchema } from './property.validate';
 
+type Amenity = {
+  name: string;
+  photoUrl: string;
+}
 const propertyRoutes= express.Router();
 
 propertyRoutes.post("/mortgage/:id",authenticate, calculateProjectMortgage)
@@ -40,12 +44,48 @@ propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
 
 propertyRoutes.post("/createfeatureproperty", multipleupload, (req,res, next) => {
-    req.body.isFeatureProperty = true;
-    next()
+
+     const parsedFeatures: string[] = typeof req.body.features  === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features ;
+    const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
+    const parsedLocation: {
+      lat: string,
+
+      lng: string
+    } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
+
+    const body = {
+      ...req.body,
+      features: parsedFeatures,
+      amenities: parsedAmenities,
+      location: parsedLocation,
+      isFeatureProperty: true
+    };
+    req.body = body;
+  next()
 },
 validateSchema(createFeaturePropertySchema),  authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"),  createNewProperty);
 
-propertyRoutes.post("/createproperty", multipleupload, validateSchema(createPropertySchema),  authenticate, isSuspended,  createNewProperty);
+propertyRoutes.post("/createproperty", multipleupload, (req,res, next) => {
+
+     const parsedFeatures: string[] = typeof req.body.features  === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features ;
+    const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
+    const parsedLocation: {
+      lat: string,
+
+      lng: string
+    } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
+
+    const body = {
+      ...req.body,
+      features: parsedFeatures,
+      amenities: parsedAmenities,
+      location: parsedLocation,
+    };
+    req.body = body;
+  next()
+
+},
+     validateSchema(createPropertySchema),  authenticate, isSuspended,  createNewProperty);
 
 propertyRoutes.post("/updatefeatureproperty/:propertyId", multipleupload,(req,res, next) => {
     req.body.isFeatureProperty = true;
