@@ -9,15 +9,13 @@ export  async function isLoginUser(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ success: false, message: "No token provided or malformed token please login" });
-    return;
-  }
-
-  const token = authHeader.split(" ")[1];
+  const authHeader = req?.headers?.authorization;
 
   try {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+   
+    const token = authHeader?.split(" ")[1] || "";
     const decoded = verifyToken(token);
     const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
 
@@ -25,7 +23,9 @@ export  async function isLoginUser(
       // res.status(401).json({ success: false, message: "Invalid user." });
       req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
     }
-
+  
+  
+  }
 
     next();
   } catch (err) {

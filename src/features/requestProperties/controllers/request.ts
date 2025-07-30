@@ -9,6 +9,7 @@ import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { formatInky } from "../../../utils/constants.util";
 import { emailQueue } from "../queues/email.queue";
 import { User } from "../../../types/custom";
+import { PropertyCategoryMap } from "../../property/routes/property.validate";
 dotenv.config();
 
 
@@ -40,7 +41,10 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
   try {
 
 
-    const isLogin = await Prisma.user.findUnique({ where: { id: user?.id } });
+    let isLogin = null;
+    if (user?.id) {
+        isLogin = await Prisma.user.findUnique({ where: { id: user.id } });
+    }
 
     const response = await Prisma.propertyRequest.create({
       data: {
@@ -77,7 +81,6 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
 
     new CustomResponse(201, true, "Property request created successfully", res, response.id);
   } catch (error) {
-    // console.error("Property request creation error:", error);
     next(new InternalServerError("Failed to create property request."));
   }
 };
@@ -160,6 +163,10 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
     }
 
 
+    property.propertyCategory =   PropertyCategoryMap[property.propertyCategory] as PropertyCategory;
+
+
+
     await redis.set(cacheKey, JSON.stringify(property), "EX", 60);
 
 
@@ -177,15 +184,15 @@ export const propertyAssignDetail = async (req: Request, res: Response, next: Ne
 
   const cacheKey = `propertyRequests:${id}:other`;
 
-  // const cached = await redis.get(cacheKey);
-  // if (cached) {
-  //   res.status(200).json({
-  //     success: true,
-  //     message: "successfully. from cache",
-  //     data: JSON.parse(cached)
-  //   });
-  //   return
-  // }
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    res.status(200).json({
+      success: true,
+      message: "successfully. from cache",
+      data: JSON.parse(cached)
+    });
+    return
+  }
 
   try {
 
@@ -216,6 +223,7 @@ export const propertyAssignDetail = async (req: Request, res: Response, next: Ne
       return next(new InternalServerError("Property request not found", 404));
     }
 
+    property.propertyRequest.propertyCategory = PropertyCategoryMap[property.propertyRequest.propertyCategory] as PropertyCategory;
 
     await redis.set(cacheKey, JSON.stringify(property), "EX", 60);
 
@@ -291,7 +299,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
       budget: true,
       adminStatus: true,
       createdById: true,
-      
+   
     } : {
       propertyCategory: true,
       propertyType: true,
@@ -330,9 +338,16 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
       const totalPages = Math.ceil(total / limit);
 
+      let userData = isAdmin ? data : data.map(item => {
+        return {
+          ...item,
+          propertyCategory:  PropertyCategoryMap[item.propertyCategory as PropertyCategory] ?? item.propertyCategory,
+        }
+      })
+
 
       return {
-        data,
+        data: userData,
         pagination: {
           total,
           page,
@@ -357,7 +372,6 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
 export const propertyAssigns = async (req: Request, res: Response, next: NextFunction) => {
 
-
     const {
       propertyType,
       country,
@@ -373,18 +387,8 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
 
   const search = (req.query.search as string) || "";
 
-  const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}`;
+  const cacheKey = `propertyRequests:assigns:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}`;
 
-  // const cached = await redis.get(cacheKey);
-  // if (cached) {
-
-  //   res.status(200).json({
-  //     success: true,
-  //     message: "successfully. from cache",
-  //     data: JSON.parse(cached)
-  //   });
-  //   return
-  // }
 
   try {
 
@@ -445,8 +449,16 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
       const totalPages = Math.ceil(total / limit);
 
 
+       let userData =  data.map(item => {
+        return {
+          ...item,
+          propertyCategory:  PropertyCategoryMap[item.propertyRequest.propertyCategory as PropertyCategory] ?? item.propertyRequest.propertyCategory,
+        }
+      })
+
+
       return {
-        data,
+        data: userData,
         pagination: {
           total,
           page,

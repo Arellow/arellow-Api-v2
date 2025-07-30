@@ -1,29 +1,45 @@
-import { UserRole } from '@prisma/client';
 import Joi from 'joi';
 
+enum UserRole {
+  REALTOR = 'REALTOR',
+  DEVELOPER = 'DEVELOPER',
+  BUYER = 'BUYER'
+}
+
 export const registerSchema = Joi.object({
-  username: Joi.string().required().min(3).max(30),
-  fullname: Joi.string().required().min(2).max(100),
-  email: Joi.string().required().email(),
-  role: Joi.string().valid(...Object.values(UserRole)),
-  password: Joi.string()
+  username: Joi.string().trim().min(3).max(30).required(),
+
+  fullname: Joi.string().trim().min(2).max(100).required(),
+
+  email: Joi.string().trim().email().lowercase().required(),
+
+  role: Joi.string()
+    .valid(...Object.values(UserRole))
     .required()
-    .min(8).message('Password must be at least 8 characters long'),
-  phone_number:  Joi.object({
-    phone: Joi.string()
-    .required()
-    .pattern(/^\+?\d{7,15}$/)
     .messages({
-      'string.pattern.base': 'Phone number must be valid. E.g. +2348012345678 or 08012345678'
+      'any.only': `Role must be one of: ${Object.values(UserRole).join(', ')}`,
     }),
-    country: Joi.string().required().min(3)
-  })
-  
-  
+
+  password: Joi.string()
+    .min(8)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters long',
+    }),
+
+  phone_number: Joi.object({
+    phone: Joi.string()
+      .required()
+      .pattern(/^\+?\d{7,15}$/)
+      .messages({
+        'string.pattern.base': 'Phone number must be valid. E.g. +2348012345678 or 08012345678',
+      }),
+    country: Joi.string().trim().min(3).required(),
+  }).required(),
 });
 
 export const loginSchema = Joi.object({
-  email: Joi.string().required().email(),
+  email: Joi.string().required().email().lowercase(),
   password: Joi.string().required()
 });
 
@@ -38,7 +54,7 @@ export const changePasswordSchema = Joi.object({
 });
 
 export const forgotPasswordSchema = Joi.object({
-  email: Joi.string().required().email()
+  email: Joi.string().required().email().lowercase()
 });
 
 export const confirmForgotPasswordSchema = Joi.object({

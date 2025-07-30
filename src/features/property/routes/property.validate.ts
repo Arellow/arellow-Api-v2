@@ -94,10 +94,11 @@ export const createFeaturePropertySchema = Joi.object({
 });
 
 export const createPropertyRequestSchema = Joi.object({
-  username: Joi.string().required().min(3),
-  userRole: Joi.string().required().min(3),
-  email: Joi.string().required().email(),
-  phoneNumber: Joi.string().required().min(3),
+  username: Joi.string().trim().min(3).max(50),
+  userRole: Joi.string().trim().min(3).max(50),
+  email: Joi.string().trim().email(),
+  phoneNumber: Joi.string().pattern(/^[0-9+\-().\s]{7,15}$/),
+
   propertyCategory: Joi.string().required().valid(...Object.values(PropertyCategory)),
   propertyType: Joi.string().required().min(3),
   furnishingStatus: Joi.string().required().min(3),
@@ -113,9 +114,34 @@ export const createPropertyRequestSchema = Joi.object({
 });
 
 
+export const PropertyCategoryMap = {
+  Apartment: "Apartment",
+  Bungalow: "Bungalow",
+  Duplex: "Duplex",
+  Detached_House: "Detached House",
+  Semi_detached_House: "Semi-detached House",
+  Mansion: "Mansion",
+  Penthouse: "Penthouse",
+  Studio_Apartment: "Studio Apartment",
+  Shared_Apartment: "Shared Apartment",
+  Serviced_Apartment: "Serviced Apartment",
+  Co_living_Space: "Co-living Space",
+  Office_Space: "Office Space",
+  Commercial_Property: "Commercial Property",
+  Warehouse: "Warehouse",
+  Short_let: "Short-let",
+  Hostel_Student_Housing: "Hostel / Student Housing",
+};
+
+
 
 export const changeStatusSchema = Joi.object({
   salesStatus: Joi.string().required().valid(...Object.values(SalesStatus)),
 });
+
+
+
+
+
 
 
