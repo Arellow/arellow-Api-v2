@@ -332,7 +332,7 @@ export const userKycs = async (req: Request, res: Response, next: NextFunction) 
     const skip = (page - 1) * limit;
 
     const search = (req.query.search as string) || "";
-    const filterTime = req.query.filterTime || "";
+    const filterTime = req.query.filterTime || "this_year";
 
     const cacheKey = `kyc:${page}:${limit}:${search}:${type || ""}:${status || ""}:${filterTime}`;
 
@@ -698,6 +698,596 @@ export const approvedKyc = async (req: Request, res: Response, next: NextFunctio
 
 
 
+export const userDashbroad = async (req: Request, res: Response, next: NextFunction) => {
+     const userId = req.user?.id!;
+
+    // const {
+    //     type,
+    //     status,
+    // } = req.query;
+
+    // const page = parseInt(req.query.page as string) || 1;
+    const limit =  10;
+    // const skip = (page - 1) * limit;
+
+    // const search = (req.query.search as string) || "";
+    const filterTime = req.query.filterTime || "this_year";
+
+    const cacheKey = `userdashbroad:${limit}:${filterTime}`;
+
+
+    const now = new Date();
+    let dateFilter: prisma.DateTimeFilter | undefined;
+
+    // const now = new Date();
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setHours(0, 0, 0, 0);
+    startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
+
+    // Last week (previous Monday to previous Sunday)
+    const endOfLastWeek = new Date(startOfThisWeek);
+    endOfLastWeek.setSeconds(-1); // One second before current week starts
+
+    const startOfLastWeek = new Date(endOfLastWeek);
+    startOfLastWeek.setDate(endOfLastWeek.getDate() - 6);
+    startOfLastWeek.setHours(0, 0, 0, 0);
+
+
+
+    switch (filterTime) {
+        case "this_week": {
+            const startOfThisWeek = new Date(now);
+            startOfThisWeek.setHours(0, 0, 0, 0);
+            startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
+            dateFilter = { gte: startOfThisWeek };
+            break;
+        }
+
+        case "last_week": {
+            const startOfThisWeek = new Date(now);
+            startOfThisWeek.setHours(0, 0, 0, 0);
+            startOfThisWeek.setDate(now.getDate() - now.getDay() + 1);
+
+            const endOfLastWeek = new Date(startOfThisWeek);
+            endOfLastWeek.setSeconds(-1);
+
+            const startOfLastWeek = new Date(endOfLastWeek);
+            startOfLastWeek.setDate(endOfLastWeek.getDate() - 6);
+            startOfLastWeek.setHours(0, 0, 0, 0);
+
+            dateFilter = { gte: startOfLastWeek, lte: endOfLastWeek };
+            break;
+        }
+
+        case "today": {
+            const startOfToday = new Date(now);
+            startOfToday.setHours(0, 0, 0, 0);
+            dateFilter = { gte: startOfToday };
+            break;
+        }
+
+        case "this_month": {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            dateFilter = { gte: startOfMonth };
+            break;
+        }
+
+        case "last_month": {
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); // last day of previous month
+            endOfLastMonth.setHours(23, 59, 59, 999);
+            dateFilter = { gte: startOfLastMonth, lte: endOfLastMonth };
+            break;
+        }
+
+        default:
+            dateFilter = undefined;
+    }
+
+
+    try {
+
+         const kyc = await Prisma.kyc.findUnique({
+            where: { userId },
+         });
+
+        const filters: prisma.KycWhereInput = {
+
+            AND: [
+                dateFilter ? { createdAt: dateFilter } : undefined,
+            ].filter(Boolean) as prisma.KycWhereInput[]
+        };
+
+        const result = await swrCache(cacheKey, async () => {
+
+            const [propertyLocationData, totalPropertyLocationData, properties,
+                data,  totalSubmitted, totalVerified, totalPending, totalRejected,
+                totalSubmittedThisWeek, totalSubmittedLastWeek,
+                totalVerifiedThisWeek, totalVerifiedLastWeek,
+                totalPendingThisWeek, totalPendingLastWeek,
+                totalRejectedThisWeek, totalRejectedLastWeek,
+            ] = await Promise.all([
+
+            Prisma.property.findMany({
+                where: { userId,  archived: false },
+                select: { location: true, status: true, title: true},
+                orderBy: { createdAt: "desc" },
+            }
+          ),
+            Prisma.property.count({ where: { userId, archived: false,} }),
+
+              Prisma.property.findMany({
+                // where: { userId,  archived: false },
+                select: {title: true, id: true, viewsCount: true, sharesCount: true, status: true, createdAt: true },
+                orderBy: { createdAt: "desc" },
+                take: limit
+            }
+          ),
+
+
+
+
+
+                Prisma.kyc.findMany({
+                    where: filters,
+                    select: {
+                        id: true,
+                        user: {
+                            select: {
+                                role: true,
+                                fullname: true,
+                            }
+                        },
+                        documentType: true,
+                        createdAt: true,
+                        status: true
+                    },
+                    // skip,
+                    take: limit,
+                    orderBy: { createdAt: "desc" },
+                }),
+         
+
+                Prisma.kyc.count({}),
+                Prisma.kyc.count({ where: { status: "VERIFIED" } }),
+                Prisma.kyc.count({ where: { status: "PENDING" } }),
+                Prisma.kyc.count({ where: { status: "REJECTED" } }),
+
+
+                // stat calculation
+                // totalSubmitted stat
+                Prisma.kyc.count({
+                    where: {
+                        createdAt: {
+                            gte: startOfThisWeek,
+                        },
+                    },
+                }),
+                Prisma.kyc.count({
+                    where: {
+                        createdAt: {
+                            gte: startOfLastWeek,
+                            lte: endOfLastWeek,
+                        },
+                    },
+                }),
+
+
+                // totalVerified stat
+                Prisma.kyc.count({
+                    where: {
+                        status: "VERIFIED",
+                        createdAt: {
+                            gte: startOfThisWeek,
+                        },
+                    },
+                }),
+                Prisma.kyc.count({
+                    where: {
+                        status: "VERIFIED",
+                        createdAt: {
+                            gte: startOfLastWeek,
+                            lte: endOfLastWeek,
+                        },
+                    },
+                }),
+
+                // totalPending stat
+                Prisma.kyc.count({
+                    where: {
+                        status: "PENDING",
+                        createdAt: {
+                            gte: startOfThisWeek,
+                        },
+                    },
+                }),
+                Prisma.kyc.count({
+                    where: {
+                        status: "PENDING",
+                        createdAt: {
+                            gte: startOfLastWeek,
+                            lte: endOfLastWeek,
+                        },
+                    },
+                }),
+
+                // totalRejected stat
+                Prisma.kyc.count({
+                    where: {
+                        status: "REJECTED",
+                        createdAt: {
+                            gte: startOfThisWeek,
+                        },
+                    },
+                }),
+                Prisma.kyc.count({
+                    where: {
+                        status: "REJECTED",
+                        createdAt: {
+                            gte: startOfLastWeek,
+                            lte: endOfLastWeek,
+                        },
+                    },
+                }),
+
+
+
+            ]);
+
+            // total submitted
+            const totalSubmittedSubmissionChange = totalSubmittedLastWeek > 0 ? ((totalSubmittedThisWeek - totalSubmittedLastWeek) / totalSubmittedLastWeek) * 100 : totalSubmittedThisWeek > 0 ? 100 : 0;
+            const totalSubmittedTrend = totalSubmittedThisWeek > totalSubmittedLastWeek ? "positive" : totalSubmittedThisWeek < totalSubmittedLastWeek ? "negative" : "neutral";
+
+            // totalVerified
+            const totalVerifiedSubmissionChange = totalVerifiedLastWeek > 0 ? ((totalVerifiedThisWeek - totalVerifiedLastWeek) / totalVerifiedLastWeek) * 100 : totalVerifiedThisWeek > 0 ? 100 : 0;
+            const totalVerifiedTrend = totalVerifiedThisWeek > totalVerifiedLastWeek ? "positive" : totalVerifiedThisWeek < totalVerifiedLastWeek ? "negative" : "neutral";
+
+            // totalPending
+            const totalPendingSubmissionChange = totalPendingLastWeek > 0 ? ((totalPendingThisWeek - totalPendingLastWeek) / totalPendingLastWeek) * 100 : totalPendingThisWeek > 0 ? 100 : 0;
+            const totalPendingTrend = totalPendingThisWeek > totalPendingLastWeek ? "positive" : totalPendingThisWeek < totalPendingLastWeek ? "negative" : "neutral";
+
+            // totalRejected
+            const totalRejectedSubmissionChange = totalRejectedLastWeek > 0 ? ((totalRejectedThisWeek - totalRejectedLastWeek) / totalRejectedLastWeek) * 100 : totalRejectedThisWeek > 0 ? 100 : 0;
+            const totalRejectedTrend = totalRejectedThisWeek > totalRejectedLastWeek ? "positive" : totalRejectedThisWeek < totalRejectedLastWeek ? "negative" : "neutral";
+
+
+
+            const AllProperties = properties.map(property => {
+                return {
+                    slug: `#Arw-${property.id.slice(-3)}`,
+                    performance: {
+                        percentage: 0,
+                        trend: "neutral"
+
+                    },
+                    ...property
+                }
+            })
+
+            return {
+                properties: AllProperties,
+                // data,
+                stats: {
+                    totalSubmitted: {
+                        count: totalSubmitted,
+                        percentage: Number(totalSubmittedSubmissionChange.toFixed(2)),
+                        trend: totalSubmittedTrend
+                    },
+                    totalVerified: {
+                        count: totalVerified,
+                        percentage: Number(totalVerifiedSubmissionChange.toFixed(2)),
+                        trend: totalVerifiedTrend
+
+                    },
+                    totalPending: {
+                        count: totalPending,
+                        percentage: Number(totalPendingSubmissionChange.toFixed(2)),
+                        trend: totalPendingTrend
+                    },
+                    totalRejected: {
+                        count: totalRejected,
+                        percentage: Number(totalRejectedSubmissionChange.toFixed(2)),
+                        trend: totalRejectedTrend
+                    },
+                },
+                kycStatus: kyc?.status || "UNVERIFIED",
+                reward: {
+                    totalEarning: 0,
+                    soldEarning: 0,
+                    uploadPropertyEarning: 0,
+                    withdrawableEarning: 0,
+                },
+                propertyLocations : {
+                    locations: propertyLocationData,
+                    totalProperty: totalPropertyLocationData
+
+                }
+
+               
+            }
+        })
+
+
+        await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+        new CustomResponse(200, true, "Fetched successfully", res, result);
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
+    }
+};
+
+
+
 const getErrorMessage = (user: User, fallback: string) => {
     return ['ADMIN', 'SUPER_ADMIN'].includes(user.role) ? fallback : 'Verification failed';
 }
+
+
+
+
+
+// async function getUserPointsTimeline(userId, rewardsPage = 1, rewardsLimit = 10, requestsPage = 1, requestsLimit = 10) {
+//   // Fetch paginated reward history
+//   const rewards = await prisma.rewardHistory.findMany({
+//     where: { userId },
+//     orderBy: { createdAt: 'desc' },
+//     skip: (rewardsPage - 1) * rewardsLimit,
+//     take: rewardsLimit,
+//     include: { property: { select: { title: true } } }
+//   });
+
+//   // Fetch paginated withdrawal requests
+//   const withdrawals = await prisma.rewardRequest.findMany({
+//     where: { userId },
+//     orderBy: { createdAt: 'desc' },
+//     skip: (requestsPage - 1) * requestsLimit,
+//     take: requestsLimit,
+//   });
+
+//   // Map both to a unified format
+//   const rewardItems = rewards.map(r => ({
+//     id: r.id,
+//     type: 'reward',
+//     points: r.points,
+//     reason: r.reason,
+//     description: r.description,
+//     propertyTitle: r.property?.title || null,
+//     status: null,
+//     createdAt: r.createdAt,
+//   }));
+
+//   const withdrawalItems = withdrawals.map(w => ({
+//     id: w.id,
+//     type: 'withdrawal',
+//     points: -w.totalPoints,
+//     reason: 'Points withdrawal',
+//     description: null,
+//     propertyTitle: null,
+//     status: w.status,
+//     createdAt: w.createdAt,
+//   }));
+
+//   // Combine and sort by createdAt descending
+//   const combined = [...rewardItems, ...withdrawalItems].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+//   return combined;
+// }
+
+
+// const rewardsCount = await prisma.rewardHistory.count({ where: { userId } });
+// const withdrawalsCount = await prisma.rewardRequest.count({ where: { userId } });
+
+
+// async function rewardUser(userId, points, type, reason, propertyId = null, description = null) {
+//   // Validate inputs, e.g., points > 0, valid type, user exists etc.
+
+//   const reward = await prisma.rewardHistory.create({
+//     data: {
+//       userId,
+//       points,
+//       type,          // "SOLD" or "UPLOAD"
+//       reason,        // e.g., "Property sold bonus"
+//       description,
+//       propertyId,    // optional, if reward is related to a property
+//     }
+//   });
+
+//   return reward;
+// }
+
+
+
+// async function createWithdrawalRequestFull(userId, requestedPoints) {
+//   const remainingPoints = await getRemainingPoints(userId);
+//   if (requestedPoints > remainingPoints) {
+//     throw new Error('Insufficient points');
+//   }
+
+//   // Create request
+//   const withdrawalRequest = await prisma.rewardRequest.create({
+//     data: {
+//       userId,
+//       totalPoints: requestedPoints,
+//       status: 'PENDING'
+//     }
+//   });
+
+//   // Allocate points across reward history
+//   await allocatePointsForWithdrawal(userId, requestedPoints, withdrawalRequest.id);
+
+//   return withdrawalRequest;
+// }
+
+
+// async function getRemainingPoints(userId: string): Promise<number> {
+//   // Sum total earned points
+//   const earnedResult = await prisma.rewardHistory.aggregate({
+//     where: { userId },
+//     _sum: { points: true },
+//   });
+
+//   // Sum total approved withdrawn points
+//   const withdrawnResult = await prisma.rewardRequest.aggregate({
+//     where: {
+//       userId,
+//       status: 'APPROVED',
+//     },
+//     _sum: { totalPoints: true },
+//   });
+
+//   const totalEarned = earnedResult._sum.points ?? 0;
+//   const totalWithdrawn = withdrawnResult._sum.totalPoints ?? 0;
+
+//   const remaining = totalEarned - totalWithdrawn;
+
+//   // Ensure no negative balance
+//   return remaining >= 0 ? remaining : 0;
+// }
+
+
+// async function allocatePointsForWithdrawal(userId, requestedPoints, rewardRequestId) {
+//   let pointsLeft = requestedPoints;
+
+//   // Fetch reward histories with available points
+//   const rewards = await prisma.$queryRaw`
+//     SELECT rh.id, rh.points - COALESCE(SUM(rri.claimedPoints), 0) as availablePoints
+//     FROM RewardHistory rh
+//     LEFT JOIN RewardRequestItem rri ON rh.id = rri.rewardHistoryId
+//     WHERE rh.userId = ${userId}
+//     GROUP BY rh.id, rh.points
+//     HAVING availablePoints > 0
+//     ORDER BY rh.createdAt ASC
+//   `;
+
+//   for (const reward of rewards) {
+//     if (pointsLeft <= 0) break;
+
+//     const claim = Math.min(reward.availablePoints, pointsLeft);
+
+//     await prisma.rewardRequestItem.create({
+//       data: {
+//         rewardRequestId,
+//         rewardHistoryId: reward.id,
+//         claimedPoints: claim
+//       }
+//     });
+
+//     pointsLeft -= claim;
+//   }
+
+//   if (pointsLeft > 0) {
+//     throw new Error('Not enough unclaimed points to allocate');
+//   }
+// }
+
+
+
+// import express from 'express';
+// import { PrismaClient } from '@prisma/client';
+
+// const prisma = new PrismaClient();
+// const adminRouter = express.Router();
+
+// // Middleware example to check admin auth (simple stub)
+// function isAdmin(req, res, next) {
+//   // TODO: implement real admin auth here
+//   if (req.headers['x-admin-token'] === 'secret-admin-token') {
+//     next();
+//   } else {
+//     res.status(403).json({ error: 'Unauthorized' });
+//   }
+// }
+
+// adminRouter.use(isAdmin);
+
+// // List withdrawal requests with pagination & filter by status
+// adminRouter.get('/withdrawals', async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page as string) || 1;
+//     const limit = parseInt(req.query.limit as string) || 20;
+//     const status = req.query.status as string | undefined;
+
+//     const whereClause = status ? { status } : {};
+
+//     const [requests, total] = await Promise.all([
+//       prisma.rewardRequest.findMany({
+//         where: whereClause,
+//         orderBy: { createdAt: 'desc' },
+//         skip: (page - 1) * limit,
+//         take: limit,
+//         include: {
+//           user: { select: { id: true, email: true } },
+//           items: {
+//             include: {
+//               rewardHistory: { select: { reason: true, description: true } }
+//             }
+//           }
+//         }
+//       }),
+//       prisma.rewardRequest.count({ where: whereClause }),
+//     ]);
+
+//     res.json({
+//       data: requests,
+//       pagination: {
+//         page,
+//         limit,
+//         total,
+//         totalPages: Math.ceil(total / limit),
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// // Approve a withdrawal request
+// adminRouter.post('/withdrawals/:id/approve', async (req, res) => {
+//   try {
+//     const requestId = req.params.id;
+
+//     const request = await prisma.rewardRequest.findUnique({ where: { id: requestId } });
+//     if (!request) return res.status(404).json({ error: 'Request not found' });
+//     if (request.status !== 'PENDING') return res.status(400).json({ error: 'Request already processed' });
+
+//     const updatedRequest = await prisma.rewardRequest.update({
+//       where: { id: requestId },
+//       data: { status: 'APPROVED', processedAt: new Date() },
+//     });
+
+//     // Optional: Notify user here (email, websocket, etc.)
+
+//     res.json({ success: true, data: updatedRequest });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// // Reject a withdrawal request
+// adminRouter.post('/withdrawals/:id/reject', async (req, res) => {
+//   try {
+//     const requestId = req.params.id;
+//     const { reason } = req.body;
+
+//     const request = await prisma.rewardRequest.findUnique({ where: { id: requestId } });
+//     if (!request) return res.status(404).json({ error: 'Request not found' });
+//     if (request.status !== 'PENDING') return res.status(400).json({ error: 'Request already processed' });
+
+//     const updatedRequest = await prisma.rewardRequest.update({
+//       where: { id: requestId },
+//       data: {
+//         status: 'REJECTED',
+//         processedAt: new Date(),
+//         // optionally, store rejection reason somewhere (add a column if needed)
+//       },
+//     });
+
+//     // Optional: Notify user with rejection reason here
+
+//     res.json({ success: true, data: updatedRequest });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// export default adminRouter;

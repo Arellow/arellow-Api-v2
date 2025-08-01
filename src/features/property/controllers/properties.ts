@@ -1801,6 +1801,8 @@ export const deleteProperty = async (req: Request, res: Response, next: NextFunc
       return next(new InternalServerError("Property not found", 404));
     }
 
+    console.log({property})
+
     //  Delete old media
     const oldMedia = await Prisma.media.findMany({
       where: { propertyId },

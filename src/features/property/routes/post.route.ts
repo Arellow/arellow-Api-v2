@@ -94,7 +94,7 @@ propertyRoutes.post("/updatefeatureproperty/:propertyId", multipleupload, (req, 
 },
     validateSchema(createPropertySchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
 
-    propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
+propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
     (req, res, next) => {
 
         const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
@@ -134,7 +134,9 @@ propertyRoutes.patch("/:id/feature", authenticate, isSuspended, requireRole(User
 propertyRoutes.delete("/:id/unfeature", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), unmarkAsFeatureProperty);
 propertyRoutes.patch("/:id/status", validateSchema(changeStatusSchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), statusProperty);
 propertyRoutes.patch("/:id/reject", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), rejectProperty);
-propertyRoutes.patch("/:id/approve", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), approveProperty);
+propertyRoutes.patch("/:id/approve", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), 
+adminRequireRole("PROPERTY"),
+ approveProperty);
 
 propertyRoutes.post("/:id/like", authenticate, isSuspended, likeProperty);
 propertyRoutes.delete('/:id/like', authenticate, isSuspended, unLikeProperty);

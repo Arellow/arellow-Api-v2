@@ -9,27 +9,32 @@ export  async function isLoginUser(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req?.headers?.authorization;
+   const authHeader = req?.headers?.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
+  if (!token) {
+    return next();
+  }
+
 
   try {
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
    
-    const token = authHeader?.split(" ")[1] || "";
     const decoded = verifyToken(token);
     const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
 
     if (user) {
-      // res.status(401).json({ success: false, message: "Invalid user." });
       req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
+    } else {
+       res.status(401).json({ success: false, message: "Unauthorized: User not found" });
+       return
     }
   
-  
-  }
+
 
     next();
   } catch (err) {
-    res.status(401).json({ success: false, message: "Invalid or expired token" });
+    res.status(401).json({ success: false, message: "Token verification failed" });
   }
 }
 

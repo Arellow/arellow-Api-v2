@@ -1,6 +1,5 @@
 
 import { Request, Response, NextFunction } from "express";
-import { UserQueryDTO } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { actionRole, Prisma as prisma, UserRole } from "@prisma/client";

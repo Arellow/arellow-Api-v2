@@ -14,9 +14,9 @@ export class UserService {
         where: { id: userId },
         include: {
           properties: true,
-          rewardHistory: {
-            where: { reason: { contains: "sold", mode: "insensitive" } },
-          },
+          // rewardHistory: {
+          //   where: { reason: { contains: "sold", mode: "insensitive" } },
+          // },
         },
       });
       if (!user) {
@@ -27,12 +27,14 @@ export class UserService {
       const propertiesListed = user.properties.length;
 
       // Calculate properties sold (based on rewardHistory length for sold transactions)
-      const propertiesSold = user.rewardHistory.length;
+      // const propertiesSold = user.rewardHistory.length;
 
       // Calculate selling (sum of points from sold transactions)
-      const selling = user.rewardHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
+      // const selling = user.rewardHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
 
-      return this.mapToResponse({ ...user, propertiesListed, propertiesSold, selling });
+      return this.mapToResponse({ ...user, propertiesListed,
+        //  propertiesSold, selling 
+        });
     } catch (error) {
       console.error("[getUserById] Prisma error:", error);
       throw new InternalServerError("Database error when fetching user.");

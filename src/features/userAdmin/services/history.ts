@@ -16,15 +16,15 @@ export class EarningHistoryService {
         _sum: { points: true },
         where: { userId, reason: { contains: "upload", mode: "insensitive" } },
       });
-      const withdrawnPoints = await this.prisma.rewardWithdrawal.aggregate({
-        _sum: { points: true },
-        where: { userId, status: "pending" },
-      }) || { _sum: { points: 0 } }; // Default to 0 if no withdrawals
+      // const withdrawnPoints = await this.prisma.rewardWithdrawal.aggregate({
+      //   _sum: { points: true },
+      //   where: { userId, status: "pending" },
+      // }) || { _sum: { points: 0 } }; // Default to 0 if no withdrawals
 
       return {
         total_earning: totalEarning._sum.points || 0,
         withdrawable_earning: withdrawableEarning._sum.points || 0,
-        withdrawn_points: Math.abs(withdrawnPoints._sum.points || 0),
+        // withdrawn_points: Math.abs(withdrawnPoints._sum.points || 0),
       };
     } catch (error) {
       console.error("[getEarningSummary] Prisma error:", error);

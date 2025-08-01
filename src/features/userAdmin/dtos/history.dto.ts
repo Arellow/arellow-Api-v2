@@ -3,7 +3,7 @@ import { Property } from "@prisma/client";
 export interface EarningSummaryResponse {
   total_earning: number;
   withdrawable_earning: number;
-  withdrawn_points: number;
+  // withdrawn_points: number;
 }
 
 export interface EarningHistoryFilterDto {
