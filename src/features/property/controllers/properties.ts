@@ -778,6 +778,9 @@ export const featureProperties = async (req: Request, res: Response, next: NextF
     } = req.query;
 
 
+    console.log({data: req.query})
+
+
 
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
@@ -787,6 +790,7 @@ export const featureProperties = async (req: Request, res: Response, next: NextF
       archived: false,
       status: "APPROVED",
       salesStatus: "SELLING",
+      isFeatureProperty: true,
       AND: [
         search
           ? {
@@ -914,6 +918,7 @@ export const recentProperties = async (req: Request, res: Response, next: NextFu
       archived: false,
       status: "APPROVED",
       salesStatus: "SELLING",
+      isFeatureProperty: false,
       AND: [
         search
           ? {
