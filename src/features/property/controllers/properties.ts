@@ -778,10 +778,6 @@ export const featureProperties = async (req: Request, res: Response, next: NextF
     } = req.query;
 
 
-    console.log({data: req.query})
-
-
-
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
     const cacheKey = `featureProperties:${JSON.stringify(req.query)}`;
