@@ -1239,10 +1239,6 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
 };
 
 
-// uncache
-//  const cacheKey = `getAllArchivedProperties:${JSON.stringify(req.query)}`;
-// const cacheKey = `getArchivedPropertiesByUser:${userId}:${JSON.stringify(req.query)}`;
-
 
 // others
 
