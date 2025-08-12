@@ -1274,7 +1274,7 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
       amenities,
 
       
-      isFeatureProperty,
+      is_Property_A_Project,
       yearBuilt,
       stage,
       progress,
@@ -1351,7 +1351,7 @@ export const createNewProperty = async (req: Request, res: Response, next: NextF
         floors: Number(floors),
         price: Number(price),
 
-        ...(isFeatureProperty && {isFeatureProperty} ),
+        ...(is_Property_A_Project && {is_Property_A_Project} ),
         ...(yearBuilt && {yearBuilt} ),
         ...(stage && {stage} ),
         ...(progress && {progress} ),
@@ -1434,12 +1434,12 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
   try {
 
     const { propertyId } = req.params;
-    const userId = req.user?.id!;
-    const is_user_verified = req.user?.is_verified!;
+    // const userId = req.user?.id!;
+    // const is_user_verified = req.user?.is_verified!;
 
-    if (!is_user_verified) {
-      return next(new InternalServerError("Email not verify", 401));
-    }
+    // if (!is_user_verified) {
+    //   return next(new InternalServerError("Email not verify", 401));
+    // }
 
 
     const {
@@ -1551,7 +1551,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
         amenities: {
           create: propertyAmenities
         },
-        userId,
+        // userId,
         category,
         city,
         country,
@@ -1577,7 +1577,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
     });
 
 
-
+// 
 
     if (!updatedProperty) {
       return next(new InternalServerError("Failed to upload property", 401));
@@ -1643,7 +1643,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
     await deleteMatchingKeys(`property:${updatedProperty.id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);
 
-    await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
+    await deleteMatchingKeys(`getPropertiesByUser:${updatedProperty?.userId}:*`);
 
 
 
@@ -2101,3 +2101,6 @@ export const mediaForProperty = async (req: Request, res: Response, next: NextFu
     next(new InternalServerError("Upload faile", 500));
   }
 };
+
+
+

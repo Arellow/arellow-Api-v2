@@ -235,6 +235,7 @@ model Property {
 
   archived          Boolean @default(false)
   isFeatureProperty Boolean @default(false)
+  is_Property_A_Project Boolean @default(false)
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
