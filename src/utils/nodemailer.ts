@@ -50,10 +50,11 @@ export const mailController =  (mailOptions: MailDataRequired) => {
   // sgMail.setDataResidency('eu'); 
   try {
      sgMail.send(mailOptions);
-    console.log('Email sent')
-
-  } catch (error) {
-     console.error(error)
+  } catch (error:any) {
+    console.log({
+      mailError: error?.response?.body
+    })
+    //  console.error(error?.response?.body)
   }
 
 };

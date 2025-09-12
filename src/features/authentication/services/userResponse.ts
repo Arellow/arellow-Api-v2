@@ -37,10 +37,9 @@ export const userResponse = async({ res, user, message }: { res: Response, user:
 
     };
 
-    new CustomResponse(200, true, "Login successful", res, {
+    new CustomResponse(200, true, message, res, {
         user: response,
-        token,
-        message
+        token
     });
 
 }

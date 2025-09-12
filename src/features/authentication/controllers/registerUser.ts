@@ -38,14 +38,15 @@ export class RegisterController {
 
       const user = await AuthService.registerUser(userInput);
 
-      userResponse({user, res, message: "User registered successfully. Check your email to verify."})
+      userResponse({user, res, message: "Registration successfully."})
 
     } catch (error) {
-      if (error instanceof DuplicateError) {
-        next(new BadRequestError("Email or username already exists"));
-      } else {
-        next(error);
-      }
+      next(error);
+      // if (error instanceof DuplicateError) {
+      //   next(new BadRequestError("Email or username already exists"));
+      // } else {
+      //   next(error);
+      // }
     }
   }
 }

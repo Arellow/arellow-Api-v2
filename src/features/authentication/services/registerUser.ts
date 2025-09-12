@@ -19,8 +19,16 @@ export class AuthService {
       where: { email },
     });
 
+    const existingUserName = await Prisma.user.findUnique({
+      where: { username },
+    });
+
     if (existingUser) {
       throw new DuplicateError("Email already exists.");
+    }
+
+    if (existingUserName) {
+      throw new DuplicateError("User name already exists.");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -51,10 +59,10 @@ export class AuthService {
     const verificationToken = generateToken(newUser.id, newUser.email);
     const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}/verify-email?token=${verificationToken}`;
     const mailOptions = await emailVerificationMailOption(newUser.email, verificationUrl);
+    
     mailController({from: "noreply@arellow.com", ...mailOptions})
 
     return newUser;
-
 
   }
 }
