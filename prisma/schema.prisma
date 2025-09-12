@@ -203,13 +203,14 @@ model Property {
   neighborhood String
   location     GeoPoint
 
-  bedrooms     String
-  bathrooms    String
+  bedrooms     Int
+  bathrooms    Int
   squareMeters String
 
   floors     Int
   price      Float
-  yearBuilt  String?
+  // yearBuilt  String?
+  yearBuilt  Int
   stage      PropertyStage?
   progress   PropertyProgress?
   stagePrice Float?

@@ -5,7 +5,7 @@ import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
     unArchiveProperty, unLikeProperty, deleteProperty, statusProperty, getLikedPropertiesByUser,
-    getPropertiesByUser, mediaForProperty, recentProperties, featureProperties, createNewProperty,
+    getPropertiesByUser, mediaForProperty, recentProperties, featureProperties,
     getAllProperties,
     updateProperty,
     getAllArchivedProperties,
@@ -18,9 +18,9 @@ import {
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
-import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propertyAssignDetail, propertyRequests, propertyAssigns, updateDeveloperAssignment } from '../../requestProperties/controllers/request';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-import { changeStatusSchema, createProjectSchema, createPropertyRequestSchema, createPropertySchema } from './property.validate';
+import { changeStatusSchema, createPropertySchema } from './property.validate';
+import { createProperty } from '../controllers/createProperty';
 
 type Amenity = {
     name: string;
@@ -30,14 +30,6 @@ const propertyRoutes = express.Router();
 
 propertyRoutes.post("/mortgage/:id", authenticate, calculateProjectMortgage)
 
-//Request property
-propertyRoutes.post("/requestProperty", validateSchema(createPropertyRequestSchema), isLoginUser, createPropertyRequest);
-propertyRoutes.get("/assignProperties", authenticate, propertyAssigns);
-propertyRoutes.get("/requestProperties", authenticate, propertyRequests);
-propertyRoutes.get("/assignProperty/:id/detail", authenticate, propertyAssignDetail);
-propertyRoutes.get("/requestProperty/:id/detail", authenticate, propertyRequestDetail);
-propertyRoutes.post("/requestProperty/:id/assign-developers", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), assignDevelopers);
-propertyRoutes.patch("/requestProperty/:id/close", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateDeveloperAssignment);
 
 
 // test by flow
@@ -52,30 +44,7 @@ propertyRoutes.get("/recent", recentProperties);
 
 
 
-propertyRoutes.post("/createproject", multipleupload, (req, res, next) => {
-
-    const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
-    const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
-    const parsedLocation: {
-        lat: string,
-
-        lng: string
-    } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
-
-    const body = {
-        ...req.body,
-        features: parsedFeatures,
-        amenities: parsedAmenities,
-        location: parsedLocation,
-        is_Property_A_Project: true
-    };
-    req.body = body;
-    next()
-},
-    validateSchema(createProjectSchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), createNewProperty);
-
 propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
-
     const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
     const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
     const parsedLocation: {
@@ -94,13 +63,15 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
     next()
 
 },
-    validateSchema(createPropertySchema), authenticate, isSuspended, createNewProperty);
+    validateSchema(createPropertySchema), 
+    // authenticate, isSuspended,
+     createProperty);
 
 propertyRoutes.post("/updateproject/:propertyId", multipleupload, (req, res, next) => {
     req.body.isFeatureProperty = true;
     next()
 },
-    validateSchema(createPropertySchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
+validateSchema(createPropertySchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
 
 propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
     (req, res, next) => {
