@@ -23,8 +23,8 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
     email,
     phoneNumber,
     propertyCategory,
-    propertyType,
-    furnishingStatus,
+    title,
+    features,
     numberOfBedrooms,
     numberOfBathrooms,
     budget,
@@ -53,8 +53,8 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
         email: isLogin ? isLogin.email : email,
         phoneNumber: isLogin ? isLogin.phone_number : phoneNumber,
         propertyCategory,
-        propertyType,
-        furnishingStatus,
+        title,
+        features,
         propertyAddress: {
           country,
           state,
@@ -107,8 +107,8 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
     const baseSelect = {
       propertyAddress: true,
       propertyCategory: true,
-      propertyType: true,
-      furnishingStatus: true,
+      title: true,
+      features: true,
       numberOfBedrooms: true,
       numberOfBathrooms: true,
       budget: true,
@@ -206,8 +206,8 @@ export const propertyAssignDetail = async (req: Request, res: Response, next: Ne
           select: {
             propertyAddress: true,
            propertyCategory: true,
-           propertyType: true,
-          furnishingStatus: true,
+           features: true,
+          title: true,
           numberOfBedrooms: true,
           numberOfBathrooms: true,
           budget: true,
@@ -302,7 +302,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
    
     } : {
       propertyCategory: true,
-      propertyType: true,
+      title: true,
       budget: true,
       propertyAddress: true,
       createdAt: true,
@@ -432,7 +432,7 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
             propertyRequest: {
               select: {
                   propertyCategory: true,
-                 propertyType: true,
+                 title: true,
               budget: true,
              propertyAddress: true,
                createdAt: true,
@@ -576,10 +576,10 @@ export const assignDevelopers = async (
             email: response.email,
             realtorName: response.username,
             location: response.propertyAddress.location,
-            propertyType: response.propertyType,
+            title: response.title,
             bedrooms: response.numberOfBedrooms,
             budget: formatInky(response.budget?.toString()),
-            furnishingStatus: response.furnishingStatus,
+            // furnishingStatus: response.furnishingStatus,
           from: "noreply@arellow.com"
 
           }, {

@@ -396,8 +396,8 @@ model PropertyRequest {
   email             String
   phoneNumber       String
   propertyCategory  PropertyCategory
-  propertyType      String
-  furnishingStatus  String
+  features      String[]
+  title  String
   propertyAddress   PropertyAddress
   numberOfBedrooms  Int              @default(0)
   numberOfBathrooms Int              @default(0)

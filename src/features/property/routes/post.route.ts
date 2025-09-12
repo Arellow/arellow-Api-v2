@@ -13,7 +13,8 @@ import {
     unmarkAsFeatureProperty,
     markAsFeatureProperty,
     sellingProperties,
-    propertiesListing
+    propertiesListing,
+    getProjects
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
@@ -41,8 +42,15 @@ propertyRoutes.patch("/requestProperty/:id/close", authenticate, requireRole(Use
 
 // test by flow
 propertyRoutes.get("/seed", getAllStates);
+propertyRoutes.get("/project", getProjects);
+
+
+
+
 propertyRoutes.get("/selling", sellingProperties);
 propertyRoutes.get("/recent", recentProperties);
+
+
 
 propertyRoutes.post("/createproject", multipleupload, (req, res, next) => {
 
