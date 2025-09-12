@@ -248,7 +248,7 @@ export const propertyAssignDetail = async (req: Request, res: Response, next: Ne
 
 export const propertyRequests = async (req: Request, res: Response, next: NextFunction) => {
     const {
-      propertyType,
+      title,
       country,
       state,
       status,
@@ -262,7 +262,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
   const search = (req.query.search as string) || "";
 
-    const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}:self`;
+    const cacheKey = `propertyRequests:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${title || ""}:self`;
 
 
        const isAdmin = getIsAdmin(req.user!);
@@ -282,7 +282,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
           ? {
             OR: [
               matchedCategory ? { propertyCategory: matchedCategory } : null,
-              { propertyType: { contains: search, mode: "insensitive" } },
+              { title: { contains: search, mode: "insensitive" } },
               { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } },
               { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } },
               { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } },
@@ -294,7 +294,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 
           country ? { propertyAddress: { is: { country: { contains: country, mode: "insensitive" } } } } : undefined,
           state ? { propertyAddress: { is: { state: { contains: state, mode: "insensitive" } } } } : undefined,
-           propertyType ? { propertyType: { contains: propertyType, mode: "insensitive" } } : undefined,
+           title ? { propertyType: { contains: title, mode: "insensitive" } } : undefined,
       ].filter(Boolean) as prisma.PropertyRequestWhereInput[]
     };
 
@@ -383,7 +383,7 @@ export const propertyRequests = async (req: Request, res: Response, next: NextFu
 export const propertyAssigns = async (req: Request, res: Response, next: NextFunction) => {
 
     const {
-      propertyType,
+      title,
       country,
       state,
       status,
@@ -397,7 +397,7 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
 
   const search = (req.query.search as string) || "";
 
-  const cacheKey = `propertyRequests:assigns:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${propertyType || ""}`;
+  const cacheKey = `propertyRequests:assigns:${user?.id}:${page}:${limit}:${search || "all"}:${status || ""}:${state || ""}:${country || ""}:${title || ""}`;
 
 
   try {
@@ -411,7 +411,7 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
           ? {
             OR: [
               matchedCategory ? {propertyRequest: { propertyCategory: matchedCategory }} : null,
-              {propertyRequest: { propertyType: { contains: search, mode: "insensitive" } }},
+              {propertyRequest: { title: { contains: search, mode: "insensitive" } }},
               {propertyRequest: { propertyAddress: { is: { country: { contains: search, mode: "insensitive" } } } }},
               {propertyRequest: { propertyAddress: { is: { state: { contains: search, mode: "insensitive" } } } }},
               {propertyRequest: { propertyAddress: { is: { city: { contains: search, mode: "insensitive" } } } }},
@@ -424,7 +424,7 @@ export const propertyAssigns = async (req: Request, res: Response, next: NextFun
 
           country ? {propertyRequest: { propertyAddress: { is: { country: { contains: country, mode: "insensitive" } } } } } : undefined,
           state ? {propertyRequest: { propertyAddress: { is: { state: { contains: state, mode: "insensitive" } } } } }: undefined,
-           propertyType ? {propertyRequest: { propertyType: { contains: propertyType, mode: "insensitive" } } } : undefined,
+           title ? {propertyRequest: { title: { contains: title, mode: "insensitive" } } } : undefined,
 
       ].filter(Boolean) as prisma.DeveloperAssignmentWhereInput[]
     };

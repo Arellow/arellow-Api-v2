@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import nodemailer, { Transporter, SendMailOptions, SentMessageInfo } from "nodemailer";
+import nodemailer, { SendMailOptions, SentMessageInfo } from "nodemailer";
 import sgMail, {MailDataRequired} from "@sendgrid/mail";
  
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
