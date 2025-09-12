@@ -49,11 +49,10 @@ export const nodeMailerController = async (mailOptions: SendMailOptions): Promis
 export const mailController =  (mailOptions: MailDataRequired) => {
   // sgMail.setDataResidency('eu'); 
   try {
+   
      sgMail.send(mailOptions);
   } catch (error:any) {
-    console.log({
-      mailError: error?.response?.body
-    })
+    
     //  console.error(error?.response?.body)
   }
 

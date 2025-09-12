@@ -77,8 +77,8 @@ export const createPropertyRequestSchema = Joi.object({
   phoneNumber: Joi.string().pattern(/^[0-9+\-().\s]{7,15}$/),
 
   propertyCategory: Joi.string().required().valid(...Object.values(PropertyCategory)),
-  propertyType: Joi.string().required().min(3),
-  furnishingStatus: Joi.string().required().min(3),
+  title: Joi.string().required().min(3),
+  features: Joi.array().items(Joi.string()),
   country: Joi.string().required().min(1),
   state: Joi.string().required().min(1),
   city: Joi.string().required().min(1),

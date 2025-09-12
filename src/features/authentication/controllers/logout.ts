@@ -15,8 +15,10 @@ export class LogoutController {
         200,
         true,
         "Logged out successfully",
-        res
+        res,
+        {}
       );
+
     } catch (error) {
       next(error);
     }

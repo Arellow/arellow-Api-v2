@@ -46,6 +46,16 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
         isLogin = await Prisma.user.findUnique({ where: { id: user.id } });
     }
 
+
+    if(!isLogin && (
+       !username ||
+    !userRole ||
+    !email ||
+    !phoneNumber
+    )){
+    return next(new InternalServerError("Contact detail not found", 404));
+    }
+
     const response = await Prisma.propertyRequest.create({
       data: {
         username: isLogin ? isLogin.fullname : username,
