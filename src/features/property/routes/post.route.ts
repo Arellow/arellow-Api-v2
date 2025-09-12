@@ -1,6 +1,6 @@
 import express from 'express'
 import { calculateProjectMortgage } from '../controllers/FetchProperties';
-import authenticate, { adminRequireRole, isLoginUser, isSuspended, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isLoginUser, isSuspended, isVerify, requireRole } from '../../../middlewares/auth.middleware';
 import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
@@ -63,9 +63,10 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
     next()
 
 },
-    validateSchema(createPropertySchema), 
-    // authenticate, isSuspended,
-     createProperty);
+    validateSchema(createPropertySchema),
+     isVerify,authenticate, isSuspended, createProperty);
+
+
 
 propertyRoutes.post("/updateproject/:propertyId", multipleupload, (req, res, next) => {
     req.body.isFeatureProperty = true;
