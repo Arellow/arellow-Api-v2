@@ -4,16 +4,28 @@ import sgMail, {MailDataRequired} from "@sendgrid/mail";
  
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.gmail.com",
+//   port: 465,
+//   secure: true,
+//   auth: {
+//      user: process.env.AUTH_EMAIL,
+//     pass: process.env.AUTH_EMAIL_PASSWORD,
+//   },
+//   tls: { rejectUnauthorized: true },
+// });
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
   auth: {
-     user: process.env.AUTH_EMAIL,
+    user: process.env.AUTH_EMAIL,
     pass: process.env.AUTH_EMAIL_PASSWORD,
   },
-  tls: { rejectUnauthorized: true },
+  tls: { rejectUnauthorized: false },
 });
+
 
 
 transporter.verify((error: Error | null, success: boolean) => {

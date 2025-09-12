@@ -22,7 +22,7 @@ export class AuthService {
       }
     });
 
-    if (!user) throw new UnAuthorizedError("Invalid credentials.");
+    if (!user) throw new UnAuthorizedError("Account does not exist.");
    
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {

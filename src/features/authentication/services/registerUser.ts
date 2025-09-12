@@ -57,7 +57,7 @@ export class AuthService {
       }
     });
     const verificationToken = generateToken(newUser.id, newUser.email);
-    const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}verify-email?token=${verificationToken}`;
     const mailOptions = await emailVerificationMailOption(newUser.email, verificationUrl);
     
     mailController({from: "noreply@arellow.com", ...mailOptions})
