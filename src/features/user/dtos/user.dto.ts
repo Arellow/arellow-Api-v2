@@ -47,13 +47,19 @@ export interface UserResponseDto {
   suspended: boolean;
   points?: number;
   createdAt: Date;
-  propertiesListed: number;
-  propertiesSold: number;
-  selling: number;
+  // propertiesListed: number;
+  // propertiesSold: number;
+  // selling: number;
   kyc: {
       status: string,
       tryCount: number
-  }
+  },
+  address :{
+  country:  String
+  city :    String
+  state :   String
+  location : String
+   }
 }
 
 export interface ProjectPost {

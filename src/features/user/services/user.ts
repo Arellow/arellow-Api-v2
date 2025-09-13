@@ -132,10 +132,11 @@ export class UserService {
       suspended: user.suspended,
       points: user.points || 0,
       createdAt: user.createdAt,
-      propertiesListed: user.propertiesListed || 0,
-      propertiesSold: user.propertiesSold || 0,
-      selling: user.selling || 0,
-      kyc: user.kyc
+      // propertiesListed: user.propertiesListed || 0,
+      // propertiesSold: user.propertiesSold || 0,
+      // selling: user.selling || 0,
+      kyc: user.kyc,
+      address: user.address
     };
   }
 }
