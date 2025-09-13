@@ -16,7 +16,8 @@ import { kycRejectiontMailOption } from "../../../utils/mailer";
 interface IRequest {
     documentType: KycDocumentType,
     documentNumber: string
-
+    firstname: string
+    lastname: string
 }
 
 
@@ -26,17 +27,16 @@ export const createKyc = async (
     res: Response,
     next: NextFunction
 ) => {
-    const { documentNumber } = req.body as IRequest;
+    const { documentNumber , firstname, lastname } = req.body as IRequest;
 
     try {
 
         const userId = req.user?.id!;
-        const fullName = req.user?.fullname?.trim().split(' ');
 
         const hashedDocumentNumber = await bcrypt.hash(documentNumber, 10);
         const maskedDocumentNumber = documentNumber.slice(-4);
 
-        if (!fullName || fullName.length < 2) {
+        if (!firstname || !lastname) {
             return next(new InternalServerError('Update full name to continue', 400));
         }
 
@@ -112,7 +112,7 @@ export const createKyc = async (
 
             const identityResp = await axios.post(
                 `https://api.qoreid.com/v1/ng/identities/nin/${documentNumber}`,
-                { firstname: fullName[0], lastname: fullName[1] },
+                { firstname, lastname },
                 {
                     headers: {
                         authorization: `Bearer ${accessToken}`,
@@ -120,7 +120,6 @@ export const createKyc = async (
                     }
                 }
             );
-
 
 
             if (identityResp?.data?.status?.status === 'id_mismatch') {

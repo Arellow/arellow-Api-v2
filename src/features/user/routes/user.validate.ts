@@ -11,6 +11,8 @@ export const createKycSchema = Joi.object({
       'any.required': 'documentNumber is required',
       'string.base': 'documentNumber must be a string',
     }),
+    firstname: Joi.string().required().min(1),
+    lastname: Joi.string().required().min(1),
 });
 
 export const changeTicketSchema = Joi.object({
