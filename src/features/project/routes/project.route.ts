@@ -37,7 +37,12 @@ projectRoutes.post("/createproject", multipleupload, (req, res, next) => {
     validateSchema(createProjectSchema),
      authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), createProject);
 
-// projectRoutes.post("/mortgage/:id", authenticate, calculateProjectMortgage)
+// projectRoutes.post("/updateproject/:propertyId", multipleupload, (req, res, next) => {
+//          req.body.isFeatureProperty = true;
+//          next()
+//      },
+// validateSchema(createPropertySchema),isVerify, authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
+     
 
 
 

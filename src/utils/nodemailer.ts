@@ -60,11 +60,16 @@ export const mailController =  async(mailOptions: MailDataRequired) => {
 } as SendMailOptions;
 
     // transporter.sendMail(emailOptions);
-    await fetch('https://your-vercel-project.vercel.app/api/send-email', {
+
+await fetch('https://your-vercel-project.vercel.app/api/send-email', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer your-secret',
+  },
   body: JSON.stringify(emailOptions),
 });
+
 
 
   } catch (error:any) {

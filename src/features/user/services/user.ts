@@ -5,15 +5,21 @@ import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController,  } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export class UserService {
   async getUserById(userId: string): Promise<UserResponseDto> {
     try {
-      const user = await prisma.user.findUnique({
+      const user = await Prisma.user.findUnique({
         where: { id: userId },
         include: {
           properties: true,
+          kyc: {
+            select: {
+              status: true,
+              tryCount: true
+            }
+          }
           // rewardHistory: {
           //   where: { reason: { contains: "sold", mode: "insensitive" } },
           // },
@@ -50,9 +56,18 @@ export class UserService {
       if (data.phone_number !== undefined) updatedData.phone_number = data.phone_number;
       if (data.avatar !== undefined) updatedData.avatar = data.avatar;
 
-      const user = await prisma.user.update({
+      const user = await Prisma.user.update({
         where: { id: userId },
         data: updatedData,
+        include: {
+          properties: true,
+          kyc: {
+            select: {
+              status: true,
+              tryCount: true
+            }
+          }
+        }
       });
 
       return this.mapToResponse(user);
@@ -64,7 +79,7 @@ export class UserService {
 
   async deleteUser(userId: string): Promise<void> {
     try {
-      await prisma.user.delete({
+      await Prisma.user.delete({
         where: { id: userId },
       });
     } catch (error) {
@@ -75,11 +90,20 @@ export class UserService {
 
   async suspendUser(userId: string, data: UserSuspendDto): Promise<UserResponseDto> {
     try {
-      const user = await prisma.user.update({
+      const user = await Prisma.user.update({
         where: { id: userId },
         data: {
           suspended: true,
         },
+        include: {
+          properties: true,
+          kyc: {
+            select: {
+              status: true,
+              tryCount: true
+            }
+          }
+        }
       });
       if (!user) {
         throw new NotFoundError("User not found.");
@@ -111,6 +135,7 @@ export class UserService {
       propertiesListed: user.propertiesListed || 0,
       propertiesSold: user.propertiesSold || 0,
       selling: user.selling || 0,
+      kyc: user.kyc
     };
   }
 }

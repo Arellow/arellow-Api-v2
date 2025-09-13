@@ -6,7 +6,7 @@ import {
     unArchiveProperty, unLikeProperty, deleteProperty, statusProperty, getLikedPropertiesByUser,
     getPropertiesByUser, mediaForProperty, recentProperties, featureProperties,
     getAllProperties,
-    updateProperty,
+    // updateProperty,
     getAllArchivedProperties,
     getArchivedPropertiesByUser,
     unmarkAsFeatureProperty,
@@ -20,6 +20,7 @@ import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { changeStatusSchema, createPropertySchema } from './property.validate';
 import { createProperty } from '../controllers/createProperty';
+import { updateProperty } from '../controllers/updateProperty';
 
 type Amenity = {
     name: string;
@@ -62,15 +63,7 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
     validateSchema(createPropertySchema),
      isVerify,authenticate, isSuspended, createProperty);
 
-
-
-propertyRoutes.post("/updateproject/:propertyId", multipleupload, (req, res, next) => {
-    req.body.isFeatureProperty = true;
-    next()
-},
-validateSchema(createPropertySchema), authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), updateProperty);
-
-propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
+propertyRoutes.patch("/:propertyId/update", multipleupload,
     (req, res, next) => {
 
         const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
@@ -91,7 +84,8 @@ propertyRoutes.post("/updateproperty/:propertyId", multipleupload,
         next()
 
     },
-    validateSchema(createPropertySchema), authenticate, isSuspended, updateProperty);
+    validateSchema(createPropertySchema),isVerify, authenticate, isSuspended, updateProperty);
+
 
 propertyRoutes.get("/featured", featureProperties);
 propertyRoutes.get("/user/archive", authenticate, getArchivedPropertiesByUser);

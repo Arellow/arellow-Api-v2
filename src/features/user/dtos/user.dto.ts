@@ -50,6 +50,10 @@ export interface UserResponseDto {
   propertiesListed: number;
   propertiesSold: number;
   selling: number;
+  kyc: {
+      status: string,
+      tryCount: number
+  }
 }
 
 export interface ProjectPost {

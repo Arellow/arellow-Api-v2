@@ -1,20 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
-import {
-    InternalServerError,
-    // UnAuthorizedError 
-} from "../../../lib/appError";
-// import { Prisma as prisma, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
-// import { DirectMediaUploader } from "../services/directMediaUploader";
-// import { IMediaUploader, UploadJob } from "../services/mediaUploader";
-
-// import { MediaType } from '@prisma/client';
+import { InternalServerError } from "../../../lib/appError";
 import { mediaUploadQueue } from "../queues/media.queue";
-// import { cloudinary } from "../../../configs/cloudinary";
-// import { redis } from "../../../lib/redis";
-import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-
+import { deleteMatchingKeys } from "../../../lib/cache";
 
 type Amenity = {
     name: string;
@@ -27,11 +16,6 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
     try {
 
         const userId = req.user?.id!;
-        // const is_user_verified = req.user?.is_verified!;
-
-        // if (!is_user_verified) {
-        //   return next(new InternalServerError("Unverify email please check mail and verify account", 401));
-        // }
 
         const fields = req.files as { [fieldname: string]: Express.Multer.File[] } || [];
 
@@ -52,24 +36,12 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
             state,
             features,
             amenities,
-            yearBuilt,
-
-
-            //   is_Property_A_Project,
-            //   stage,
-            //   progress,
-            //   stagePrice 
-
+            yearBuilt
         } = req.body;
 
         const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
         const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
-        const parsedLocation: {
-            lat: string,
-
-            lng: string
-        } = typeof location === 'string' ? JSON.parse(location) : location;
-
+        const parsedLocation: { lat: string, lng: string } = typeof location === 'string' ? JSON.parse(location) : location;
 
         // Basic validation
         if (!title || !description) {
@@ -91,20 +63,13 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
         }
 
 
-
         const propertyAmenities = parsedAmenities.map(amenity => {
             return { name: amenity.name.trim(), photoUrl: amenity.photoUrl.trim() }
         });
 
 
         const propertyFeatures = parsedFeatures.map(feature => feature.trim());
-        const propertyLocation = {
-            lat: Number(parsedLocation.lat),
-
-            lng: Number(parsedLocation.lng)
-        };
-
-
+        const propertyLocation = { lat: Number(parsedLocation.lat), lng: Number(parsedLocation.lng)};
 
 
         // Create property
@@ -136,14 +101,6 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
                 yearBuilt: Number(yearBuilt),
                 is_Property_A_Project: false,
                 isFeatureProperty: (req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN") ? true : false,
-
-
-                // ...(is_Property_A_Project && {is_Property_A_Project} ),
-                // ...(yearBuilt && {yearBuilt} ),
-                // ...(stage && {stage} ),
-                // ...(progress && {progress} ),
-                // ...(stagePrice && {stagePrice: Number(stagePrice)} ),
-
             },
         });
 
@@ -216,21 +173,16 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
         }
 
 
-
         await deleteMatchingKeys(`getAllProperties:*`);
         await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
 
         new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
               propertyId: newProperty.id,
-           
         });
 
 
     } catch (error) {
-        // console.log({ error })
         next(new InternalServerError("Internal server error", 500));
-
     }
-
 
 };
