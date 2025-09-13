@@ -1,9 +1,9 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
-import { Prisma,  } from "../../../lib/prisma";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController,  } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
+import { Prisma } from "../../../lib/prisma";
 
 // const prisma = new PrismaClient();
 
@@ -20,9 +20,6 @@ export class UserService {
               tryCount: true
             }
           }
-          // rewardHistory: {
-          //   where: { reason: { contains: "sold", mode: "insensitive" } },
-          // },
         },
       });
       if (!user) {
@@ -32,9 +29,6 @@ export class UserService {
       // Calculate properties listed
       const propertiesListed = user.properties.length;
 
-      // Calculate properties sold (based on rewardHistory length for sold transactions)
-      // const propertiesSold = user.rewardHistory.length;
-
       // Calculate selling (sum of points from sold transactions)
       // const selling = user.rewardHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
 
@@ -42,7 +36,7 @@ export class UserService {
         //  propertiesSold, selling 
         });
     } catch (error) {
-      console.error("[getUserById] Prisma error:", error);
+      // console.error("[getUserById] Prisma error:", error);
       throw new InternalServerError("Database error when fetching user.");
     }
   }
