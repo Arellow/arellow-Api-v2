@@ -73,7 +73,10 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
         },
         numberOfBedrooms: Number(numberOfBedrooms),
         numberOfBathrooms: Number(numberOfBathrooms),
-        budget: Number(budget),
+        budget: {
+          amount: Number(budget.amount),
+          currency: budget.currency
+        },
         description,
 
         ...(user && {

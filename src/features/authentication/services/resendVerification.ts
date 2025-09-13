@@ -1,7 +1,7 @@
 import { Prisma } from "../../../lib/prisma";
 import { BadRequestError, UnAuthorizedError } from "../../../lib/appError";
 import { emailVerificationMailOption } from "../../../utils/mailer";
-import { nodeMailerController } from "../../../utils/nodemailer";
+import { mailController } from "../../../utils/nodemailer";
 import { generateToken } from "../../../utils/jwt";
 
 export class ResendVerificationService {
@@ -31,8 +31,9 @@ export class ResendVerificationService {
       user.email,
       verificationUrl
     );
-    await nodeMailerController(mailOptions);
-
+   
+     mailController({from: "noreply@arellow.com", ...mailOptions})
+    
     // Update last verification sent timestamp
     await Prisma.user.update({
       where: { id: user.id },

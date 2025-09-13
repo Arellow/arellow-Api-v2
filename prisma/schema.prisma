@@ -208,12 +208,12 @@ model Property {
   squareMeters String
 
   floors     Int
-  price      Float
+  price      PriceModel
   // yearBuilt  String?
   yearBuilt  Int
   stage      PropertyStage?
   progress   PropertyProgress?
-  stagePrice Float?
+  stagePrice PriceModel?
 
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
@@ -310,6 +310,10 @@ type GeoPoint {
   lat Float
   lng Float
 }
+type PriceModel {
+  currency String
+  amount Float
+}
 
 enum MediaType {
   PHOTO
@@ -402,7 +406,8 @@ model PropertyRequest {
   propertyAddress   PropertyAddress
   numberOfBedrooms  Int              @default(0)
   numberOfBathrooms Int              @default(0)
-  budget            Int              @default(0)
+  // budget            Int              @default(0)
+  budget            PriceModel
   description       String?
 
   createdBy   User?   @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])

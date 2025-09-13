@@ -18,11 +18,11 @@ import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 
 type Amenity = {
     name: string;
-    photoUrl: string;
+    photoUrl: string; 
 }
 
 
-export const createProperty = async (req: Request, res: Response, next: NextFunction) => {
+export const createProperty = async (req: Request, res: Response, next: NextFunction)=> {
 
     try {
 
@@ -129,7 +129,10 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
                 squareMeters: squareMeters,
 
                 floors: Number(floors),
-                price: Number(price),
+                price: {
+                    amount: Number(price.amount),
+                    currency: price.currency
+                },
                 yearBuilt: Number(yearBuilt),
                 is_Property_A_Project: false,
                 isFeatureProperty: (req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN") ? true : false,
@@ -211,6 +214,8 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
             }
 
         }
+
+
 
         await deleteMatchingKeys(`getAllProperties:*`);
         await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);

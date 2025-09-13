@@ -41,8 +41,6 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       features,
       amenities,
 
-      
-      is_Property_A_Project,
       yearBuilt,
       stage,
       progress,
@@ -117,13 +115,19 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
         squareMeters: squareMeters,
 
         floors: Number(floors),
-        price: Number(price),
-
-        ...(is_Property_A_Project && {is_Property_A_Project} ),
-        ...(yearBuilt && {yearBuilt} ),
-        ...(stage && {stage} ),
-        ...(progress && {progress} ),
-        ...(stagePrice && {stagePrice: Number(stagePrice)} ),
+        price: {
+            amount: Number(price.amount),
+            currency: price.currency
+        },
+        yearBuilt: Number(yearBuilt),
+        is_Property_A_Project: true,
+        isFeatureProperty: true,
+        stage,
+        progress,
+        stagePrice: {
+          amount: Number(stagePrice.amount),
+          currency: stagePrice.currency
+        }
       },
     });
 

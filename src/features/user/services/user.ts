@@ -2,7 +2,7 @@ import { PrismaClient, UserRole } from "@prisma/client";
 import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
 import { Prisma,  } from "../../../lib/prisma";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
-import { nodeMailerController } from "../../../utils/nodemailer";
+import { mailController,  } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 
 const prisma = new PrismaClient();
@@ -85,7 +85,7 @@ export class UserService {
         throw new NotFoundError("User not found.");
       }
       const mailOptions = await suspendedAccountMailOption(user.email, data?.reason);
-      await nodeMailerController(mailOptions);
+       mailController({from: "noreply@arellow.com", ...mailOptions})
 
       return this.mapToResponse(user);
     } catch (error) {

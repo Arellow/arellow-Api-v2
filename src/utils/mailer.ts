@@ -378,13 +378,11 @@ export const sendForgetPasswordMailOption = async (
   { email, username }: SendForgetPasswordMailOptionParams,
   resetCode: string | number
 ): Promise<{
-  from?: string | undefined;
   to: string;
   subject: string;
   html: string;
 }> => {
   const mailOptions = {
-    from: process.env.MAIL_FROM,
     to: email,
     subject: "Password Reset Code",
     html: `
@@ -655,7 +653,6 @@ export const suspendedAccountMailOption = async (
     reason || "Violation of our platform's terms of service.";
 
   return {
-    from: process.env.SMTP_EMAIL,
     to: email,
     subject: "Account Suspension Notice",
     html: `

@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import { RegisterDTO } from "../dtos/registerUserDto";
 import { AuthService } from "../services/registerUser";
-import { BadRequestError, DuplicateError, InternalServerError } from "../../../lib/appError";
+import { InternalServerError } from "../../../lib/appError";
 import { userResponse } from "../services/userResponse";
 
 

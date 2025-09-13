@@ -9,6 +9,7 @@ import propertyRoutes from './property/routes/post.route';
 import advertRoutes from './advertiseWithUs/route';
 import projectRoutes from './project/routes/project.route';
 import propertyRequestRoutes from './requestProperties/routes/propertyrequest.route';
+import { sendMail } from '../utils/nodemailer';
 const appRouter = express.Router();
 
 
@@ -22,6 +23,8 @@ const appRouter = express.Router();
  appRouter.use("/project",projectRoutes );
  appRouter.use("/advertiseMent", advertRoutes);
  appRouter.use("/propertyrequest", propertyRequestRoutes);
+ appRouter.post("/send-email", sendMail);
+
 
 
 export default appRouter;

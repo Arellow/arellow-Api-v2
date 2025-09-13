@@ -7,7 +7,7 @@ import {
   UnAuthorizedError,
 } from "../../../lib/appError";
 import { sendForgetPasswordMailOption } from "../../../utils/mailer";
-import { nodeMailerController } from "../../../utils/nodemailer";
+import { mailController } from "../../../utils/nodemailer";
 
 export class ForgetPasswordService {
   async forgetPassword(dto: ForgetPasswordDto) {
@@ -54,8 +54,8 @@ export class ForgetPasswordService {
       throw new InternalServerError("Server error, please try again");
     }
 
-    const mailOption = await sendForgetPasswordMailOption(user, resetCode);
-    await nodeMailerController(mailOption);
+    const mailOptions = await sendForgetPasswordMailOption(user, resetCode);
+     mailController({from: "noreply@arellow.com", ...mailOptions})
 
     return {
       resetSent: true,

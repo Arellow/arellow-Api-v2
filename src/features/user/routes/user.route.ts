@@ -8,7 +8,6 @@ import {
 import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
-import { getRealtorsLeaderboard } from "../controllers/leaderboard";
 import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs, userDashbroad } from "../controllers/kyc";
 import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload } from "../../../middlewares/multer";
@@ -35,9 +34,6 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
   adminRequireRole("SUPPORT"),
   changeTicketStatus);
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
-
-
-usersRoutes.get("/leaderboard", getRealtorsLeaderboard);
 
 usersRoutes.get("/:userId", getUserById);
 usersRoutes.patch(

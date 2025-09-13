@@ -86,6 +86,8 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
       return next(new InternalServerError("Property not found", 404));
     }
 
+    
+
 
     await redis.set(cacheKey, JSON.stringify(property), "EX", 60);
 
@@ -1552,13 +1554,18 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
         squareMeters: squareMeters,
 
         floors: Number(floors),
-        price: Number(price),
+        price: {
+            amount: Number(price.amount),
+            currency: price.currency
+          },
 
         ...(isFeatureProperty && {isFeatureProperty} ),
         ...(yearBuilt && {yearBuilt} ),
         ...(stage && {stage} ),
         ...(progress && {progress} ),
-        ...(stagePrice && {stagePrice: Number(stagePrice)} ),
+        ...(stagePrice.amount && {stagePrice: Number(stagePrice.amount)} ),
+        ...(stagePrice.currency && {stagePrice: stagePrice.currency} ),
+       
 
       },
     });

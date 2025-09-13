@@ -1,5 +1,4 @@
 import express from 'express'
-import { calculateProjectMortgage } from '../controllers/FetchProperties';
 import authenticate, { adminRequireRole, isLoginUser, isSuspended, isVerify, requireRole } from '../../../middlewares/auth.middleware';
 import { getAllStates } from '../controllers/seedPropImages';
 import {
@@ -27,9 +26,6 @@ type Amenity = {
     photoUrl: string;
 }
 const propertyRoutes = express.Router();
-
-propertyRoutes.post("/mortgage/:id", authenticate, calculateProjectMortgage)
-
 
 
 // test by flow
