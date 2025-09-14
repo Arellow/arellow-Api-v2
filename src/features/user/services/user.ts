@@ -1,12 +1,9 @@
-import { PrismaClient, UserRole } from "@prisma/client";
-import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
+import { UserRole } from "@prisma/client";
+import { InternalServerError, NotFoundError } from "../../../lib/appError";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController, } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
-
-// const prisma = new PrismaClient();
-
 export class UserService {
   async getUserById(userId: string): Promise<UserResponseDto> {
     try {
@@ -19,7 +16,7 @@ export class UserService {
               status: true,
               tryCount: true,
               documentNumber: true,
-              statueText: true,
+              statusText: true,
             }
           }
         },

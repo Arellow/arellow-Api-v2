@@ -129,7 +129,7 @@ export const createKyc = async (
                         where: { id: kyc.id },
                         data: {
                             status: "REJECTED",
-                            statueText: "Mismatch",
+                            statusText: "Mismatch",
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
                             tryCount: { increment: 1 }
@@ -143,7 +143,7 @@ export const createKyc = async (
                             userId,
                             documentType: "NIN",
                             status: "REJECTED",
-                            statueText: "Mismatch",
+                            statusText: "Mismatch",
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
                             tryCount: 1
@@ -157,9 +157,6 @@ export const createKyc = async (
             }
 
             const ninData = identityResp.data?.nin;
-
-
-
 
             const kycPayload = {
                 userId,
@@ -217,7 +214,7 @@ export const createKyc = async (
                         where: { id: kyc.id },
                         data: {
                             status: "REJECTED",
-                            statueText: error.response?.data?.message,
+                            statusText: error.response?.data?.message,
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
                             tryCount: { increment: 1 }
@@ -230,7 +227,7 @@ export const createKyc = async (
                             userId,
                             documentType: "NIN",
                             status: "REJECTED",
-                            statueText: error.response?.data?.message,
+                            statusText: error.response?.data?.message,
                             documentNumber: maskedDocumentNumber,
                             documentPhoto,
                             tryCount: 1
@@ -295,7 +292,7 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
                 ninData: true,
                 documentPhoto: true,
                 status: true,
-                statueText: true,
+                statusText: true,
                 user: {
                     select: {
                         createdAt: true,
@@ -689,7 +686,7 @@ export const approvedKyc = async (req: Request, res: Response, next: NextFunctio
             where: { id },
             data: {
                 status: "VERIFIED",
-                statueText: null,
+                statusText: null,
             }
         });
 

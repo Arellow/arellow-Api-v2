@@ -67,7 +67,7 @@ model Kyc {
   documentType   KycDocumentType @default(NIN)
   ninData            NIN_Data?
   documentNumber String
-  statueText     String?
+  statusText     String?
   documentPhoto  String
   tryCount       Int             @default(0)
   status         KycStatus       @default(PENDING)
