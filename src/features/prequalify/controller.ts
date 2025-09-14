@@ -3,8 +3,8 @@ import { PropertyService } from "./service";
 import { InternalServerError } from "../../lib/appError";
 import CustomResponse from "../../utils/helpers/response.util";
 import { PreQualificationDto } from "./dto";
-import { nodeMailerController } from "../../utils/nodemailer";
 import { createPrequalificationMailOptions } from "../../utils/mailer";
+import { mailController } from "../../utils/nodemailer";
 
 const propertyService = new PropertyService();
 
@@ -41,7 +41,9 @@ export const createPreQualification = async (
       data.down_payment_goal,
       false
     );
-    await nodeMailerController(userMailOptions);
+  
+    mailController({from: "noreply@arellow.com", ...userMailOptions})
+    
 
     // Email options for the admin
     const adminMailOptions = await createPrequalificationMailOptions(
@@ -57,7 +59,8 @@ export const createPreQualification = async (
       data.down_payment_goal,
       true
     );
-    await nodeMailerController(adminMailOptions);
+     mailController({from: "noreply@arellow.com", ...adminMailOptions})
+    
 
     new CustomResponse(
       201,

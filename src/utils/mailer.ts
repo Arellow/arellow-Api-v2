@@ -724,7 +724,6 @@ export const createPrequalificationMailOptions = async (
     : "We will contact you soon regarding your prequalification request.";
 
   return {
-    from: process.env.SMTP_EMAIL,
     to,
     subject,
     html: `
