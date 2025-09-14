@@ -83,7 +83,7 @@ export const createCustomerSupport = async (req: Request, res: Response, next: N
 
         await deleteMatchingKeys("ticket:*");
 
-        new CustomResponse(200, true, "successfully", res,);
+        new CustomResponse(200, true, "ticket created successfully", res,);
     } catch (error) {
         next(new InternalServerError("Internal server error", 500));
     }

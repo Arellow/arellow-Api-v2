@@ -10,7 +10,7 @@ import { validateSchema } from "../../../middlewares/propertyParsingAndValidatio
 import { updateUserSchema } from "../../../validations/user.validation";
 import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs, userDashbroad } from "../controllers/kyc";
 import { UserRole } from "@prisma/client";
-import { documentPhotoupload, multipleupload } from "../../../middlewares/multer";
+import { documentPhotoupload, multipleupload, singleupload } from "../../../middlewares/multer";
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
 
@@ -38,6 +38,7 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
 usersRoutes.get("/:userId", getUserById);
 usersRoutes.patch(
   "/:userId",
+  singleupload,
   authenticate,
   validateSchema(updateUserSchema),
   updateUser

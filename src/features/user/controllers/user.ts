@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/user";
 import { UserSuspendDto, UserUpdateDto } from "../dtos/user.dto";
 import CustomResponse from "../../../utils/helpers/response.util";
-import { BadRequestError } from "../../../lib/appError";
+import { BadRequestError, InternalServerError } from "../../../lib/appError";
+import { processImage } from "../../../utils/imagesprocess";
 const userService = new UserService();
 
 
@@ -32,13 +33,36 @@ export const updateUser = async (
   const data = req.body as UserUpdateDto;
 
  
-  const allowedFields = ["fullname", "username", "phone_number"];
+  const allowedFields = ["fullname", "username", "phone_number", "image"];
   const invalidFields = Object.keys(data).filter((key) => !allowedFields.includes(key));
   if (invalidFields.length > 0) {
     throw new BadRequestError(`Cannot update fields: ${invalidFields.join(", ")}`);
   }
 
+
+
   try {
+    // let avatar;
+
+    if(req.file){
+
+      data.avatar = await processImage({
+                      folder: "kyc_container",
+                      image: req.file,
+                      photoType: "KYC",
+                      type: "PHOTO"
+                  });
+      
+                  if (!data.avatar) {
+                      return next(new InternalServerError('Failed to process profile photo', 500));
+                  }
+
+    }
+
+
+
+
+
     const user = await userService.updateUser(userId, data);
     new CustomResponse(200, true, "User updated successfully", res, user);
   } catch (error) {
