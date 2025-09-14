@@ -4,6 +4,7 @@ import {
   updateUser,
   deleteUser,
   suspendUser,
+  updateAvatar,
 } from "../controllers/user";
 import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
@@ -36,12 +37,19 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
 
 usersRoutes.get("/:userId", getUserById);
+
 usersRoutes.patch(
-  "/:userId",
-  singleupload,
+  "/profile",
   authenticate,
   validateSchema(updateUserSchema),
   updateUser
+);
+
+usersRoutes.patch(
+  "/avatar",
+  singleupload,
+  authenticate,
+  updateAvatar
 );
 
 usersRoutes.put("/:userId/suspend", suspendUser);

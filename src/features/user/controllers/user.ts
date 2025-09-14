@@ -29,41 +29,56 @@ export const updateUser = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const userId = req.params.userId as string;
+  const userId = req.user?.id!;
   const data = req.body as UserUpdateDto;
-
  
-  const allowedFields = ["fullname", "username", "phone_number", "image"];
+  const allowedFields = ["fullname", "username", "phone_number"];
   const invalidFields = Object.keys(data).filter((key) => !allowedFields.includes(key));
   if (invalidFields.length > 0) {
     throw new BadRequestError(`Cannot update fields: ${invalidFields.join(", ")}`);
   }
 
+  try {
+    const user = await userService.updateUser(userId, data);
+    new CustomResponse(200, true, "User updated successfully", res, user);
+  } catch (error) {
+    console.error("[updateUser] error:", error);
+    next(error);
+  }
+};
 
+export const updateAvatar = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const userId = req.user?.id!;
 
   try {
-    // let avatar;
+    let avatar;
 
     if(req.file){
 
-      data.avatar = await processImage({
+      avatar = await processImage({
                       folder: "kyc_container",
                       image: req.file,
                       photoType: "KYC",
                       type: "PHOTO"
                   });
       
-                  if (!data.avatar) {
-                      return next(new InternalServerError('Failed to process profile photo', 500));
-                  }
+                  // if (avatar) {
+                  //     return next(new InternalServerError('Failed to process profile photo', 500));
+                  // }
 
     }
 
+     if (!avatar) {
+    throw new BadRequestError('user profile update failed');
+  }
 
 
 
-
-    const user = await userService.updateUser(userId, data);
+    const user = await userService.updateUserAvatar(userId, avatar);
     new CustomResponse(200, true, "User updated successfully", res, user);
   } catch (error) {
     console.error("[updateUser] error:", error);
@@ -106,5 +121,6 @@ export const suspendUser = async (
     next(error);
   }
 };
+
 
 

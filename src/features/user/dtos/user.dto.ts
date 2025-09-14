@@ -12,8 +12,10 @@ export interface UserCreateDto {
 export interface UserUpdateDto {
   fullname?: string;
   username?: string;
-  phone_number?: string;
-  avatar?: string;
+   phone_number: {
+      phone: string,
+      country: string
+    },
 }
 
 

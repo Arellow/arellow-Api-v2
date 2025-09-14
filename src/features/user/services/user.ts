@@ -62,9 +62,9 @@ export class UserService {
 
       if (data.fullname !== undefined) updatedData.fullname = data.fullname;
       if (data.username !== undefined) updatedData.username = data.username;
-      if (data.phone_number !== undefined) updatedData.phone_number = data.phone_number;
-      if (data.avatar !== undefined) updatedData.avatar = data.avatar;
-
+      if (data.phone_number.country !== undefined) updatedData.phone_number.country = data.phone_number.country;
+      if (data.phone_number.phone !== undefined) updatedData.phone_number.phone = data.phone_number.phone;
+     
       const user = await Prisma.user.update({
         where: { id: userId },
         data: updatedData,
@@ -107,6 +107,56 @@ export class UserService {
       });
     } catch (error) {
       console.error("[updateUser] Prisma error:", error);
+      throw new InternalServerError("Database error when updating user.");
+    }
+  }
+
+  async updateUserAvatar(userId: string, avatar:string): Promise<UserResponseDto> {
+    try {
+   
+      const user = await Prisma.user.update({
+        where: { id: userId },
+        data: {
+          avatar
+        },
+        include: {
+          properties: true,
+          kyc: {
+            select: {
+              status: true,
+              tryCount: true,
+              documentNumber: true,
+              statusText: true,
+            }
+          }
+        }
+      });
+
+       const propertystats = user.properties.reduce((acc, property) => {
+        if (property.status === 'APPROVED') {
+          acc.totalListed += 1;
+
+          if (property.salesStatus === 'SOLD') {
+            acc.totalSold += 1;
+          } else if (property.salesStatus === 'SELLING') {
+            acc.totalSelling += 1;
+          }
+        }
+
+        return acc;
+      },
+        {
+          totalListed: 0,
+          totalSold: 0,
+          totalSelling: 0,
+        }
+      );
+
+
+      return this.mapToResponse({
+        ...user, propertystats,
+      });
+    } catch (error) {
       throw new InternalServerError("Database error when updating user.");
     }
   }
