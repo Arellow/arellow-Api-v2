@@ -65,7 +65,7 @@ model Kyc {
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String          @db.ObjectId
   documentType   KycDocumentType @default(NIN)
-  NIN            NIN_Data?
+  ninData            NIN_Data?
   documentNumber String
   statueText     String?
   documentPhoto  String
@@ -81,12 +81,20 @@ type NIN_Data {
   nin        String
   firstname  String
   lastname   String
-  middlename String
-  phone      String
-  gender     String
-  birthdate  String
-  photo      String
-  address    String
+  middlename String?
+  phone      String?
+  gender     String?
+  birthdate  String?
+  photo      String?
+  address    String?
+  residence Residence?
+}
+
+type Residence {
+  address1 String?
+  town String?
+  lga String?
+  state String?
 }
 
 model User {

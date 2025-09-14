@@ -47,9 +47,11 @@ export interface UserResponseDto {
   suspended: boolean;
   points?: number;
   createdAt: Date;
-  // propertiesListed: number;
-  // propertiesSold: number;
-  // selling: number;
+  propertystats: {
+    totalListed: number,
+    totalSold: number,
+    totalSelling: number,
+  },
   kyc: {
       status: string,
       tryCount: number

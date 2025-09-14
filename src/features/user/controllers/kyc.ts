@@ -45,7 +45,7 @@ export const createKyc = async (
 
 
         if (kyc && kyc.status == 'VERIFIED') {
-            return next(new InternalServerError("Credential was verify", 403));
+            return next(new InternalServerError("Credential was verified", 403));
         }
 
         if (kyc && kyc.status == 'PENDING') {
@@ -168,7 +168,7 @@ export const createKyc = async (
                 documentNumber: maskedDocumentNumber,
                 documentPhoto,
                 tryCount: kyc ? undefined : 1,
-                NIN: {
+                ninData: {
                     nin: hashedDocumentNumber,
                     firstname: ninData?.firstname,
                     lastname: ninData?.lastname,
@@ -177,11 +177,17 @@ export const createKyc = async (
                     gender: ninData?.gender,
                     birthdate: ninData?.birthdate,
                     photo: ninData?.photo,
-                    address: ninData?.address
+                    residence: {
+                        address1: ninData.residence.address1,
+                        town: ninData.residence.town,
+                        lga: ninData.residence.lga,
+                        state: ninData.residence.state
+                    } 
+                   
                 }
             };
 
-
+           
             if (kyc) {
                 await Prisma.kyc.update({
                     where: { id: kyc.id },
@@ -235,6 +241,8 @@ export const createKyc = async (
                 return next(new InternalServerError(error.response?.data?.message, error.response?.status));
             }
 
+            console.log({error})
+
             const status = error.response?.status || 500;
             let errormessage = error.response?.data?.message || 'verification failed';
 
@@ -284,7 +292,7 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
             where: { id },
             select: {
                 userId: true,
-                NIN: true,
+                ninData: true,
                 documentPhoto: true,
                 status: true,
                 statueText: true,

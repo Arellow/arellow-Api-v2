@@ -106,7 +106,7 @@ export const isSuspended = (req: Request, res: Response, next: NextFunction): vo
 export const isVerify = (req: Request, res: Response, next: NextFunction): void => {
   const is_user_verified = req.user?.is_verified!;
   if (!is_user_verified) {
-    res.status(403).json({ success: false, message: "Unauthorized: User email not verify" });
+    res.status(403).json({ success: false, message: "Unauthorized: User email not verified" });
     return;
   }
   next();

@@ -1,7 +1,7 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
-import { mailController,  } from "../../../utils/nodemailer";
+import { mailController, } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
 
@@ -27,16 +27,32 @@ export class UserService {
       }
 
       // Calculate properties listed
-      const propertiesListed = user.properties.length;
 
-      // Calculate selling (sum of points from sold transactions)
-      // const selling = user.rewardHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
+      const propertystats = user.properties.reduce((acc, property) => {
+        if (property.status === 'APPROVED') {
+          acc.totalListed += 1;
 
-      return this.mapToResponse({ ...user, propertiesListed,
-        //  propertiesSold, selling 
-        });
+          if (property.salesStatus === 'SOLD') {
+            acc.totalSold += 1;
+          } else if (property.salesStatus === 'SELLING') {
+            acc.totalSelling += 1;
+          }
+        }
+
+        return acc;
+      },
+        {
+          totalListed: 0,
+          totalSold: 0,
+          totalSelling: 0,
+        }
+      );
+
+
+      return this.mapToResponse({
+        ...user, propertystats,
+      });
     } catch (error) {
-      // console.error("[getUserById] Prisma error:", error);
       throw new InternalServerError("Database error when fetching user.");
     }
   }
@@ -103,7 +119,7 @@ export class UserService {
         throw new NotFoundError("User not found.");
       }
       const mailOptions = await suspendedAccountMailOption(user.email, data?.reason);
-       mailController({from: "noreply@arellow.com", ...mailOptions})
+      mailController({ from: "noreply@arellow.com", ...mailOptions })
 
       return this.mapToResponse(user);
     } catch (error) {
@@ -126,9 +142,7 @@ export class UserService {
       suspended: user.suspended,
       points: user.points || 0,
       createdAt: user.createdAt,
-      // propertiesListed: user.propertiesListed || 0,
-      // propertiesSold: user.propertiesSold || 0,
-      // selling: user.selling || 0,
+      propertystats: user.propertystats,
       kyc: user.kyc,
       address: user.address
     };
