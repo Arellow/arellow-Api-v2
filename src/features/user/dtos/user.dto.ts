@@ -59,10 +59,15 @@ export interface UserResponseDto {
       tryCount: number
   },
   address :{
-  country:  String
-  city :    String
-  state :   String
-  location : String
+  country:  string
+  city :    string
+  state :   string
+  location : string
+   },
+   setting: {
+    pushNotification:  boolean,
+  emailNotification:  boolean,
+  smsNotification:  boolean 
    }
 }
 

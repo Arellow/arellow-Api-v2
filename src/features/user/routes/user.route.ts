@@ -5,6 +5,7 @@ import {
   deleteUser,
   suspendUser,
   updateAvatar,
+  updateNotificationSetting,
 } from "../controllers/user";
 import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
@@ -50,6 +51,11 @@ usersRoutes.patch(
   singleupload,
   authenticate,
   updateAvatar
+);
+usersRoutes.patch(
+  "/notifysetting",
+  authenticate,
+  updateNotificationSetting
 );
 
 usersRoutes.put("/:userId/suspend", suspendUser);

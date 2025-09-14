@@ -229,7 +229,8 @@ export class UserService {
       createdAt: user.createdAt,
       propertystats: user.propertystats,
       kyc: user.kyc,
-      address: user.address
+      address: user.address,
+      setting: user.setting
     };
   }
 }

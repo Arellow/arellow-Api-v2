@@ -4,6 +4,7 @@ import { UserSuspendDto, UserUpdateDto } from "../dtos/user.dto";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { BadRequestError, InternalServerError } from "../../../lib/appError";
 import { processImage } from "../../../utils/imagesprocess";
+import { Prisma } from "../../../lib/prisma";
 const userService = new UserService();
 
 
@@ -38,10 +39,6 @@ export const updateUser = async (
     throw new BadRequestError(`Cannot update fields: ${invalidFields.join(", ")}`);
   }
 
-
-  // console.log("work*************************************")
-  // console.log("work", data)
-  // console.log("work*************************************")
 
   try {
     const user = await userService.updateUser(userId, data);
@@ -117,7 +114,7 @@ export const suspendUser = async (
 ): Promise<void> => {
   const userId = req.params.userId as string;
   const data = req.body as UserSuspendDto;
-   console.log(data)
+ 
   try {
     const user = await userService.suspendUser(userId, data);
    new CustomResponse(200, true, "User suspended successfully", res, user);
@@ -127,5 +124,37 @@ export const suspendUser = async (
   }
 };
 
+
+export const updateNotificationSetting = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+ const userId = req.user?.id!;
+  const {
+      emailNotification,
+      pushNotification,
+      smsNotification
+  } = req.body;
+ 
+  try {
+
+    const data = await Prisma.user.update({
+      where: {id: userId},
+      data: {
+        setting: {
+          emailNotification,
+          pushNotification,
+          smsNotification
+        }
+      }
+    })
+   
+   new CustomResponse(200, true, "successful", res, data.setting);
+  } catch (error) {
+    console.error("[suspendUser] error:", error);
+    next(error);
+  }
+};
 
 

@@ -139,6 +139,13 @@ model User {
   // reward
   rewardHistories RewardHistory[]
   rewardRequests  RewardRequest[]
+  setting Setting?
+}
+
+type Setting {
+  pushNotification  Boolean @default(true)
+  emailNotification  Boolean @default(true)
+  smsNotification  Boolean @default(false)
 }
 
 enum UserRole {

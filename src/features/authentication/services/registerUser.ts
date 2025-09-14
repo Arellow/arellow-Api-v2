@@ -46,6 +46,11 @@ export class AuthService {
           city: "",
           location: "",
           state: ""
+        },
+        setting: {
+          emailNotification: true,
+          pushNotification: true,
+          smsNotification: false
         }
       },
       include: {
