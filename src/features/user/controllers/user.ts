@@ -38,6 +38,11 @@ export const updateUser = async (
     throw new BadRequestError(`Cannot update fields: ${invalidFields.join(", ")}`);
   }
 
+
+  // console.log("work*************************************")
+  // console.log("work", data)
+  // console.log("work*************************************")
+
   try {
     const user = await userService.updateUser(userId, data);
     new CustomResponse(200, true, "User updated successfully", res, user);

@@ -57,14 +57,25 @@ export class UserService {
   }
 
   async updateUser(userId: string, data: UserUpdateDto): Promise<UserResponseDto> {
-    try {
-      const updatedData: any = {};
 
-      if (data.fullname !== undefined) updatedData.fullname = data.fullname;
-      if (data.username !== undefined) updatedData.username = data.username;
-      if (data.phone_number.country !== undefined) updatedData.phone_number.country = data.phone_number.country;
-      if (data.phone_number.phone !== undefined) updatedData.phone_number.phone = data.phone_number.phone;
-     
+    const updatedData: any = {
+      address : {
+        country: "",
+        city: "",
+        location: "",
+        state: ""
+      }
+
+    };
+
+    if (data.fullname !== undefined) updatedData.fullname = data.fullname;
+    if (data.username !== undefined) updatedData.username = data.username;
+    if (data.phone_number.phone !== undefined) updatedData.phone_number = data.phone_number.phone;
+    if (data.phone_number.country !== undefined) updatedData.address.country = data.phone_number.country;
+   
+
+    try {
+
       const user = await Prisma.user.update({
         where: { id: userId },
         data: updatedData,
