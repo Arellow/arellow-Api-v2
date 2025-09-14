@@ -17,7 +17,9 @@ export class UserService {
           kyc: {
             select: {
               status: true,
-              tryCount: true
+              tryCount: true,
+              documentNumber: true,
+              statueText: true,
             }
           }
         },
