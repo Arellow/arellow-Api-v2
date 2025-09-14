@@ -13,7 +13,7 @@ export const getUserById = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const userId = req.params.userId as string;
+  const userId = req.user?.id!;
 
   try {
     const user = await userService.getUserById(userId);

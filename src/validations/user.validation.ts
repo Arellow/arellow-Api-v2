@@ -3,9 +3,15 @@ import Joi from 'joi';
 export const updateUserSchema = Joi.object({
   username: Joi.string().min(3).max(30),
   fullname: Joi.string().min(2).max(100),
-  phone_number: Joi.string()
-  .pattern(/^\+?[1-9]\d{9,14}$/)
-  .message("Invalid phone number format e.g. +2348012345678")
+  phone_number: Joi.object({
+      phone: Joi.string()
+        .required()
+        .pattern(/^\+?\d{7,15}$/)
+        .messages({
+          'string.pattern.base': 'Phone number must be valid. E.g. +2348012345678 or 08012345678',
+        }),
+      country: Joi.string().trim().min(3).required(),
+    }).required(),
 });
 
 export const userRatingSchema = Joi.object({
