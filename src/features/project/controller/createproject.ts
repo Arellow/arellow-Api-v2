@@ -4,6 +4,7 @@ import { Prisma } from "../../../lib/prisma";
 import { mediaUploadQueue } from "../../property/queues/media.queue";
 import { deleteMatchingKeys } from "../../../lib/cache";
 import CustomResponse from "../../../utils/helpers/response.util";
+import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
 
 type Amenity = {
   name: string;
@@ -33,7 +34,6 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       city,
       country,
       floors,
-      location,
       neighborhood,
       price,
       squareMeters,
@@ -44,17 +44,13 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       yearBuilt,
       stage,
       progress,
-      stagePrice 
+      stagePrice
 
     } = req.body;
 
     const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
     const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
-    const parsedLocation: {
-      lat: string,
 
-      lng: string
-    } = typeof location === 'string' ? JSON.parse(location) : location;
     const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
     const parsedStagePrice: { amount: number, currency: string } = typeof stagePrice === 'string' ? JSON.parse(stagePrice) : stagePrice;
 
@@ -86,14 +82,29 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
 
 
     const propertyFeatures = parsedFeatures.map(feature => feature.trim());
-    const propertyLocation = {
-      lat: Number(parsedLocation.lat),
 
-      lng: Number(parsedLocation.lng)
-    };
+    const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency };
+    const propertyStagePrice = { amount: Number(parsedStagePrice.amount), currency: parsedStagePrice.currency };
 
- const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency};
- const propertyStagePrice = { amount: Number(parsedStagePrice.amount), currency: parsedStagePrice.currency};
+    const getLocation = await getPropertyLocation({ address: neighborhood });
+    let propertyLocation: { lat: number, lng: number } = { lat: 9.6000359, lng: 7.9999721 };
+
+    if (getLocation.status !== 'OK' || getLocation.results.length === 0) {
+      const response = await getPropertyLocationAlternative({ city });
+      const data = response.data[0];
+
+      if (data) {
+        propertyLocation = { lat: Number(data.lat), lng: Number(data.lon) };
+      }
+
+
+    } else {
+      const userlocation = getLocation.results[0].geometry.location;
+
+      propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng) };
+
+
+    }
 
 
     // Create property
@@ -156,17 +167,17 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
           //   buffer: file.buffer,
           //   originalname: file.originalname,
           // },
-           filePath: file.path,
+          filePath: file.path,
           meta: {
             // order: index, // optional
             type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
             photoType: photoType || null,
           },
-        },{
-          removeOnFail: {count: 3},
+        }, {
+          removeOnFail: { count: 3 },
           removeOnComplete: true
         }
-      );
+        );
 
       }
 
@@ -176,7 +187,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
 
     await deleteMatchingKeys(`getAllProperties:*`);
     await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
-   
+
 
     new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
       propertyId: newProperty.id,
@@ -189,7 +200,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
 
 
   } catch (error) {
-    console.log({error})
+    console.log({ error })
     next(new InternalServerError("Internal server error", 500));
 
   }

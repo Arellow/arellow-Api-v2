@@ -30,12 +30,6 @@ export const createPropertySchema = Joi.object({
 
   squareMeters: Joi.string().required().min(1),
 
-
-  location: Joi.object({
-    lat: Joi.string().required().min(1),
-    lng: Joi.string().required().min(1)
-  }),
-
   yearBuilt: Joi.number().positive().required(),
 
 });

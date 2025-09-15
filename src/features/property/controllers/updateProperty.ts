@@ -12,6 +12,7 @@ import { mediaUploadQueue } from "../queues/media.queue";
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
+import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
 
 type Amenity = {
   name: string;
@@ -28,13 +29,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
   try {
 
     const { propertyId } = req.params;
-    // const userId = req.user?.id!;
-    // const is_user_verified = req.user?.is_verified!;
-
-    // if (!is_user_verified) {
-    //   return next(new InternalServerError("Email not verify", 401));
-    // }
-
+   
 
     const {
       title,
@@ -45,7 +40,6 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
       city,
       country,
       floors,
-      location,
       neighborhood,
       price,
       squareMeters,
@@ -63,13 +57,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
 
     const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
     const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
-    const parsedLocation: {
-      lat: string,
-
-      lng: string
-    } = typeof location === 'string' ? JSON.parse(location) : location;
-
-
+    
     // Basic validation
     if (!title || !description) {
       return next(new InternalServerError("Title and description are required", 400));
@@ -98,12 +86,7 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
 
 
     const propertyFeatures = parsedFeatures.map(feature => feature.trim());
-    const propertyLocation = {
-      lat: Number(parsedLocation.lat),
-
-      lng: Number(parsedLocation.lng)
-    };
-
+    
       const property = await Prisma.property.findUnique({ where: { id: propertyId } });
     if (!property) {
       return next(new InternalServerError("Property not found", 404));
@@ -131,6 +114,27 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
 
     // Delete from DB
     await Prisma.media.deleteMany({ where: { propertyId } });
+
+    const getLocation =  await getPropertyLocation({address: neighborhood });
+            let propertyLocation: { lat: number, lng: number } = {lat: 9.6000359, lng:7.9999721};
+            
+            if (getLocation.status !== 'OK' || getLocation.results.length === 0) {
+               const response = await getPropertyLocationAlternative({city});
+                 const data = response.data[0];
+    
+                if (data) {
+                    propertyLocation = { lat: Number(data.lat), lng: Number(data.lon)}; 
+                    }
+    
+    
+            } else {
+                const userlocation = getLocation.results[0].geometry.location;
+                
+                 propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng)};
+        
+    
+            }
+    
 
 
     // Create property
@@ -171,7 +175,6 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
         ...(stagePrice.amount && {stagePrice: Number(stagePrice.amount)} ),
         ...(stagePrice.currency && {stagePrice: stagePrice.currency} ),
        
-
       },
     });
 

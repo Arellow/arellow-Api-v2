@@ -28,12 +28,6 @@ export const createProjectSchema = Joi.object({
       currency: Joi.string().required().min(1),
       amount: Joi.number().positive().required()
     }),
-  
-
-  location: Joi.object({
-    lat: Joi.string().required().min(1),
-    lng: Joi.string().required().min(1)
-  }),
 
   isFeatureProperty: Joi.boolean().required(),
   yearBuilt: Joi.string().required().min(1),

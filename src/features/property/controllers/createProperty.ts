@@ -4,6 +4,8 @@ import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
 import { mediaUploadQueue } from "../queues/media.queue";
 import { deleteMatchingKeys } from "../../../lib/cache";
+import axios from "axios";
+import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
 
 type Amenity = {
     name: string;
@@ -29,7 +31,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
             city,
             country,
             floors,
-            location,
+            // location,
             neighborhood,
             price,
             squareMeters,
@@ -41,7 +43,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
         const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
         const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
-        const parsedLocation: { lat: string, lng: string } = typeof location === 'string' ? JSON.parse(location) : location;
+        // const parsedLocation: { lat: string, lng: string } = typeof location === 'string' ? JSON.parse(location) : location;
         const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
 
         // Basic validation
@@ -70,8 +72,28 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
 
         const propertyFeatures = parsedFeatures.map(feature => feature.trim());
-        const propertyLocation = { lat: Number(parsedLocation.lat), lng: Number(parsedLocation.lng)};
         const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency};
+        
+        
+        const getLocation =  await getPropertyLocation({address: neighborhood });
+        let propertyLocation: { lat: number, lng: number } = {lat: 9.6000359, lng:7.9999721};
+        
+        if (getLocation.status !== 'OK' || getLocation.results.length === 0) {
+           const response = await getPropertyLocationAlternative({city});
+             const data = response.data[0];
+
+            if (data) {
+                propertyLocation = { lat: Number(data.lat), lng: Number(data.lon)}; 
+                }
+
+
+        } else {
+            const userlocation = getLocation.results[0].geometry.location;
+            
+             propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng)};
+    
+
+        }
 
 
         // Create property
@@ -177,10 +199,13 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
         new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
               propertyId: newProperty.id,
+            
         });
+   
 
 
-    } catch (error) {
+    } catch (error:any) {
+        console.log({error: error?.response})
         next(new InternalServerError("Internal server error", 500));
     }
 
