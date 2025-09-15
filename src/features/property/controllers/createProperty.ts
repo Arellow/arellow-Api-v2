@@ -4,7 +4,7 @@ import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
 import { mediaUploadQueue } from "../queues/media.queue";
 import { deleteMatchingKeys } from "../../../lib/cache";
-import axios from "axios";
+
 import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
 
 type Amenity = {
