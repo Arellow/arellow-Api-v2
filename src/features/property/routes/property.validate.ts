@@ -1,4 +1,4 @@
-import { PropertyCategory, PropertyProgress, PropertyStage, SalesStatus } from '@prisma/client';
+import { PropertyCategory, SalesStatus } from '@prisma/client';
 import Joi from 'joi';
 
 
@@ -22,7 +22,11 @@ export const createPropertySchema = Joi.object({
   bedrooms: Joi.number().positive().required().min(1),
   bathrooms: Joi.number().positive().required().min(1),
   floors: Joi.number().positive().required().min(1),
-  price: Joi.number().positive().required().min(1),
+
+  price: Joi.object({
+    currency: Joi.string().required().min(1),
+    amount: Joi.number().positive().required()
+  }),
 
   squareMeters: Joi.string().required().min(1),
 
