@@ -24,12 +24,17 @@ projectRoutes.post("/createproject", multipleupload, (req, res, next) => {
         lng: string
     } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
 
+    const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price) : req.body.price;
+    const parsedStagePrice: { amount: number, currency: string } = typeof req.body.stagePrice === 'string' ? JSON.parse(req.body.stagePrice) : req.body.stagePrice;
+
     const body = {
         ...req.body,
         features: parsedFeatures,
         amenities: parsedAmenities,
         location: parsedLocation,
-        is_Property_A_Project: true
+        is_Property_A_Project: true,
+        price: parsedPrice,
+        stagePrice: parsedStagePrice
     };
     req.body = body;
     next()

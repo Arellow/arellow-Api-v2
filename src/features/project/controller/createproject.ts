@@ -55,6 +55,8 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
 
       lng: string
     } = typeof location === 'string' ? JSON.parse(location) : location;
+    const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
+    const parsedStagePrice: { amount: number, currency: string } = typeof stagePrice === 'string' ? JSON.parse(stagePrice) : stagePrice;
 
 
     // Basic validation
@@ -90,7 +92,8 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       lng: Number(parsedLocation.lng)
     };
 
-
+ const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency};
+ const propertyStagePrice = { amount: Number(parsedStagePrice.amount), currency: parsedStagePrice.currency};
 
 
     // Create property
@@ -115,19 +118,13 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
         squareMeters: squareMeters,
 
         floors: Number(floors),
-        price: {
-            amount: Number(price.amount),
-            currency: price.currency
-        },
+        price: propertyPrice,
         yearBuilt: Number(yearBuilt),
         is_Property_A_Project: true,
         isFeatureProperty: true,
         stage,
         progress,
-        stagePrice: {
-          amount: Number(stagePrice.amount),
-          currency: stagePrice.currency
-        }
+        stagePrice: propertyStagePrice
       },
     });
 

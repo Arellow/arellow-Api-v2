@@ -49,12 +49,14 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
 
         lng: string
     } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
+ const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price || '{}') : req.body.price;
 
     const body = {
         ...req.body,
         features: parsedFeatures,
         amenities: parsedAmenities,
         location: parsedLocation,
+        price: parsedPrice
     };
     req.body = body;
     next()
@@ -73,12 +75,14 @@ propertyRoutes.patch("/:propertyId/update", multipleupload,
 
             lng: string
         } = typeof req.body.location === 'string' ? JSON.parse(req.body.location || '{}') : req.body.location;
+         const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price || '{}') : req.body.price;
 
         const body = {
             ...req.body,
             features: parsedFeatures,
             amenities: parsedAmenities,
             location: parsedLocation,
+            price: parsedPrice
         };
         req.body = body;
         next()

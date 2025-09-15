@@ -42,6 +42,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
         const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
         const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
         const parsedLocation: { lat: string, lng: string } = typeof location === 'string' ? JSON.parse(location) : location;
+        const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
 
         // Basic validation
         if (!title || !description) {
@@ -70,6 +71,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
         const propertyFeatures = parsedFeatures.map(feature => feature.trim());
         const propertyLocation = { lat: Number(parsedLocation.lat), lng: Number(parsedLocation.lng)};
+        const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency};
 
 
         // Create property
@@ -94,10 +96,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
                 squareMeters: squareMeters,
 
                 floors: Number(floors),
-                price: {
-                    amount: Number(price.amount),
-                    currency: price.currency
-                },
+                price: propertyPrice,
                 yearBuilt: Number(yearBuilt),
                 is_Property_A_Project: false,
                 isFeatureProperty: (req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN") ? true : false,
