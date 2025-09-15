@@ -63,7 +63,7 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
 
 },
     validateSchema(createPropertySchema),
-     isVerify,authenticate, isSuspended, createProperty);
+     authenticate, isVerify, isSuspended, createProperty);
 
 propertyRoutes.patch("/:propertyId/update", multipleupload,
     (req, res, next) => {
@@ -88,7 +88,7 @@ propertyRoutes.patch("/:propertyId/update", multipleupload,
         next()
 
     },
-    validateSchema(createPropertySchema),isVerify, authenticate, isSuspended, updateProperty);
+    validateSchema(createPropertySchema), authenticate, isVerify, isSuspended, updateProperty);
 
 
 propertyRoutes.get("/featured", featureProperties);

@@ -3,7 +3,7 @@ import express from 'express'
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-import authenticate, { adminRequireRole, isSuspended, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isSuspended, isVerify, requireRole } from '../../../middlewares/auth.middleware';
 // import { createProjectSchema } from '../../property/routes/property.validate';
 import { createProject } from '../controller/createproject';
 import { createProjectSchema } from './property.validate';
@@ -40,7 +40,7 @@ projectRoutes.post("/createproject", multipleupload, (req, res, next) => {
     next()
 },
     validateSchema(createProjectSchema),
-     authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), createProject);
+     authenticate, isVerify, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), createProject);
 
 // projectRoutes.post("/updateproject/:propertyId", multipleupload, (req, res, next) => {
 //          req.body.isFeatureProperty = true;
