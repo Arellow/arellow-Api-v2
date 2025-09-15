@@ -32,7 +32,7 @@ export const updateUser = async (
 ): Promise<void> => {
   const userId = req.user?.id!;
   const data = req.body as UserUpdateDto;
- 
+
   const allowedFields = ["fullname", "username", "phone_number"];
   const invalidFields = Object.keys(data).filter((key) => !allowedFields.includes(key));
   if (invalidFields.length > 0) {
@@ -59,29 +59,29 @@ export const updateAvatar = async (
   try {
     let avatar;
 
-    if(req.file){
+    if (req.file) {
 
       avatar = await processImage({
-                      folder: "kyc_container",
-                      image: req.file,
-                      photoType: "KYC",
-                      type: "PHOTO"
-                  });
-      
-                  // if (avatar) {
-                  //     return next(new InternalServerError('Failed to process profile photo', 500));
-                  // }
+        folder: "kyc_container",
+        image: req.file,
+        photoType: "KYC",
+        type: "PHOTO"
+      });
+
+      // if (avatar) {
+      //     return next(new InternalServerError('Failed to process profile photo', 500));
+      // }
 
     }
 
-     if (!avatar) {
-    throw new BadRequestError('user profile update failed');
-  }
+    if (!avatar) {
+      throw new BadRequestError('user profile update failed');
+    }
 
 
 
     const user = await userService.updateUserAvatar(userId, avatar);
-    new CustomResponse(200, true, "User updated successfully", res, user);
+    new CustomResponse(200, true, "avatar updated successfully", res, user);
   } catch (error) {
     console.error("[updateUser] error:", error);
     next(error);
@@ -114,10 +114,10 @@ export const suspendUser = async (
 ): Promise<void> => {
   const userId = req.params.userId as string;
   const data = req.body as UserSuspendDto;
- 
+
   try {
     const user = await userService.suspendUser(userId, data);
-   new CustomResponse(200, true, "User suspended successfully", res, user);
+    new CustomResponse(200, true, "User suspended successfully", res, user);
   } catch (error) {
     console.error("[suspendUser] error:", error);
     next(error);
@@ -130,17 +130,17 @@ export const updateNotificationSetting = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
- const userId = req.user?.id!;
+  const userId = req.user?.id!;
   const {
-      emailNotification,
-      pushNotification,
-      smsNotification
+    emailNotification,
+    pushNotification,
+    smsNotification
   } = req.body;
- 
+
   try {
 
     const data = await Prisma.user.update({
-      where: {id: userId},
+      where: { id: userId },
       data: {
         setting: {
           emailNotification,
@@ -149,8 +149,8 @@ export const updateNotificationSetting = async (
         }
       }
     })
-   
-   new CustomResponse(200, true, "successful", res, data.setting);
+
+    new CustomResponse(200, true, "successful", res, data.setting);
   } catch (error) {
     console.error("[suspendUser] error:", error);
     next(error);
