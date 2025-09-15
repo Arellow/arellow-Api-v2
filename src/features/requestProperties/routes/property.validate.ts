@@ -16,7 +16,10 @@ export const createPropertyRequestSchema = Joi.object({
   location: Joi.string().required().min(1),
   numberOfBedrooms: Joi.number().integer().min(1).required(),
   numberOfBathrooms: Joi.number().integer().min(1).required(),
-  budget: Joi.number().positive().required(),
+  budget: Joi.object({
+      currency: Joi.string().required().min(1),
+      amount: Joi.number().positive().required()
+    }),
   description: Joi.string().required().min(3),
 
 });
