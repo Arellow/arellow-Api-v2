@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import fs from 'fs';
 // import { redisConnection } from '../queues/redis';
 // import { MediaType } from '@prisma/client';
-import { Readable } from 'stream';
+// import { Readable } from 'stream';
 import { cloudinary } from '../../../configs/cloudinary';
 import { Prisma } from '../../../lib/prisma';
 

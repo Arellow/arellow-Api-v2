@@ -6,7 +6,8 @@ import fs from 'fs';
 const storage = multer.memoryStorage();
 
 
-const tempDir = path.join(__dirname, '../../temp_uploads');
+// const tempDir = path.join(__dirname, '../../temp_uploads');
+const tempDir = '/tmp/temp_uploads';
 
 // Ensure temp directory exists
 if (!fs.existsSync(tempDir)) {
@@ -19,7 +20,6 @@ const multistorage = multer.diskStorage({
     cb(null, tempDir);
   },
   filename: (req, file, cb) => {
-    // Generate unique filename: timestamp + original name
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     const baseName = path.basename(file.originalname, ext);
