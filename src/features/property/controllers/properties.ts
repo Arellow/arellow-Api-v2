@@ -8,15 +8,10 @@ import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
 import { MediaType } from '@prisma/client';
-import { mediaUploadQueue } from "../queues/media.queue";
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 
-type Amenity = {
-  name: string;
-  photoUrl: string;
-}
 
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
@@ -123,6 +118,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
       neighborhood,
       features,
       amenities,
+      status,
       page = "1",
       limit = "10"
     } = req.query;
@@ -164,6 +160,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
         features ? { contains: features as string, mode: 'insensitive' } : undefined,
 
 
+        status ? { status: status as PropertyStatus } : undefined,
         salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
         minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
         maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
