@@ -12,10 +12,6 @@ import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 
-type Amenity = {
-    name: string;
-}
-
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
