@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
-import { Prisma as prisma, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
+import { Prisma as prisma, PropertyCategory, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
 import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
@@ -12,6 +12,9 @@ import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 
+type Amenity = {
+    name: string;
+}
 
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
@@ -104,10 +107,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
     const userId = req.user?.id;
 
     const {
-      search,
       salesStatus,
-      minPrice,
-      maxPrice,
       bathrooms,
       bedrooms,
       floors,
@@ -116,13 +116,18 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
       city,
       country,
       neighborhood,
-      features,
       amenities,
+      features,
+      
+      minPrice,
+      maxPrice,
+
       status,
       page = "1",
       limit = "10"
     } = req.query;
 
+    const search = (req.query.search as string) || "";
 
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
@@ -130,8 +135,11 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
     const cacheKey = `getPropertiesByUser:${userId}:${JSON.stringify(req.query)}`;
 
+    const featuresArray = (features as string)?.split(",").filter(v => v !== "") ?? [];
+    const amenitiesArray = (amenities as string)?.split(",").filter(v => v !== "") ?? [];
 
 
+   const matchedCategory = getValidCategory(search);
     const filters: prisma.PropertyWhereInput = {
       userId,
       archived: false,
@@ -139,31 +147,42 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
         search
           ? {
             OR: [
-              { title: { contains: search as string, mode: 'insensitive' } },
-              { category: { contains: search as string, mode: 'insensitive' } },
-              { city: { contains: search as string, mode: 'insensitive' } },
-              { state: { contains: search as string, mode: 'insensitive' } },
-              { country: { contains: search as string, mode: 'insensitive' } }
-            ]
+            { title: iLike(search) },
+            matchedCategory ? { category: matchedCategory } : null,
+            { city: iLike(search) },
+            { state: iLike(search) },
+            { country: iLike(search) }
+            ].filter(Boolean)
           }
           : undefined,
 
         bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
         bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
         floors ? { floors: parseInt(floors as string) } : undefined,
-        category ? { contains: category as string, mode: 'insensitive' } : undefined,
-        state ? { contains: state as string, mode: 'insensitive' } : undefined,
-        city ? { contains: city as string, mode: 'insensitive' } : undefined,
-        country ? { contains: country as string, mode: 'insensitive' } : undefined,
-        neighborhood ? { contains: neighborhood as string, mode: 'insensitive' } : undefined,
-        amenities ? { contains: amenities as string, mode: 'insensitive' } : undefined,
-        features ? { contains: features as string, mode: 'insensitive' } : undefined,
+        category ? { category: category as PropertyCategory } : undefined,
+      
+        state ? { state: iLike(state as string) } : undefined,
+        city ? { city: iLike(city as string) } : undefined,
+        country ? { country: iLike(country as string) } : undefined,
+        neighborhood ? { neighborhood: iLike(neighborhood as string) } : undefined,
 
-
-        status ? { status: status as PropertyStatus } : undefined,
+        amenitiesArray.length > 0 ? { amenities: { some: { name: { in: amenitiesArray }}} }: undefined,
+        featuresArray.length > 0 ? { features: { hasSome: featuresArray } } : undefined,
         salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
-        minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
-        maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+        status ? { status: status as PropertyStatus } : undefined,
+         (minPrice || maxPrice)
+      ? {
+        
+          price: {
+             is: { amount: {
+               ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}),
+               ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {})
+             }
+            }
+
+          }
+        }
+      : undefined,
       ].filter(Boolean) as prisma.PropertyWhereInput[]
     };
 
@@ -197,6 +216,12 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
                 }
 
               }
+            },
+            amenities: {
+              select: {
+                name: true,
+                photoUrl: true
+              }
             }
           },
           orderBy: { createdAt: "desc" },
@@ -229,6 +254,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
 
   } catch (error) {
+    console.log({error})
     next(new InternalServerError("Server Error", 500));
 
   }
@@ -1553,8 +1579,6 @@ export const deleteProperty = async (req: Request, res: Response, next: NextFunc
       return next(new InternalServerError("Property not found", 404));
     }
 
-    console.log({property})
-
     //  Delete old media
     const oldMedia = await Prisma.media.findMany({
       where: { propertyId },
@@ -1859,3 +1883,16 @@ export const mediaForProperty = async (req: Request, res: Response, next: NextFu
 
 
 
+function getValidCategory(value: string ): PropertyCategory | null {
+  if(!value) return null
+  const lowerValue = value.toLowerCase();
+  return (
+    Object.values(PropertyCategory).find(
+      (category) => category.toLowerCase().includes(lowerValue)
+    ) ?? null
+  );
+}
+
+
+const iLike = (field?: string) =>
+  field ? { contains: field, mode: "insensitive" } : undefined;
