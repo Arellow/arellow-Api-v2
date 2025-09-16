@@ -150,11 +150,12 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
             await mediaUploadQueue.add('upload', {
               propertyId: newProperty.id,
-              // file: {
-              //   buffer: file.buffer,
-              //   originalname: file.originalname,
-              // },
-               filePath: file.path,
+              file: {
+                buffer: file.buffer,
+                originalname: file.originalname,
+                mimetype: file.mimetype
+              },
+            //    filePath: file.path,
               meta: {
                 // order: index, // optional
                 type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D

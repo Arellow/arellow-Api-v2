@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import fs from 'fs';
 // import { redisConnection } from '../queues/redis';
 // import { MediaType } from '@prisma/client';
-// import { Readable } from 'stream';
+import { Readable } from 'stream';
 import { cloudinary } from '../../../configs/cloudinary';
 import { Prisma } from '../../../lib/prisma';
 
@@ -10,7 +10,10 @@ import { Prisma } from '../../../lib/prisma';
 export const mediaWorker = new Worker(
   'mediaUpload',
   async job => {
-    const { propertyId, filePath, meta } = job.data;
+    const { propertyId,
+      //  filePath,
+      file,
+        meta } = job.data;
 
     try {
        const uploadResult = await new Promise((resolve, reject) => {
@@ -22,8 +25,8 @@ export const mediaWorker = new Worker(
         }
       );
 
-      // Readable.from(Buffer.from(file.buffer)).pipe(upload);
-       fs.createReadStream(filePath).pipe(uploadStream);
+      Readable.from(Buffer.from(file.buffer)).pipe(uploadStream);
+      //  fs.createReadStream(filePath).pipe(uploadStream);
     });
 
     const media = uploadResult as any;
@@ -65,7 +68,7 @@ export const mediaWorker = new Worker(
 
 
     // Clean up temp file
-    await fs.promises.unlink(filePath);
+    // await fs.promises.unlink(filePath);
 
     // Remove job from Redis
     await job.remove();
