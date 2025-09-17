@@ -4,6 +4,7 @@ import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController, } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
+import { deleteImage } from "../../../utils/imagesprocess";
 export class UserService {
   async getUserById(userId: string): Promise<UserResponseDto> {
     try {
@@ -124,6 +125,14 @@ export class UserService {
 
   async updateUserAvatar(userId: string, avatar:string): Promise<UserResponseDto> {
     try {
+
+
+      const isUser = await Prisma.user.findUnique({
+        where: { id: userId },});
+
+        if(isUser?.avatar){
+          await deleteImage(isUser?.avatar);
+        }
    
       const user = await Prisma.user.update({
         where: { id: userId },
@@ -178,7 +187,7 @@ export class UserService {
         where: { id: userId },
       });
     } catch (error) {
-      console.error("[deleteUser] Prisma error:", error);
+      // console.error("[deleteUser] Prisma error:", error);
       throw new InternalServerError("Database error when deleting user.");
     }
   }

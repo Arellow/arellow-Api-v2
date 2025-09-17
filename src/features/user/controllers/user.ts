@@ -58,7 +58,7 @@ export const updateAvatar = async (
 
   try {
     let avatar;
-
+   
     if (req.file) {
 
       avatar = await processImage({
@@ -68,17 +68,11 @@ export const updateAvatar = async (
         type: "PHOTO"
       });
 
-      // if (avatar) {
-      //     return next(new InternalServerError('Failed to process profile photo', 500));
-      // }
-
     }
 
     if (!avatar) {
       throw new BadRequestError('user profile update failed');
     }
-
-
 
     const user = await userService.updateUserAvatar(userId, avatar);
     new CustomResponse(200, true, "avatar updated successfully", res, user);

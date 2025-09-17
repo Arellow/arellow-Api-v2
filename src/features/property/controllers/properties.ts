@@ -1067,13 +1067,6 @@ export const recentProperties = async (req: Request, res: Response, next: NextFu
 
 
 
-
-
-
-
-
-
-
 export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -1437,8 +1430,6 @@ export const getArchivedPropertiesByUser = async (req: Request, res: Response, n
 
 
 
-
-
 export const archiveProperty = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const userId = req.user?.id;
@@ -1465,7 +1456,7 @@ export const archiveProperty = async (req: Request, res: Response, next: NextFun
 
     await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
 
-    new CustomResponse(200, true, "Property archived", res,);
+    new CustomResponse(200, true, "property trash", res,);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
   }

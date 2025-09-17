@@ -18,8 +18,9 @@ export class AuthService {
           select: {
             status: true
           }
-        }
-      }
+        }, 
+      },
+      
     });
 
     if (!user) throw new UnAuthorizedError("Account does not exist.");
