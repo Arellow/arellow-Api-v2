@@ -43,7 +43,7 @@ authRouter.post(
   LoginController.login
 );
 
-authRouter.get(
+authRouter.post(
   "/verify-email",
   VerifyController.verifyEmail
 );
@@ -80,7 +80,7 @@ authRouter.patch(
   userController.changePassword
 );
 
-authRouter.get(
+authRouter.post(
   "/resend-verification",
 
   resendVerificationController.resendVerification

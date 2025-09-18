@@ -263,6 +263,8 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
     const skip = (page - 1) * limit;
      const userId = req.user?.id!;
 
+       
+
     const search = (req.query.search as string) || "";
 
     const cacheKey = `ticket:${userId}:${page}:${limit}:${search}:${status}`;
@@ -304,6 +306,7 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
                         createdAt: true,
                         category: true,
                         status: true,
+                        title: true
                     },
                     skip,
                     take: limit,
@@ -313,7 +316,6 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
             ]);
 
             const totalPages = Math.ceil(total / limit);
-
 
             return {
                 data,
