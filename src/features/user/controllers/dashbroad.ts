@@ -149,42 +149,7 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
             return {
 
                 stats: {
-                    // listedProperty: {
-                    //     count: totalListedProperty,
-                    //     percentage: 0,
-                    //     trend: ""
-                    // },
-                    // pendingListingProperty: {
-                    //     count: totalPendingListedProperty,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-                    // sellingListedProperty: {
-                    //     count: sellingProperty,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-                    // soldListedProperty: {
-                    //     count: soldProperty,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-                    // rejectedListedProperty: {
-                    //     count: rejectedProperty,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-                    // buyAbility: {
-                    //     count: userBuyAbility,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-                    // propertyRequest: {
-                    //     count: userPropertyRequest,
-                    //       percentage: 0,
-                    //     trend: ""
-                    // },
-
+                   
                     listedProperty: {
                         count: listedCurrent,
                         percentage: listedStats.percentage,
@@ -247,4 +212,102 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
 };
 
 
+export const getPropertiesStatsByUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
 
+    const { current, previous } = getDateRange(filterTime.toString());
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+    const cacheKey = `getPropertiesStats:${userId}:${JSON.stringify(req.query)}`;
+
+    const result = await swrCache(cacheKey, async () => {
+      const baseWhere = { userId, archived: false };
+
+      const [properties, total] = await Promise.all([
+        Prisma.property.findMany({
+          where: baseWhere,
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            createdAt: true,
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.property.count({ where: baseWhere })
+      ]);
+
+      // For each property, calculate like-based performance
+      const enrichedProperties = await Promise.all(
+        properties.map(async (property) => {
+          const propertyId = property.id;
+
+          const [currentLikes, previousLikes] = await Promise.all([
+            Prisma.userPropertyLike.count({
+              where: {
+                propertyId,
+                createdAt: { gte: current.start, lte: current.end }
+              }
+            }),
+            Prisma.userPropertyLike.count({
+              where: {
+                propertyId,
+                createdAt: { gte: previous.start, lte: previous.end }
+              }
+            })
+          ]);
+
+          const { percentage, trend } = calculateTrend(currentLikes, previousLikes);
+
+          return {
+            slug: `#Arw-${propertyId.slice(-3)}`,
+            performance: {
+              likes: {
+                current: currentLikes,
+                previous: previousLikes,
+              },
+              percentage,
+              trend
+            },
+            ...property
+          };
+        })
+      );
+
+      const totalPages = Math.ceil(total / pageSize);
+
+      return {
+        data: enrichedProperties,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
+          prevPage: pageNumber > 1 ? pageNumber - 1 : null,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+  } catch (error) {
+    console.error(error);
+    next(new InternalServerError("Server Error", 500));
+  }
+};

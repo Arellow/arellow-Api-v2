@@ -1771,6 +1771,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+
 // Unlike a property
 export const unLikeProperty = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id!;
@@ -1803,6 +1804,40 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
     next(new InternalServerError("Internal server error", 500));
   }
 };
+
+
+// share property
+export const shareProperty = async (req: Request, res: Response, next: NextFunction) => {
+ 
+  const propertyId = req.params.id;
+
+  try {
+    // Check if already liked
+    const existingProperty = await Prisma.property.findUnique({
+      where: {
+        id: propertyId
+      },
+    });
+
+    if (!existingProperty) {
+      next(new InternalServerError("Property not found", 400));
+    }
+
+
+    // Increment likes count
+    await Prisma.property.update({
+      where: { id: propertyId },
+      data: { sharesCount: { increment: 1 } },
+    });
+
+
+    new CustomResponse(200, true, "Property Shared", res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
 
 
 // untest route

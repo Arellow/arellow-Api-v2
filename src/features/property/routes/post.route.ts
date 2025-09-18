@@ -13,7 +13,8 @@ import {
     markAsFeatureProperty,
     sellingProperties,
     propertiesListing,
-    getProjects
+    getProjects,
+    shareProperty
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
@@ -107,6 +108,7 @@ adminRequireRole("PROPERTY"),
 propertyRoutes.post("/:id/like", authenticate, isSuspended, likeProperty);
 propertyRoutes.delete('/:id/like', authenticate, isSuspended, unLikeProperty);
 propertyRoutes.patch("/:propertyId/media", authenticate, isSuspended, mediaForProperty);
+propertyRoutes.post("/:id/share", shareProperty);
 
 
 export default propertyRoutes;

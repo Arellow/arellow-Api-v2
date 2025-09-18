@@ -16,11 +16,12 @@ import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload, singleupload } from "../../../middlewares/multer";
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
-import { userDashbroad } from "../controllers/dashbroad";
+import { getPropertiesStatsByUser, userDashbroad } from "../controllers/dashbroad";
 
 const usersRoutes = Router();
 usersRoutes.get("/dashbroad", authenticate, userDashbroad);
-// usersRoutes.post("/createreward", authenticate, createReward);
+usersRoutes.get("/propertystats", authenticate, getPropertiesStatsByUser);
+
 usersRoutes.post("/requestreward", authenticate, isVerify, requireKyc, isSuspended, requestReward);
 usersRoutes.post("/kyc", authenticate, isVerify, documentPhotoupload,  validateSchema(createKycSchema), createKyc);
 usersRoutes.get("/kycs", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), userKycs);
