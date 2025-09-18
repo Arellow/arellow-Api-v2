@@ -6,18 +6,22 @@ import {
   suspendUser,
   updateAvatar,
   updateNotificationSetting,
+  createReward,
 } from "../controllers/user";
 import authenticate, { adminRequireRole, isAdmin, isVerify, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
-import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs, userDashbroad } from "../controllers/kyc";
+import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs } from "../controllers/kyc";
 import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload, singleupload } from "../../../middlewares/multer";
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
+import { userDashbroad } from "../controllers/dashbroad";
 
 const usersRoutes = Router();
 usersRoutes.get("/dashbroad", authenticate, userDashbroad);
+usersRoutes.post("/createreward", authenticate, createReward);
+usersRoutes.get("/reward", authenticate, userDashbroad);
 usersRoutes.post("/kyc", authenticate, isVerify, documentPhotoupload,  validateSchema(createKycSchema), createKyc);
 usersRoutes.get("/kycs", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), userKycs);
 usersRoutes.get("/kyc/:id/detail", authenticate,  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),  kycDetail);

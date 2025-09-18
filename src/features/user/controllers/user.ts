@@ -151,4 +151,63 @@ export const updateNotificationSetting = async (
   }
 };
 
+export const createReward = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const userId = req.user?.id!;
+  const {points, type, reason} = req.body
+
+
+  try {
+
+    const data =   await Prisma.rewardHistory.create({
+      data: {
+        userId: userId,
+        points,
+        reason,
+        type
+      }
+    })
+
+    new CustomResponse(200, true, "successful", res, data);
+  } catch (error) {
+    console.error("[REWARD] error:", error);
+    next(error);
+  }
+};
+
+export const requestReward = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const userId = req.user?.id!;
+  const {
+    emailNotification,
+    pushNotification,
+    smsNotification
+  } = req.body;
+
+  try {
+
+    const data = await Prisma.user.update({
+      where: { id: userId },
+      data: {
+        setting: {
+          emailNotification,
+          pushNotification,
+          smsNotification
+        }
+      }
+    })
+
+    new CustomResponse(200, true, "successful", res, data.setting);
+  } catch (error) {
+    console.error("[suspendUser] error:", error);
+    next(error);
+  }
+};
+
 

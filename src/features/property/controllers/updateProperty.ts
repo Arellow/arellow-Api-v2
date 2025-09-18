@@ -242,6 +242,21 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
     }
 
 
+     let points = 10;
+    if(property.state.toLowerCase() == "lagos" || property.state.toLowerCase() == "enugu" || property.state.toLowerCase() == "abuja" ){
+      points = 5
+    }
+
+    await Prisma.rewardHistory.create({
+      data: {
+        userId: property.userId,
+        points,
+        reason: "ArellowPoints Used",
+        type: "DEBIT"
+      }
+    })
+
+
     await deleteMatchingKeys(`property:${updatedProperty.id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);
 
@@ -257,7 +272,6 @@ export const updateProperty = async (req: Request, res: Response, next: NextFunc
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
     // console.log(error)
-
   }
 
 

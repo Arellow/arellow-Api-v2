@@ -255,7 +255,7 @@ model Property {
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  RewardHistory RewardHistory[]
+  // RewardHistory RewardHistory[]
 }
 
 enum SalesStatus {
@@ -584,10 +584,15 @@ model BlogFeaturedContributor {
   @@index([userId])
 }
 
-// reward
+
+
+
+
+
+// -------------------------------------- reward start -----------------------------
 enum RewardType {
-  SOLD
-  UPLOAD
+  CREDIT
+  DEBIT
 }
 
 enum RequestStatus {
@@ -603,33 +608,21 @@ model RewardHistory {
   points            Int
   type              RewardType
   reason            String
-  // description       String?
-  propertyId        String?             @db.ObjectId
-  property          Property?           @relation(fields: [propertyId], references: [id])
   createdAt         DateTime            @default(now())
-  RewardRequestItem RewardRequestItem[]
 }
 
 model RewardRequest {
   id          String              @id @default(auto()) @map("_id") @db.ObjectId
   userId      String              @db.ObjectId
   user        User                @relation(fields: [userId], references: [id])
-  totalPoints Int // total points user requested to withdraw
+  totalPoints Int 
   bankAccountName   String
   bankAccountNumber String
   bankName          String
   status      RequestStatus       @default(PENDING)
   createdAt   DateTime            @default(now())
-  processedAt DateTime?
-  items       RewardRequestItem[] // points claimed from RewardHistory entries
+  processedAt DateTime            @updatedAt
+   @@unique(userId)
 }
 
-model RewardRequestItem {
-  id              String @id @default(auto()) @map("_id") @db.ObjectId
-  rewardRequestId String @db.ObjectId
-  rewardHistoryId String @db.ObjectId
-  claimedPoints   Int // partial points claimed from reward history entry
-
-  rewardRequest RewardRequest @relation(fields: [rewardRequestId], references: [id])
-  rewardHistory RewardHistory @relation(fields: [rewardHistoryId], references: [id])
-}
+//-------------------------- reward ends ------------------------------

@@ -1662,6 +1662,20 @@ export const approveProperty = async (req: Request, res: Response, next: NextFun
       },
     });
 
+    let points = 10;
+    if(property.state.toLowerCase() == "lagos" || property.state.toLowerCase() == "enugu" || property.state.toLowerCase() == "abuja" ){
+      points = 5
+    }
+
+    await Prisma.rewardHistory.create({
+      data: {
+        userId: property.userId,
+        points,
+        reason: "ArellowPoints Earned",
+        type: "CREDIT"
+      }
+    })
+
       await deleteMatchingKeys(`property:${id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);
     await deleteMatchingKeys(`getPropertiesByUser:${property.userId}:*`);

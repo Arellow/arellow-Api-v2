@@ -18,8 +18,7 @@ function generateSlug(): string {
     // Date.now
     const prefix = "AR";
     return `Ticket# ${year}-${prefix}${id}`;
-}
-
+};
 
 export const createCustomerSupport = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -89,8 +88,7 @@ export const createCustomerSupport = async (req: Request, res: Response, next: N
     }
 
 
-}
-
+};
 
 export const customerSupportDetail = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -306,7 +304,8 @@ export const usercustomerSupportTicket = async (req: Request, res: Response, nex
                         createdAt: true,
                         category: true,
                         status: true,
-                        title: true
+                        title: true,
+                        id: true
                     },
                     skip,
                     take: limit,
@@ -407,3 +406,7 @@ export const changeTicketStatus = async (req: Request, res: Response, next: Next
 
 
 };
+
+
+
+
