@@ -1,5 +1,5 @@
 import express from 'express'
-import authenticate, { adminRequireRole, isLoginUser, isSuspended, isVerify, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isLoginUser, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
@@ -58,7 +58,7 @@ propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
 
 },
     validateSchema(createPropertySchema),
-     authenticate, isVerify, isSuspended, createProperty);
+     authenticate, isVerify, requireKyc, isSuspended, createProperty);
 
 propertyRoutes.patch("/:propertyId/update", multipleupload,
     (req, res, next) => {
@@ -78,7 +78,7 @@ propertyRoutes.patch("/:propertyId/update", multipleupload,
         next()
 
     },
-    validateSchema(createPropertySchema), authenticate, isVerify, isSuspended, updateProperty);
+    validateSchema(createPropertySchema), authenticate, isVerify,requireKyc, isSuspended, updateProperty);
 
 
 propertyRoutes.get("/featured", featureProperties);

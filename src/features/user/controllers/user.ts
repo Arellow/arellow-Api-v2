@@ -58,7 +58,7 @@ export const updateAvatar = async (
 
   try {
     let avatar;
-   
+
     if (req.file) {
 
       avatar = await processImage({
@@ -151,32 +151,6 @@ export const updateNotificationSetting = async (
   }
 };
 
-export const createReward = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id!;
-  const {points, type, reason} = req.body
-
-
-  try {
-
-    const data =   await Prisma.rewardHistory.create({
-      data: {
-        userId: userId,
-        points,
-        reason,
-        type
-      }
-    })
-
-    new CustomResponse(200, true, "successful", res, data);
-  } catch (error) {
-    console.error("[REWARD] error:", error);
-    next(error);
-  }
-};
 
 export const requestReward = async (
   req: Request,
@@ -185,25 +159,74 @@ export const requestReward = async (
 ): Promise<void> => {
   const userId = req.user?.id!;
   const {
-    emailNotification,
-    pushNotification,
-    smsNotification
+    requestPoints,
+    bankAccountName,
+    bankAccountNumber,
+    bankName,
   } = req.body;
 
   try {
 
-    const data = await Prisma.user.update({
-      where: { id: userId },
+    const isPendingWithdrawalRequest =   await Prisma.rewardRequest.findFirst({
+      where: {userId, status: "PENDING"}
+    });
+
+     if (isPendingWithdrawalRequest) {
+      throw new BadRequestError("Sorry your withdrawal request is still in process.");
+    }
+
+
+
+    const rewards = await Prisma.rewardHistory.findMany({
+      where: { userId },
+    });
+
+
+    const totalEarning = rewards.reduce((v, c) => {
+
+      if (c.type == "CREDIT") {
+        v.CREDIT += c.points;
+      }
+
+      if (c.type == "DEBIT") {
+        v.DEBIT += c.points;
+      }
+
+      return v;
+    }, { CREDIT: 0, DEBIT: 0 });
+
+    let withdrawableEarning = 0;
+    const difference = totalEarning.CREDIT - totalEarning.DEBIT;
+
+    if (totalEarning.DEBIT > totalEarning.CREDIT) {
+      throw new BadRequestError("Sorry you don't have a withdrawable point");
+    } else if (difference >= 200) {
+      withdrawableEarning = difference - 200;
+    } else {
+      // withdrawableEarning = 0;
+
+      throw new BadRequestError("Sorry you don't have a withdrawable point");
+    }
+
+
+    if (requestPoints > withdrawableEarning) {
+      throw new BadRequestError("Sorry your request point is greater than your withdrawable point");
+    }
+
+
+
+    await Prisma.rewardRequest.create({
       data: {
-        setting: {
-          emailNotification,
-          pushNotification,
-          smsNotification
-        }
+        userId,
+        requestPoints,
+        bankAccountName,
+        bankAccountNumber,
+        bankName,
+        status: "PENDING"
       }
     })
 
-    new CustomResponse(200, true, "successful", res, data.setting);
+    new CustomResponse(200, true, "Request successful", res,isPendingWithdrawalRequest);
   } catch (error) {
     console.error("[suspendUser] error:", error);
     next(error);
