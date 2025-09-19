@@ -234,6 +234,8 @@ export const getPropertiesStatsByUser = async (req: Request, res: Response, next
             title: true,
             status: true,
             createdAt: true,
+            sharesCount: true,
+            viewsCount: true,
             media: {
               select: {
                 url: true,
