@@ -4,18 +4,19 @@ import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
     unArchiveProperty, unLikeProperty, deleteProperty, statusProperty, getLikedPropertiesByUser,
-    getPropertiesByUser, mediaForProperty, recentProperties, featureProperties,
+    getPropertiesByUser, mediaForProperty, 
     getAllProperties,
-    // updateProperty,
     getAllArchivedProperties,
     getArchivedPropertiesByUser,
     unmarkAsFeatureProperty,
     markAsFeatureProperty,
-    sellingProperties,
-    propertiesListing,
-    getProjects,
     shareProperty,
-    getProperties
+    getProperties,
+    // featureProperties,
+    // recentProperties, 
+    // sellingProperties,
+    // propertiesListing,
+    // getProjects,
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
@@ -34,14 +35,12 @@ const propertyRoutes = express.Router();
 // test by flow
 propertyRoutes.get("/", getProperties);
 propertyRoutes.get("/seed", getAllStates);
-propertyRoutes.get("/project", getProjects);
 
-
-
-
-propertyRoutes.get("/selling", sellingProperties);
-propertyRoutes.get("/recent", recentProperties);
-
+// propertyRoutes.get("/project", getProjects);
+// propertyRoutes.get("/selling", sellingProperties);
+// propertyRoutes.get("/recent", recentProperties);
+// propertyRoutes.get("/featured", featureProperties);
+// propertyRoutes.get("/listing", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertiesListing);
 
 
 propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
@@ -84,7 +83,6 @@ propertyRoutes.patch("/:propertyId/update", multipleupload,
     validateSchema(createPropertySchema), authenticate, isVerify,requireKyc, isSuspended, updateProperty);
 
 
-propertyRoutes.get("/featured", featureProperties);
 propertyRoutes.get("/user/archive", authenticate, getArchivedPropertiesByUser);
 propertyRoutes.get("/liked", authenticate, getLikedPropertiesByUser);
 propertyRoutes.get("/user", authenticate, getPropertiesByUser);
@@ -93,7 +91,7 @@ propertyRoutes.delete("/:id/archive", authenticate, isSuspended, archiveProperty
 propertyRoutes.get("/allarchive", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllArchivedProperties);
 propertyRoutes.get("/:id/detail", singleProperty);
 propertyRoutes.get("/all", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), getAllProperties);
-propertyRoutes.get("/listing", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertiesListing);
+
 propertyRoutes.delete("/:id", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     adminRequireRole("PROPERTY"),
     deleteProperty);
