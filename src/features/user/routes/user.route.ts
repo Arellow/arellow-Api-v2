@@ -8,7 +8,7 @@ import {
   updateNotificationSetting,
   requestReward,
 } from "../controllers/user";
-import authenticate, { adminRequireRole, isAdmin, isSuspended, isVerify, requireKyc, requireRole } from "../../../middlewares/auth.middleware";
+import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
 import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs } from "../controllers/kyc";

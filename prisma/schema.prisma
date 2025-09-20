@@ -254,7 +254,6 @@ model Property {
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  // RewardHistory RewardHistory[]
 }
 
 enum SalesStatus {

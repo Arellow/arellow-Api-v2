@@ -1,5 +1,5 @@
 import express from 'express'
-import authenticate, { adminRequireRole, isLoginUser, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
@@ -14,7 +14,8 @@ import {
     sellingProperties,
     propertiesListing,
     getProjects,
-    shareProperty
+    shareProperty,
+    getProperties
 } from '../controllers/properties';
 import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
@@ -31,6 +32,7 @@ const propertyRoutes = express.Router();
 
 
 // test by flow
+propertyRoutes.get("/", getProperties);
 propertyRoutes.get("/seed", getAllStates);
 propertyRoutes.get("/project", getProjects);
 

@@ -4,9 +4,11 @@ import 'dotenv/config';
 import express from "express";
 import indexMiddleware from "./middlewares/index.middleware";
 import errorHandler from './middlewares/errors.middleware';
+import { isLoginUser } from "./middlewares/auth.middleware";
 
 
 const app = express();
+app.use(isLoginUser)
 indexMiddleware(app)
 
 app.use("/", async(req, res) => {
