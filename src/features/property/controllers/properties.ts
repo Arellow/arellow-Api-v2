@@ -112,11 +112,16 @@ if(userId !== property.userId){
 
     const totalViewsCount = totalViews._sum.viewsCount ?? 0;
 
+    
+
+const {user, ...other} = property;
+
 
     const responseData = {
-      ...property,
+      ...other,
       isLiked,
-      totalViewsCount
+      user: {...user, totalViewsCount}
+      
     };
 
     await redis.set(cacheKey, JSON.stringify(responseData), "EX", 60);
