@@ -92,9 +92,31 @@ if (userId) {
   isLiked = !!like;
 }
 
+
+if(userId !== property.userId){
+  await Prisma.property.update({
+      where: { id },
+      data: { viewsCount: { increment: 1 } },
+  })
+}
+
+
+  const totalViews = await Prisma.property.aggregate({
+      _sum: {
+        viewsCount: true
+      },
+      where: {
+        userId: property?.userId
+      }
+    });
+
+    const totalViewsCount = totalViews._sum.viewsCount ?? 0;
+
+
     const responseData = {
       ...property,
-      isLiked
+      isLiked,
+      totalViewsCount
     };
 
     await redis.set(cacheKey, JSON.stringify(responseData), "EX", 60);
