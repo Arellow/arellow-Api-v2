@@ -52,12 +52,16 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
         },
         user: {
           select: {
+            id: true,
+            role: true,
             email: true,
             fullname: true,
             username: true,
             is_verified: true,
             avatar: true,
+            createdAt: true,
             approvedProperties: {
+              where: {archived: false, status: "APPROVED"},
               include: {
                 _count: true
               }
@@ -215,11 +219,11 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
                 username: true,
                 is_verified: true,
                 avatar: true,
-                approvedProperties: {
-                  include: {
-                    _count: true
-                  }
-                }
+                // approvedProperties: {
+                //   include: {
+                //     _count: true
+                //   }
+                // }
 
               }
             },
@@ -560,11 +564,11 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
                 username: true,
                 is_verified: true,
                 avatar: true,
-                approvedProperties: {
-                  include: {
-                    _count: true
-                  }
-                }
+                // approvedProperties: {
+                //   include: {
+                //     _count: true
+                //   }
+                // }
 
               }
             }
