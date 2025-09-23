@@ -194,6 +194,11 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
         }
 
+        // let message = "Property was created successfull and awaiting approval.";
+
+
+        //  await Prisma.notification.create({data: { message, userId },});
+
 
         await deleteMatchingKeys(`getAllProperties:*`);
         await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);

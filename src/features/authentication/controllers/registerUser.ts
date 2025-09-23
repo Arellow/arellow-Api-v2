@@ -38,6 +38,7 @@ export class RegisterController {
 
       const user = await AuthService.registerUser(userInput);
 
+
       userResponse({user, res, message: "Registration successfully."})
 
     } catch (error) {

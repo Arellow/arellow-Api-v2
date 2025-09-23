@@ -65,7 +65,7 @@ model Kyc {
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String          @db.ObjectId
   documentType   KycDocumentType @default(NIN)
-  ninData            NIN_Data?
+  ninData        NIN_Data?
   documentNumber String
   statusText     String?
   documentPhoto  String
@@ -87,37 +87,37 @@ type NIN_Data {
   birthdate  String?
   photo      String?
   address    String?
-  residence Residence?
+  residence  Residence?
 }
 
 type Residence {
   address1 String?
-  town String?
-  lga String?
-  state String?
+  town     String?
+  lga      String?
+  state    String?
 }
 
 model User {
-  id           String             @id @default(auto()) @map("_id") @db.ObjectId
-  email        String             @unique
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  email        String           @unique
   fullname     String
-  username     String             @unique
+  username     String           @unique
   password     String
   phone_number String
   role         UserRole
-  avatar       String             @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
-  is_verified  Boolean            @default(false)
-  suspended    Boolean            @default(false)
+  avatar       String           @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
+  is_verified  Boolean          @default(false)
+  suspended    Boolean          @default(false)
   address      PropertyAddress?
-  points       Int                @default(0)
- 
-  companyId    String?            @db.ObjectId
-  company      Company?           @relation(fields: [companyId], references: [id])
-  likes        UserPropertyLike[]
+  points       Int              @default(0)
 
-  properties           Property[]                 @relation("UserProperties")
-  approvedProperties   Property[]                 @relation("ApprovedProperties")
-  
+  companyId String?            @db.ObjectId
+  company   Company?           @relation(fields: [companyId], references: [id])
+  likes     UserPropertyLike[]
+
+  properties         Property[] @relation("UserProperties")
+  approvedProperties Property[] @relation("ApprovedProperties")
+
   mortgage             MortgageCalculationDraft[]
   Campaign             Campaign[]
   preQualifications    PreQualification[]
@@ -138,13 +138,13 @@ model User {
   // reward
   rewardHistories RewardHistory[]
   rewardRequests  RewardRequest[]
-  setting Setting?
+  setting         Setting?
 }
 
 type Setting {
   pushNotification  Boolean @default(true)
-  emailNotification  Boolean @default(true)
-  smsNotification  Boolean @default(false)
+  emailNotification Boolean @default(true)
+  smsNotification   Boolean @default(false)
 }
 
 enum UserRole {
@@ -248,12 +248,12 @@ model Property {
   media       Media[]
   salesStatus SalesStatus @default(SELLING)
 
-  archived          Boolean @default(false)
-  isFeatureProperty Boolean @default(false)
+  archived              Boolean @default(false)
+  isFeatureProperty     Boolean @default(false)
   is_Property_A_Project Boolean @default(false)
 
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum SalesStatus {
@@ -313,9 +313,9 @@ model UserPropertyLike {
   userId     String @db.ObjectId
   propertyId String @db.ObjectId
 
-  user     User     @relation(fields: [userId], references: [id])
-  property Property @relation(fields: [propertyId], references: [id])
-  createdAt           DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  property  Property @relation(fields: [propertyId], references: [id])
+  createdAt DateTime @default(now())
 
   @@unique([userId, propertyId])
 }
@@ -324,9 +324,10 @@ type GeoPoint {
   lat Float
   lng Float
 }
+
 type PriceModel {
   currency String
-  amount Float
+  amount   Float
 }
 
 enum MediaType {
@@ -367,7 +368,6 @@ model Media {
   createdAt DateTime @default(now())
 }
 
-
 model ResetPassword {
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   userId      String
@@ -389,8 +389,8 @@ model PropertyRequest {
   email             String
   phoneNumber       String
   propertyCategory  PropertyCategory
-  features      String[]
-  title  String
+  features          String[]
+  title             String
   propertyAddress   PropertyAddress
   numberOfBedrooms  Int              @default(0)
   numberOfBathrooms Int              @default(0)
@@ -557,10 +557,18 @@ model BlogFeaturedContributor {
   @@index([userId])
 }
 
+// -------------------------------------- Notification start -----------------------------
 
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
 
-
-
+// -------------------------------------- Notification End -------------------------------
 
 // -------------------------------------- reward start -----------------------------
 enum RewardType {
@@ -575,26 +583,26 @@ enum RequestStatus {
 }
 
 model RewardHistory {
-  id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String              @db.ObjectId
-  user              User                @relation(fields: [userId], references: [id])
-  points            Int
-  type              RewardType
-  reason            String
-  createdAt         DateTime            @default(now())
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String     @db.ObjectId
+  user      User       @relation(fields: [userId], references: [id])
+  points    Int
+  type      RewardType
+  reason    String
+  createdAt DateTime   @default(now())
 }
 
 model RewardRequest {
-  id          String              @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String              @db.ObjectId
-  user        User                @relation(fields: [userId], references: [id])
-  requestPoints Int 
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String        @db.ObjectId
+  user              User          @relation(fields: [userId], references: [id])
+  requestPoints     Int
   bankAccountName   String
   bankAccountNumber String
   bankName          String
-  status      RequestStatus       @default(PENDING)
-  createdAt   DateTime            @default(now())
-  processedAt DateTime            @updatedAt
+  status            RequestStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  processedAt       DateTime      @updatedAt
 }
 
 //-------------------------- reward ends ------------------------------

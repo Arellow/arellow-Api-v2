@@ -639,6 +639,185 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
 
 
 
+export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+   
+    const {
+      salesStatus,
+      bathrooms,
+      bedrooms,
+      floors,
+      category,
+      state,
+      city,
+      country,
+      neighborhood,
+      amenities,
+      features,
+
+      minPrice,
+      maxPrice,
+
+      status,
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+    const search = (req.query.search as string) || "";
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+        const cacheKey = `saved:${userId}:${JSON.stringify(req.query)}`;
+
+
+      const featuresArray = (features as string)?.split(",").filter(v => v !== "") ?? [];
+    const amenitiesArray = (amenities as string)?.split(",").filter(v => v !== "") ?? [];
+
+
+     const matchedCategory = getValidCategory(search);
+    const filters: prisma.PropertyWhereInput = {
+      archived: false,
+      AND: [
+        search
+          ? {
+            OR: [
+              { title: iLike(search) },
+              matchedCategory ? { category: matchedCategory } : null,
+              { city: iLike(search) },
+              { state: iLike(search) },
+              { country: iLike(search) }
+            ].filter(Boolean)
+          }
+          : undefined,
+
+        bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
+        bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
+        floors ? { floors: parseInt(floors as string) } : undefined,
+        category ? { category: category as PropertyCategory } : undefined,
+
+        state ? { state: iLike(state as string) } : undefined,
+        city ? { city: iLike(city as string) } : undefined,
+        country ? { country: iLike(country as string) } : undefined,
+        neighborhood ? { neighborhood: iLike(neighborhood as string) } : undefined,
+
+        amenitiesArray.length > 0 ? { amenities: { some: { name: { in: amenitiesArray } } } } : undefined,
+        featuresArray.length > 0 ? { features: { hasSome: featuresArray } } : undefined,
+        salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+        status ? { status: status as PropertyStatus } : undefined,
+        (minPrice || maxPrice)
+          ? {
+
+            price: {
+              is: {
+                amount: {
+                  ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}),
+                  ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {})
+                }
+              }
+
+            }
+          }
+          : undefined,
+      ].filter(Boolean) as prisma.PropertyWhereInput[]
+    };
+
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [properties, total] = await Promise.all([
+
+        Prisma.property.findMany({
+          where: {
+            likedBy: {
+              some: {userId}
+            },
+            ...filters
+          },
+          include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+              }
+            },
+            amenities: {
+              select: {
+                name: true,
+                photoUrl: true
+              }
+            },
+            likedBy: {
+              where: {
+                userId: userId
+              },
+              select: {
+                id: true
+              }
+            }
+          },}),
+        Prisma.property.count({where: {
+          likedBy: {
+          some: {
+            userId: userId
+          }
+        }
+        }})
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+
+      const dataWithIsLiked = properties.map(({ likedBy, ...rest }) => ({
+        ...rest,
+        isLiked: likedBy.length > 0
+      }));
+
+      return {
+        data: dataWithIsLiked,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+    new CustomResponse(200, true, "success", res, result);
+
+
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch liked properties", 500));
+  }
+
+};
+
+
+
 
 
 
@@ -1305,104 +1484,6 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
 // };
 
 
-
-export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.id;
-    const cacheKey = `saved:${userId}`;
-
-    const {
-      search,
-      page = "1",
-      limit = "10"
-    } = req.query;
-
-    const pageNumber = parseInt(page as string, 10);
-    const pageSize = parseInt(limit as string, 10);
-
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-
-      res.status(200).json({
-        success: true,
-        message: "successfully. from cache",
-        data: JSON.parse(cached)
-      });
-      return
-    };
-
-
-    const result = await swrCache(cacheKey, async () => {
-      const [properties, total] = await Promise.all([
-        Prisma.userPropertyLike.findMany({
-          where: { userId, },
-          include: {
-            property: {
-              include: {
-                media: {
-                  select: {
-                    url: true,
-                    altText: true,
-                    type: true,
-                    photoType: true,
-                    sizeInKB: true
-
-                  }
-                },
-                user: {
-                  select: {
-                    email: true,
-                    fullname: true,
-                    username: true,
-                    is_verified: true,
-                    avatar: true,
-                    approvedProperties: {
-                      include: {
-                        _count: true
-                      }
-                    }
-
-                  }
-                }
-              },
-            }
-          },
-        }),
-        Prisma.userPropertyLike.count({ where: { userId, } })
-      ]);
-
-      const totalPages = Math.ceil(total / pageSize);
-      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
-      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
-
-      const data = properties.map((like) => like.property) || [];
-
-      return {
-        data,
-        pagination: {
-          total,
-          page: pageNumber,
-          pageSize,
-          totalPages,
-          nextPage,
-          prevPage,
-          canGoNext: pageNumber < totalPages,
-          canGoPrev: pageNumber > 1
-        }
-      };
-    });
-
-
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
-
-    new CustomResponse(200, true, "success", res, result);
-
-
-  } catch (error) {
-    next(new InternalServerError("Failed to fetch liked properties", 500));
-  }
-
-};
 
 // admin
 export const getAllArchivedProperties = async (req: Request, res: Response, next: NextFunction) => {

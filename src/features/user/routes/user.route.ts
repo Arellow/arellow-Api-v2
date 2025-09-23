@@ -17,6 +17,7 @@ import { documentPhotoupload, multipleupload, singleupload } from "../../../midd
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
 import { getPropertiesStatsByUser, userDashbroad } from "../controllers/dashbroad";
+import { notificationDetail, userNotifications } from "../controllers/notifications";
 
 const usersRoutes = Router();
 usersRoutes.get("/dashbroad", authenticate, userDashbroad);
@@ -65,5 +66,8 @@ usersRoutes.patch(
 
 usersRoutes.put("/:userId/suspend", suspendUser);
 usersRoutes.delete("/:userId", deleteUser);
+
+usersRoutes.get('/notifications', authenticate, userNotifications );
+usersRoutes.get('/notification/:id/detail', authenticate, notificationDetail );
 
 export default usersRoutes;
