@@ -94,3 +94,27 @@ export const notificationDetail = async(req: Request, res: Response, next: NextF
 };
 
 
+
+export const notificationDelete = async(req: Request, res: Response, next: NextFunction) => {
+ const { id } = req.params;
+   const userId = req?.user?.id;
+
+  try {
+
+ const result = await Prisma.notification.findUnique({
+      where: { id , userId},
+    });
+
+
+    if (!result) {
+      return next(new InternalServerError("notification not found", 404));
+    }
+
+     await Prisma.notification.delete({where: { id },});
+    
+    new CustomResponse(200, true, "success", res,);
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+}
