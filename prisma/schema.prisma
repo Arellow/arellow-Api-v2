@@ -566,8 +566,19 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  category  NotificationCategory @default(GENERAL)
 }
 
+enum NotificationCategory {
+  PROPERTY
+  PROJECT
+  REQUEST
+  SUPPORT
+  CHAT
+  ACCOUNT
+  ADMIN
+  GENERAL
+}
 // -------------------------------------- Notification End -------------------------------
 
 // -------------------------------------- reward start -----------------------------

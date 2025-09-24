@@ -14,14 +14,15 @@ import { updateUserSchema } from "../../../validations/user.validation";
 import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs } from "../controllers/kyc";
 import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload, singleupload } from "../../../middlewares/multer";
-import { changeTicketSchema, createCustomerSupportSchema, createKycSchema } from "./user.validate";
+import { changeTicketSchema, createCustomerSupportSchema, createKycSchema, createNotificationSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
 import { getPropertiesStatsByUser, userDashbroad } from "../controllers/dashbroad";
-import { notificationDelete, notificationDetail, userNotifications } from "../controllers/notifications";
+import { createNotification, notificationDelete, notificationDetail, userNotifications } from "../controllers/notifications";
 
 const usersRoutes = Router();
 usersRoutes.get("/dashbroad", authenticate, userDashbroad);
 usersRoutes.get("/propertystats", authenticate, getPropertiesStatsByUser);
+
 
 usersRoutes.post("/requestreward", authenticate, isVerify, requireKyc, isSuspended, requestReward);
 usersRoutes.post("/kyc", authenticate, isVerify, documentPhotoupload,  validateSchema(createKycSchema), createKyc);
@@ -67,8 +68,9 @@ usersRoutes.patch(
 usersRoutes.put("/:userId/suspend", suspendUser);
 usersRoutes.delete("/:userId", deleteUser);
 
-usersRoutes.get('/notifications', authenticate, userNotifications );
-usersRoutes.get('/notification/:id/detail', authenticate, notificationDetail );
-usersRoutes.delete('/notification/:id/delete', authenticate, notificationDelete );
+usersRoutes.get('/notifications', authenticate, userNotifications);
+usersRoutes.get('/notification/:id/detail', authenticate, notificationDetail);
+usersRoutes.delete('/notification/:id/delete', authenticate, notificationDelete);
+usersRoutes.post('/notification', validateSchema(createNotificationSchema), authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("SUPPORT"), createNotification);
 
 export default usersRoutes;

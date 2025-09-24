@@ -25,3 +25,8 @@ export const createCustomerSupportSchema = Joi.object({
   description: Joi.string().required().min(3),
   title: Joi.string().required().min(3),
 });
+
+export const createNotificationSchema = Joi.object({
+   message: Joi.string().required().min(3),
+  title: Joi.string().required().min(3),
+});

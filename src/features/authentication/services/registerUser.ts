@@ -64,7 +64,7 @@ export class AuthService {
 
     if(newUser.role === "BUYER"){
       await Prisma.notification.create({
-        data: {message: notificationData.BUYER.message, title: notificationData.BUYER.title, userId: newUser.id}
+        data: {message: notificationData.BUYER.message, title: notificationData.BUYER.title, userId: newUser.id, category: "GENERAL"}
       })
     }
 
