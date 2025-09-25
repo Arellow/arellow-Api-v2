@@ -358,8 +358,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       status: "APPROVED",
-      isFeatureProperty,
-      is_Property_A_Project,
+      ...isFeatureProperty && {isFeatureProperty},
+      ...is_Property_A_Project && {is_Property_A_Project},
       AND: [
         search
           ? {
@@ -500,6 +500,7 @@ if (userId) {
 
 
   } catch (error) {
+
     next(new InternalServerError("Server Error", 500));
 
   }

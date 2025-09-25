@@ -20,7 +20,7 @@ export const userNotifications = async (req: Request, res: Response, next: NextF
 
 
     const result = await swrCache(cacheKey, async () => {
-      const [notifications, total, allusernotifications] = await Promise.all([
+      const [notifications, total, allusernotifications, totalUnread] = await Promise.all([
         Prisma.notification.findMany({
           where: {userId},
           orderBy: { createdAt: "desc" },
@@ -28,7 +28,8 @@ export const userNotifications = async (req: Request, res: Response, next: NextF
           take: pageSize
         }),
         Prisma.notification.count({ where: {userId} }),
-        Prisma.notification.findMany({ where: {userId} }),
+        Prisma.notification.findMany({ where: {userId, read: false} }),
+        Prisma.notification.count({ where: {userId, read: false} }),
       ]);
 
       const totalPages = Math.ceil(total / pageSize);
@@ -36,28 +37,20 @@ export const userNotifications = async (req: Request, res: Response, next: NextF
       const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
 
         const stats = allusernotifications.reduce((acc, cur) => {
-           if (!cur.read && acc[cur.category] !== undefined) {
-          acc[cur.category] += 1;
-          acc.total += 1;
+           if (acc[cur.category] !== undefined) {
+           acc[cur.category] += 1;
         }
         return acc;
       
-    }, {
-      total,
-       PROPERTY: 0,
-  PROJECT: 0,
-  REQUEST: 0,
-  SUPPORT: 0,
-  CHAT: 0,
-  ACCOUNT: 0,
-  ADMIN: 0,
-  GENERAL: 0,
-    })
+    }, { PROPERTY: 0, PROJECT: 0, REQUEST: 0, SUPPORT: 0, CHAT: 0, ACCOUNT: 0, ADMIN: 0, GENERAL: 0 })
 
       return {
         data: {
           notifications,
-          stats
+          stats: {
+            ...stats,
+            totalUnread
+          }
         },
         pagination: {
           total,
