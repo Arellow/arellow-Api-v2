@@ -33,12 +33,14 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const cleanedPhoneNumber = phone_number.phone.replace(/[^\d+]/g, '');
+
     const newUser = await Prisma.user.create({
       data: {
         username,
         email,
         password: hashedPassword,
-        phone_number: phone_number.phone,
+        phone_number: cleanedPhoneNumber,
         role,
         fullname,
         address: {

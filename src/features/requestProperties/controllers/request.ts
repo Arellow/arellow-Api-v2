@@ -56,12 +56,14 @@ export const createPropertyRequest = async (req: Request, res: Response, next: N
     return next(new InternalServerError("Contact detail not found", 404));
     }
 
+
+     const cleanedPhoneNumber = isLogin ? isLogin.phone_number.replace(/[^\d+]/g, '') : phoneNumber.replace(/[^\d+]/g, '');
     const response = await Prisma.propertyRequest.create({
       data: {
         username: isLogin ? isLogin.fullname : username,
         userRole: isLogin ? isLogin.role : userRole,
         email: isLogin ? isLogin.email : email,
-        phoneNumber: isLogin ? isLogin.phone_number : phoneNumber,
+        phoneNumber: cleanedPhoneNumber,
         propertyCategory,
         title,
         features,

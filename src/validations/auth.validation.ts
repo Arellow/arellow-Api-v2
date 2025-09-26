@@ -28,12 +28,12 @@ export const registerSchema = Joi.object({
     }),
 
   phone_number: Joi.object({
-    phone: Joi.string()
-      .required()
-      .pattern(/^\+?\d{7,15}$/)
-      .messages({
-        'string.pattern.base': 'Phone number must be valid. E.g. +2348012345678 or 08012345678',
-      }),
+       phone: Joi.string()
+        .pattern(/^\+?[0-9\s\-()]{7,15}$/)
+        .optional()
+        .messages({
+          'string.pattern.base': 'Phone number must be a valid format with only digits, optional +, spaces, dashes, or parentheses.',
+        }),
     country: Joi.string().trim().min(3).required(),
   }).required(),
 });

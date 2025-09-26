@@ -5,7 +5,12 @@ export const createPropertyRequestSchema = Joi.object({
   username: Joi.string().trim().min(3).max(50),
   userRole: Joi.string().trim().min(3).max(50),
   email: Joi.string().trim().email(),
-  phoneNumber: Joi.string().pattern(/^[0-9+\-().\s]{7,15}$/),
+  phoneNumber: Joi.string()
+  .pattern(/^\+?[0-9\s\-()]{7,15}$/)
+  .optional()
+  .messages({
+    'string.pattern.base': 'Phone number must be a valid format with only digits, optional +, spaces, dashes, or parentheses.',
+  }),
 
   propertyCategory: Joi.string().required().valid(...Object.values(PropertyCategory)),
   title: Joi.string().required().min(3),
