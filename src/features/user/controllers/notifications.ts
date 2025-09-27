@@ -3,6 +3,42 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { swrCache } from "../../../lib/cache";
+import { NotificationCategory } from "@prisma/client";
+import { PrismaClient, Notification } from "@prisma/client";
+import { format, isToday, isYesterday } from "date-fns";
+
+
+
+// type NotificationWithFields = {
+//   id: string;
+//   userId: string;
+//   title: string;
+//   message: string;
+//   read: boolean;
+//   createdAt: Date;
+//   category: NotificationCategory;
+// };
+
+// type SectionListNotification<T> = {
+//   title: NotificationCategory;
+//   data: T[];
+//   unreadCount: number;
+// };
+
+
+
+type SectionedNotification = {
+  title: string;
+  data: Notification[];
+};
+
+function getReadableDate(date: Date): string {
+  if (isToday(date)) return `Today, ${format(date, "MMMM d yyyy")}`;
+  if (isYesterday(date)) return `Yesterday, ${format(date, "MMMM d yyyy")}`;
+  return `${format(date, "EEEE")}, ${format(date, "MMMM d yyyy")}`;
+}
+
+
 
 
 export const userNotifications = async (req: Request, res: Response, next: NextFunction) => {
@@ -172,3 +208,77 @@ export const createNotification = async (req: Request, res: Response, next: Next
 
 
 
+export const userNotificationsForMobile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id;
+ 
+
+  try {
+    const {
+      page = "1",
+      limit = "50", 
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+    const cacheKey = `notifications:grouped:${userId}:${pageNumber}:${pageSize}`;
+
+    const result = await swrCache(cacheKey, async () => {
+      const [notifications, total, totalUnread] = await Promise.all([
+        Prisma.notification.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize,
+        }),
+        Prisma.notification.count({ where: { userId } }),
+        Prisma.notification.count({ where: { userId, read: false } }),
+      ]);
+
+      // Group notifications by formatted date
+      const sectionsMap = new Map<string, Notification[]>();
+
+      for (const notif of notifications) {
+        const label = getReadableDate(new Date(notif.createdAt));
+        if (!sectionsMap.has(label)) {
+          sectionsMap.set(label, []);
+        }
+        sectionsMap.get(label)!.push(notif);
+      }
+
+      const sectionList: SectionedNotification[] = Array.from(sectionsMap.entries()).map(
+        ([title, data]) => ({ title, data })
+      );
+
+      const totalPages = Math.ceil(total / pageSize);
+
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+      return {
+        data: sectionList,
+        meta: {
+          totalUnread,
+        },
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber * pageSize < total,
+          canGoPrev: pageNumber > 1,
+        },
+
+      };
+    });
+
+    new CustomResponse(200, true, "Notifications grouped by date", res, result);
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch notifications"));
+  }
+};
