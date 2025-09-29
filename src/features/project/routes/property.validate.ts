@@ -29,7 +29,7 @@ export const createProjectSchema = Joi.object({
       amount: Joi.number().positive().required()
     }),
 
-  isFeatureProperty: Joi.boolean().required(),
+  // isFeatureProperty: Joi.boolean().required(),
   yearBuilt: Joi.string().required().min(1),
  
    stagePrice: Joi.object({

@@ -16,11 +16,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
   try {
 
     const userId = req.user?.id!;
-    const is_user_verified = req.user?.is_verified!;
-
-    if (!is_user_verified) {
-      return next(new InternalServerError("Unverify email please check mail and verify account", 401));
-    }
+  
 
     const fields = req.files as { [fieldname: string]: Express.Multer.File[] } || [];
 

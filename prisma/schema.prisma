@@ -261,7 +261,7 @@ enum SalesStatus {
 }
 
 enum PropertyStage {
-  OfPlaneStage    @map("Off-plane stage")
+  OffPlanStage    @map("Off-plan stage")
   CarcassStage    @map("Carcass stage")
   CompletionStage @map("Completion stage")
 }
