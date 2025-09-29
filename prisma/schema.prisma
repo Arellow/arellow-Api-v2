@@ -223,7 +223,7 @@ model Property {
 
   floors     Int
   price      PriceModel
-  // yearBuilt  String?
+
   yearBuilt  Int
   stage      PropertyStage?
   progress   PropertyProgress?
@@ -243,7 +243,6 @@ model Property {
   viewsCount  Int @default(0)
   sharesCount Int @default(0)
 
-  // rewardHistories RewardHistory[]
 
   media       Media[]
   salesStatus SalesStatus @default(SELLING)
@@ -569,6 +568,7 @@ enum BlogCategory {
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
+  avatar    String?
   title     String
   message   String
   read      Boolean  @default(false)

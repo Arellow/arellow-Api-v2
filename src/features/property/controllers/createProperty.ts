@@ -181,7 +181,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
             const hasAccess = adminPermission.action.some((role) =>
                 ["PROPERTY"].includes(role)
             );
-            if (!hasAccess) {
+            if (hasAccess) {
                 await Prisma.property.update({
                     where: { id: newProperty.id },
                     data: {
@@ -194,14 +194,12 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
         }
 
-        // let message = "Property was created successfull and awaiting approval.";
-
-
-        //  await Prisma.notification.create({data: { message, userId },});
-
-
-        await deleteMatchingKeys(`getAllProperties:*`);
-        await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
+    
+    
+    const getPropertiesByUser = `getPropertiesByUser:${userId}`
+ 
+    await deleteMatchingKeys(getPropertiesByUser);
+ 
 
         new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
               propertyId: newProperty.id,

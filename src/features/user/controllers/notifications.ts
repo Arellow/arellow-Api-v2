@@ -3,27 +3,8 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { swrCache } from "../../../lib/cache";
-import { NotificationCategory } from "@prisma/client";
-import { PrismaClient, Notification } from "@prisma/client";
+import { Notification } from "@prisma/client";
 import { format, isToday, isYesterday } from "date-fns";
-
-
-
-// type NotificationWithFields = {
-//   id: string;
-//   userId: string;
-//   title: string;
-//   message: string;
-//   read: boolean;
-//   createdAt: Date;
-//   category: NotificationCategory;
-// };
-
-// type SectionListNotification<T> = {
-//   title: NotificationCategory;
-//   data: T[];
-//   unreadCount: number;
-// };
 
 
 

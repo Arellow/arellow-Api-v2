@@ -27,7 +27,7 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
   if (cached) {
     res.status(200).json({
       success: true,
-      message: "successfully. from cache",
+      message: "successfully from cache",
       data: JSON.parse(cached)
     });
     return
@@ -2052,7 +2052,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
   const userId = req.user?.id!;
   const propertyId = req.params.id;
 
-  const cacheKey = `saved:${userId}`;
+  // const cacheKey = `saved:${userId}`;
 
   try {
     // Check if already liked
@@ -2083,10 +2083,18 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
       data: { likesCount: { increment: 1 } },
     });
 
-const propertyCacheKey = `property:${propertyId}:${existingLike?.userId || ""}`;
 
-    await deleteMatchingKeys(cacheKey);
+    const savedCacheKey = `saved:${userId}`;
+    const propertyCacheKey = `property:${propertyId}:${userId}`;
+    const getPropertiesByUser = `getPropertiesByUser:${userId}`
+    const lastestCacheKey = `lastest:${userId}`
+    
+
+    await deleteMatchingKeys(getPropertiesByUser);
+    await deleteMatchingKeys(lastestCacheKey);
+    await deleteMatchingKeys(savedCacheKey);
     await deleteMatchingKeys(propertyCacheKey);
+
 
     new CustomResponse(200, true, "Property liked", res,);
   } catch (error) {
@@ -2099,7 +2107,7 @@ const propertyCacheKey = `property:${propertyId}:${existingLike?.userId || ""}`;
 export const unLikeProperty = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id!;
   const propertyId = req.params.id;
-  const cacheKey = `saved:${userId}`;
+  
 
   try {
     // Delete the like relation
@@ -2120,9 +2128,15 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
       data: { likesCount: { decrement: 1 } },
     });
 
-    const propertyCacheKey = `property:${propertyId}:${userId || ""}`;
+    const savedCacheKey = `saved:${userId}`;
+    const propertyCacheKey = `property:${propertyId}:${userId}`;
+    const getPropertiesByUser = `getPropertiesByUser:${userId}`
+    const lastestCacheKey = `lastest:${userId}`
+    
 
-    await deleteMatchingKeys(cacheKey);
+    await deleteMatchingKeys(getPropertiesByUser);
+    await deleteMatchingKeys(lastestCacheKey);
+    await deleteMatchingKeys(savedCacheKey);
     await deleteMatchingKeys(propertyCacheKey);
 
     new CustomResponse(200, true, "Property unliked", res,);
