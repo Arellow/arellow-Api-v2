@@ -22,6 +22,9 @@ projectRoutes.post("/createproject", multipleupload, (req, res, next) => {
     const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price) : req.body.price;
     const parsedStagePrice: { amount: number, currency: string } = typeof req.body.stagePrice === 'string' ? JSON.parse(req.body.stagePrice) : req.body.stagePrice;
 
+
+
+    
     const body = {
         ...req.body,
         features: parsedFeatures,

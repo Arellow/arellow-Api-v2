@@ -74,26 +74,33 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
         const propertyFeatures = parsedFeatures.map(feature => feature.trim());
         const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency};
         
+
+          const getLocation = await getPropertyLocation({ address: neighborhood });
+            let propertyLocation: { lat: number, lng: number } = { lat: 9.6000359, lng: 7.9999721 };
         
-        const getLocation =  await getPropertyLocation({address: neighborhood });
-        let propertyLocation: { lat: number, lng: number } = {lat: 9.6000359, lng:7.9999721};
+            if (getLocation.status !== 'OK' || getLocation?.results?.length === 0) {
+              const response = await getPropertyLocationAlternative({ city });
         
-        if (getLocation.status !== 'OK' || getLocation.results.length === 0) {
-           const response = await getPropertyLocationAlternative({city});
-             const data = response.data[0];
-
-            if (data) {
-                propertyLocation = { lat: Number(data.lat), lng: Number(data.lon)}; 
-                }
-
-
-        } else {
-            const userlocation = getLocation.results[0].geometry.location;
-            
-             propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng)};
-    
-
-        }
+              if (response && response?.data && response?.data.lenth && response?.data[0]) {
+                const data = response.data[0];
+        
+                propertyLocation = { lat: Number(data.lat), lng: Number(data.lon) };
+        
+              }
+        
+        
+            } else {
+        
+              if (getLocation && getLocation?.results && getLocation.results.length && getLocation.results[0]) {
+                const userlocation = getLocation.results[0].geometry.location;
+        
+                propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng) };
+        
+              }
+        
+            }
+        
+        
 
 
         // Create property
@@ -209,7 +216,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
 
     } catch (error:any) {
-        console.log({error: error?.response})
+        // console.log({error: error?.response})
         next(new InternalServerError("Internal server error", 500));
     }
 

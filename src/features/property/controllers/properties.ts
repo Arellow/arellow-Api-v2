@@ -513,11 +513,9 @@ if (userId) {
 export const getAllProperties = async (req: Request, res: Response, next: NextFunction) => {
   try {
 
+
     const {
-      search,
       salesStatus,
-      minPrice,
-      maxPrice,
       bathrooms,
       bedrooms,
       floors,
@@ -526,49 +524,82 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
       city,
       country,
       neighborhood,
-      features,
       amenities,
+      features,
+
+      minPrice,
+      maxPrice,
+
       page = "1",
       limit = "10"
     } = req.query;
 
+    const search = (req.query.search as string) || "";
+
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
+
+    const isFeatureProperty = req.query.isFeatureProperty === "true" ? true : false;
+    const is_Property_A_Project = req.query.is_Property_A_Project === "true" ? true : false;
 
 
     const cacheKey = `getAllProperties:${JSON.stringify(req.query)}`;
 
+    const featuresArray = (features as string)?.split(",").filter(v => v !== "") ?? [];
+    const amenitiesArray = (amenities as string)?.split(",").filter(v => v !== "") ?? [];
+
+    const matchedCategory = getValidCategory(search);
+
+
     const filters: prisma.PropertyWhereInput = {
+      archived: false,
+      // status: "APPROVED",
+      ...isFeatureProperty && {isFeatureProperty},
+      ...is_Property_A_Project && {is_Property_A_Project},
       AND: [
         search
           ? {
             OR: [
-              { title: { contains: search as string, mode: 'insensitive' } },
-              { category: { contains: search as string, mode: 'insensitive' } },
-              { city: { contains: search as string, mode: 'insensitive' } },
-              { state: { contains: search as string, mode: 'insensitive' } },
-              { country: { contains: search as string, mode: 'insensitive' } }
-            ]
+              { title: iLike(search) },
+              matchedCategory ? { category: matchedCategory } : null,
+              { city: iLike(search) },
+              { state: iLike(search) },
+              { country: iLike(search) }
+            ].filter(Boolean)
           }
           : undefined,
 
         bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
         bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
         floors ? { floors: parseInt(floors as string) } : undefined,
-        category ? { contains: category as string, mode: 'insensitive' } : undefined,
-        state ? { contains: state as string, mode: 'insensitive' } : undefined,
-        city ? { contains: city as string, mode: 'insensitive' } : undefined,
-        country ? { contains: country as string, mode: 'insensitive' } : undefined,
-        neighborhood ? { contains: neighborhood as string, mode: 'insensitive' } : undefined,
-        amenities ? { contains: amenities as string, mode: 'insensitive' } : undefined,
-        features ? { contains: features as string, mode: 'insensitive' } : undefined,
+        category ? { category: category as PropertyCategory } : undefined,
 
+        state ? { state: iLike(state as string) } : undefined,
+        city ? { city: iLike(city as string) } : undefined,
+        country ? { country: iLike(country as string) } : undefined,
+        neighborhood ? { neighborhood: iLike(neighborhood as string) } : undefined,
 
+        amenitiesArray.length > 0 ? { amenities: { some: { name: { in: amenitiesArray } } } } : undefined,
+        featuresArray.length > 0 ? { features: { hasSome: featuresArray } } : undefined,
         salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
-        minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
-        maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+        (minPrice || maxPrice)
+          ? {
+
+            price: {
+              is: {
+                amount: {
+                  ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}),
+                  ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {})
+                }
+              }
+
+            }
+          }
+          : undefined,
       ].filter(Boolean) as prisma.PropertyWhereInput[]
     };
+
+
 
     const result = await swrCache(cacheKey, async () => {
       const [properties, total] = await Promise.all([

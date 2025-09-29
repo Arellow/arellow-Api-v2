@@ -18,19 +18,20 @@ export const createProjectSchema = Joi.object({
   state: Joi.string().required().min(1),
   city: Joi.string().required().min(1),
   neighborhood: Joi.string().required().min(1),
+  
+  bedrooms: Joi.number().positive().required().min(1),
+  bathrooms: Joi.number().positive().required().min(1),
+  floors: Joi.number().positive().required().min(1),
+  
 
-  bedrooms: Joi.string().required().min(1),
-  bathrooms: Joi.string().required().min(1),
+  price: Joi.object({
+    currency: Joi.string().required().min(1),
+    amount: Joi.number().positive().required()
+  }),
+
   squareMeters: Joi.string().required().min(1),
 
-  floors: Joi.string().required().min(1),
-   price: Joi.object({
-      currency: Joi.string().required().min(1),
-      amount: Joi.number().positive().required()
-    }),
-
-  // isFeatureProperty: Joi.boolean().required(),
-  yearBuilt: Joi.string().required().min(1),
+  yearBuilt: Joi.number().positive().required(),
  
    stagePrice: Joi.object({
       currency: Joi.string().required().min(1),
@@ -40,6 +41,18 @@ export const createProjectSchema = Joi.object({
   progress: Joi.string().required().valid(...Object.values(PropertyProgress)),
 });
 
+
+
+export const createPropertySchema = Joi.object({
+
+
+
+
+
+
+
+
+});
 
 
 
