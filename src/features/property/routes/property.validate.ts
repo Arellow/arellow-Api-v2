@@ -100,5 +100,28 @@ export const changeStatusSchema = Joi.object({
 
 
 
+export const PropertyStageMap: Record<string, string> = {
+  OffPlanStage: "Off-plan stage",
+  CarcassStage: "Carcass stage",
+  CompletionStage: "Completion stage",
+};
+
+export const PropertyProgressMap: Record<string, string> = {
+  Zero: "0% ongoing",
+  Ten: "10% ongoing",
+  Twenty: "20% ongoing",
+  Thirty: "30% ongoing",
+  Forty: "40% ongoing",
+  Fifty: "50% ongoing",
+  Sixty: "60% ongoing",
+  Seventy: "70% ongoing",
+  Eighty: "80% ongoing",
+  Ninety: "90% ongoing",
+  OneHundred: "100% ongoing",
+};
+
+
+
+
 
 

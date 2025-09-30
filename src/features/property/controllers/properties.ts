@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
-import { Prisma as prisma, PropertyCategory, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
+import { Prisma as prisma, PropertyCategory,  PropertyProgress,  PropertyStage,  PropertyStatus, SalesStatus } from '@prisma/client';
 import { DirectMediaUploader } from "../services/directMediaUploader";
 import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
@@ -11,6 +11,8 @@ import { MediaType } from '@prisma/client';
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
+import { mapEnumValue } from "../../../utils/enumMap";
+import { PropertyCategoryMap, PropertyProgressMap, PropertyStageMap } from "../routes/property.validate";
 
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
@@ -111,6 +113,14 @@ if(userId !== property.userId){
     });
 
     const totalViewsCount = totalViews._sum.viewsCount ?? 0;
+
+
+    property.stage = mapEnumValue(PropertyStageMap, property?.stage) as PropertyStage;
+    property.progress = mapEnumValue(PropertyProgressMap, property.progress) as PropertyProgress;
+    property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
+
+
+
 
     
 
@@ -507,7 +517,44 @@ if (userId) {
 
 };
 
+// enum PropertyStage {
+//   OffPlanStage    @map("Off-plan stage")
+//   CarcassStage    @map("Carcass stage")
+//   CompletionStage @map("Completion stage")
+// }
 
+// enum PropertyProgress {
+//   Zero       @map("0% ongoing")
+//   Ten        @map("10% ongoing")
+//   Twenty     @map("20% ongoing")
+//   Thirty     @map("30% ongoing")
+//   Forty      @map("40% ongoing")
+//   Fifty      @map("50% ongoing")
+//   Sixty      @map("60% ongoing")
+//   Seventy    @map("70% ongoing")
+//   Eighty     @map("80% ongoing")
+//   Ninety     @map("90% ongoing")
+//   OneHundred @map("100% ongoing")
+// }
+
+// enum PropertyCategory {
+//   Apartment
+//   Bungalow
+//   Duplex
+//   Detached_House         @map("Detached House")
+//   Semi_detached_House    @map("Semi-detached House")
+//   Mansion
+//   Penthouse
+//   Studio_Apartment       @map("Studio Apartment")
+//   Shared_Apartment       @map("Shared Apartment")
+//   Serviced_Apartment     @map("Serviced Apartment")
+//   Co_living_Space        @map("Co-living Space")
+//   Office_Space           @map("Office Space")
+//   Commercial_Property    @map("Commercial Property")
+//   Warehouse
+//   Short_let              @map("Short-let")
+//   Hostel_Student_Housing @map("Hostel / Student Housing")
+// }
 
 // for admin
 export const getAllProperties = async (req: Request, res: Response, next: NextFunction) => {
