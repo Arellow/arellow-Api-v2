@@ -12,6 +12,7 @@ import {
     markAsFeatureProperty,
     shareProperty,
     getProperties,
+    getAffordableProperties,
     // featureProperties,
     // recentProperties, 
     // sellingProperties,
@@ -42,6 +43,7 @@ propertyRoutes.get("/seed", getAllStates);
 // propertyRoutes.get("/featured", featureProperties);
 // propertyRoutes.get("/listing", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertiesListing);
 
+propertyRoutes.get("/affordable", getAffordableProperties);
 
 propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
     const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;

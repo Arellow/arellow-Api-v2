@@ -13,6 +13,7 @@ import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mapEnumValue } from "../../../utils/enumMap";
 import { PropertyCategoryMap, PropertyProgressMap, PropertyStageMap } from "../routes/property.validate";
+import { canUserAffordProperty } from "../../../utils/buyabilitycalculator";
 
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
@@ -118,10 +119,6 @@ if(userId !== property.userId){
     property.stage = mapEnumValue(PropertyStageMap, property?.stage) as PropertyStage;
     property.progress = mapEnumValue(PropertyProgressMap, property.progress) as PropertyProgress;
     property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
-
-
-
-
     
 
 const {user, ...other} = property;
@@ -516,6 +513,115 @@ if (userId) {
   }
 
 };
+
+
+
+export const getAffordableProperties = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+
+
+   const userId = req.user?.id;
+  try {
+   
+
+
+    const include: any = {
+  media: {
+    select: {
+      url: true,
+      altText: true,
+      type: true,
+      photoType: true,
+      sizeInKB: true
+    }
+  },
+  user: {
+    select: {
+      email: true,
+      fullname: true,
+      username: true,
+      is_verified: true,
+      avatar: true,
+      // approvedProperties: {
+      //   include: {
+      //     _count: true
+      //   }
+      // }
+    }
+  },
+  amenities: {
+    select: {
+      name: true,
+      photoUrl: true
+    }
+  }
+};
+
+// Only include likedBy if user is logged in
+if (userId) {
+  include.likedBy = {
+    where: {
+      userId: userId
+    },
+    select: {
+      id: true
+    }
+  };
+}
+
+
+
+
+
+    const downPayment = Number(req.query.downPayment) || 200_000;
+    const monthlyBudget = Number(req.query.monthlyPayment) || 100_000;
+
+    // Step 1: Get active properties (filter out archived or pending)
+    const properties = await Prisma.property.findMany({
+      where: {
+        archived: false,
+        status: 'APPROVED',
+        salesStatus: 'SELLING'
+      },
+     include,
+    });
+
+    // Step 2: Filter properties based on affordability
+    const affordableProperties = properties.filter(property =>
+      canUserAffordProperty({
+        price: property.price.amount,
+        downPayment,
+        monthlyBudget
+      })
+    );
+
+
+
+       const dataWithIsLiked = affordableProperties.map(({ likedBy, ...rest }) => ({
+  ...rest,
+  isLiked: Array.isArray(likedBy) && likedBy.length > 0
+  }));
+
+
+
+
+
+
+    // Step 3: Return response
+    new CustomResponse(200, true, "Affordable properties fetched", res, { data: dataWithIsLiked,});
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch affordable properties"));
+  }
+};
+
+
+
+
+
+
 
 // enum PropertyStage {
 //   OffPlanStage    @map("Off-plan stage")
