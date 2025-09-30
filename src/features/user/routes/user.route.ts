@@ -7,6 +7,8 @@ import {
   updateAvatar,
   updateNotificationSetting,
   requestReward,
+  allUsers,
+  allAdmins,
 } from "../controllers/user";
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
@@ -73,5 +75,7 @@ usersRoutes.get('/notifications', authenticate, userNotifications);
 usersRoutes.get('/notification/:id/detail', authenticate, notificationDetail);
 usersRoutes.delete('/notification/:id/delete', authenticate, notificationDelete);
 usersRoutes.post('/notification', validateSchema(createNotificationSchema), authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("SUPPORT"), createNotification);
+usersRoutes.get('/allusers', authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY", "PROJECT",), allUsers);
+usersRoutes.get('/alladmins', authenticate, isVerify, requireRole(UserRole.SUPER_ADMIN), allAdmins);
 
 export default usersRoutes;

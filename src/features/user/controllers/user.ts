@@ -234,3 +234,41 @@ export const requestReward = async (
 };
 
 
+
+
+export const allUsers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await Prisma.user.findMany({
+      where: {
+        role: {
+          notIn: ['ADMIN', 'SUPER_ADMIN'], 
+        },
+        is_verified: true,
+        suspended: false,
+      },
+      select: {avatar: true, id: true, fullname: true, username: true, role: true}
+    });
+
+    new CustomResponse(200, true, "Users fetched successfully", res, result);
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch users"));
+  }
+};
+
+export const allAdmins = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await Prisma.user.findMany({
+      where: {
+        role: {
+          notIn: ['DEVELOPER', 'BUYER', "REALTOR", "SUPER_ADMIN"], 
+        },
+      },
+      select: {avatar: true, id: true, fullname: true, username: true, role: true}
+    });
+
+    new CustomResponse(200, true, "Admins fetched successfully", res, result);
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch admins"));
+  }
+};
+
