@@ -108,67 +108,85 @@ export const propertyRequestDetail = async (req: Request, res: Response, next: N
   const cacheKey = `propertyRequests:${id}:${user}`;
 
   const cached = await redis.get(cacheKey);
-  if (cached) {
-    res.status(200).json({
-      success: true,
-      message: "successfully. from cache",
-      data: JSON.parse(cached)
-    });
-    return
-  }
+  // if (cached) {
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
 
   try {
 
-    const baseSelect = {
-      propertyAddress: true,
-      propertyCategory: true,
-      title: true,
-      features: true,
-      numberOfBedrooms: true,
-      numberOfBathrooms: true,
-      budget: true,
-      description: true,
-    };
+    // const baseSelect = {
+    //   propertyAddress: true,
+    //   propertyCategory: true,
+    //   title: true,
+    //   features: true,
+    //   numberOfBedrooms: true,
+    //   numberOfBathrooms: true,
+    //   budget: true,
+    //   description: true,
+    // };
 
 
-    const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
-      email: true,
-      phoneNumber: true,
-      userRole: true,
-      adminStatus: true,
-      createdBy: {
-        select: {
-          id: true,
-          fullname: true,
-          _count: {
-            select: {
-              propertyRequests: true
-            }
-          },
-          address: {
-            select: {
-              state: true
-            }
-          }
-        }
-      },
-      developerAssignments: {
-          select: {
-            developer: {
-              select: {
-                fullname: true
-              }
-            }
-          }
-        }
-    } : {};
+    // const adminSelect = (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") ? {
+    //   email: true,
+    //   phoneNumber: true,
+    //   userRole: true,
+    //   adminStatus: true,
+    //   createdBy: {
+    //     select: {
+    //       id: true,
+    //       fullname: true,
+    //       _count: {
+    //         select: {
+    //           propertyRequests: true
+    //         }
+    //       },
+    //       address: {
+    //         select: {
+    //           state: true
+    //         }
+    //       }
+    //     }
+    //   },
+    //   developerAssignments: {
+    //       select: {
+    //         developer: {
+    //           select: {
+    //             fullname: true
+    //           }
+    //         }
+    //       }
+    //     }
+    // } : {};
 
 
     const property = await Prisma.propertyRequest.findUnique({
       where: { id },
-      select: {
-        ...baseSelect,
-        ...adminSelect,
+      // select: {
+      //   ...baseSelect,
+      //   ...adminSelect,
+      // }
+      include: {
+        developerAssignments: true,
+        createdBy: {
+          select: {
+             address: true,   
+            id: true,
+           email: true,
+           fullname :true,
+           username: true,
+           phone_number: true,
+           role :true,
+           avatar:  true,
+           is_verified: true,
+           createdAt: true,
+           updatedAt: true,
+          }
+        }
       }
     });
 
@@ -214,21 +232,27 @@ export const propertyAssignDetail = async (req: Request, res: Response, next: Ne
 
     const property = await Prisma.developerAssignment.findUnique({
       where: { id },
-      select: {
-        status: true,
-        comment: true,
-        propertyRequest: {
-          select: {
-            propertyAddress: true,
-           propertyCategory: true,
-           features: true,
-          title: true,
-          numberOfBedrooms: true,
-          numberOfBathrooms: true,
-          budget: true,
-          description: true
-          }
-        }
+
+      // select: {
+      //   status: true,
+      //   comment: true,
+      //   propertyRequest: {
+      //     select: {
+      //       propertyAddress: true,
+      //      propertyCategory: true,
+      //      features: true,
+      //     title: true,
+      //     numberOfBedrooms: true,
+      //     numberOfBathrooms: true,
+      //     budget: true,
+      //     description: true
+      //     }
+      //   }
+      // }
+      include: {
+        assignedBy: true,
+        developer: true,
+        propertyRequest: true
       }
     });
 
