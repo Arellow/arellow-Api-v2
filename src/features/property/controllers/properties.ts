@@ -66,7 +66,10 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
             approvedProperties: {
               where: {archived: false, status: "APPROVED"},
               include: {
-                _count: true
+                _count: true,
+                amenities: true,
+                media: true,
+                
               }
             }
 
@@ -350,8 +353,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
 
-    const isFeatureProperty = req.query.isFeatureProperty === "true" ? true : false;
-    const is_Property_A_Project = req.query.is_Property_A_Project === "true" ? true : false;
+    const isFeatureProperty = req?.query?.isFeatureProperty === "true" ? true : false;
+    const is_Property_A_Project = req?.query?.is_Property_A_Project === "true" ? true : false;
 
 
     const cacheKey = `lastest:${userId}:${JSON.stringify(req.query)}`;
@@ -365,8 +368,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       status: "APPROVED",
-      ...isFeatureProperty && {isFeatureProperty},
-      ...is_Property_A_Project && {is_Property_A_Project},
+      ...req?.query?.isFeatureProperty && {isFeatureProperty},
+      ...req?.query?.is_Property_A_Project && {is_Property_A_Project},
       AND: [
         search
           ? {
