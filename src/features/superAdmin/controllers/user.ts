@@ -13,13 +13,15 @@ import { accountSuspendMailOption } from "../../../utils/mailer";
 
 export const getAllAdmins = async (req: Request, res: Response, next: NextFunction) => {
 
+      const role = req.query.role as UserRole;
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
     const search = (req.query.search as string) || "";
 
-    const cacheKey = `admins:${page}:${limit}:${search ? search : "all"}`;
+    const cacheKey = `admins:${page}:${limit}:${search ? search : "all"}:${role || "ALL"}`;
 
 
     try {
@@ -42,6 +44,7 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
                         ].filter(Boolean)
                       }
                       : undefined,
+                        role ? { role } : undefined,
             
                     
                   ].filter(Boolean) as prisma.UserWhereInput[]
@@ -107,7 +110,7 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
 
 export const getUsersController = async (req: Request, res: Response, next: NextFunction) => {
 
-    const allowedRoles: UserRole[] = ["REALTOR", "DEVELOPER", "BUYER", "ADMIN"];
+    
     const role = req.query.role as UserRole;
 
     const page = parseInt(req.query.page as string) || 1;
@@ -116,27 +119,11 @@ export const getUsersController = async (req: Request, res: Response, next: Next
 
     const search = (req.query.search as string) || "";
 
-    const cacheKey = `users:${page}:${limit}:${search}:${allowedRoles.includes(role) ? role : 'ALL'}`;
+    const cacheKey = `users:${page}:${limit}:${search}:${ role || 'ALL'}`;
 
 
     try {
-       
-            // const filters: prisma.UserWhereInput = {
-
-            //   AND: [
-            //     search
-            //       ? {
-            //         OR: [
-            //           { fullname: { contains: search as string, mode: 'insensitive' } },
-            //           { username: { contains: search as string, mode: 'insensitive' } },
-            //         ]
-            //       }
-            //       : undefined,
-        
-            //    allowedRoles.includes(role) ? { role } : { role: { in: allowedRoles } },
-               
-            //   ].filter(Boolean) as prisma.UserWhereInput[]
-            // };
+    
 
                const filters: prisma.UserWhereInput = {
                 role: {
@@ -154,9 +141,10 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                         ].filter(Boolean)
                       }
                       : undefined,
-            
-                    
-                  ].filter(Boolean) as prisma.UserWhereInput[]
+
+                    role ? { role } : undefined,
+                  
+                    ].filter(Boolean) as prisma.UserWhereInput[]
                 };
 
         const result = await swrCache(cacheKey, async () => {
