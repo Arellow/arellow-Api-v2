@@ -1966,6 +1966,10 @@ export const statusProperty = async (req: Request, res: Response, next: NextFunc
       },
     });
 
+     const cacheKey = `getPropertiesByUser:${userId}`
+        await deleteMatchingKeys(cacheKey);
+
+
     new CustomResponse(200, true, `status updated to ${salesStatus}`, res,);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
