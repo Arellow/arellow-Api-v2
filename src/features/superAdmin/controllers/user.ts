@@ -24,38 +24,47 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
 
     try {
 
-        const filters = search
-            ? {
-                user: {
-                    OR: [
+
+               const filters: prisma.UserWhereInput = {
+                role: {
+                    // notIn: 
+                    equals: "ADMIN"
+                },
+                 
+                  AND: [
+                    search
+                      ? {
+                        OR: [
                         { fullname: { contains: search, mode: "insensitive" }, },
                         { username: { contains: search, mode: "insensitive" }, },
-                    ].filter(Boolean) as prisma.UserWhereInput[],
-                }
-            }
-            : {};
+                        { email: { contains: search, mode: "insensitive" }, },
+                         
+                        ].filter(Boolean)
+                      }
+                      : undefined,
+            
+                    
+                  ].filter(Boolean) as prisma.UserWhereInput[]
+                };
+
 
         const result = await swrCache(cacheKey, async () => {
 
             const [data, total] = await Promise.all([
-                Prisma.adminPermission.findMany({
+                Prisma.user.findMany({
                     where: filters,
-                    include: {
-                        user: {
-                            select: {
-                                fullname: true,
-                                email: true,
-                                avatar: true,
-                                suspended: true
-                            }
-                        }
-
-                    },
+                     select: {
+                        id: true,
+                        fullname: true,
+                        email: true,
+                        avatar: true,
+                        suspended: true,
+                     },
                     skip,
                     take: limit,
                     // orderBy: { : "desc" },
                 }),
-                Prisma.adminPermission.count({ where: filters }),
+                Prisma.user.count({ where: filters }),
             ]);
 
             const totalPages = Math.ceil(total / limit);
@@ -112,22 +121,43 @@ export const getUsersController = async (req: Request, res: Response, next: Next
 
     try {
        
-            const filters: prisma.UserWhereInput = {
+            // const filters: prisma.UserWhereInput = {
 
-              AND: [
-                search
-                  ? {
-                    OR: [
-                      { fullname: { contains: search as string, mode: 'insensitive' } },
-                      { username: { contains: search as string, mode: 'insensitive' } },
-                    ]
-                  }
-                  : undefined,
+            //   AND: [
+            //     search
+            //       ? {
+            //         OR: [
+            //           { fullname: { contains: search as string, mode: 'insensitive' } },
+            //           { username: { contains: search as string, mode: 'insensitive' } },
+            //         ]
+            //       }
+            //       : undefined,
         
-               allowedRoles.includes(role) ? { role } : { role: { in: allowedRoles } },
+            //    allowedRoles.includes(role) ? { role } : { role: { in: allowedRoles } },
                
-              ].filter(Boolean) as prisma.UserWhereInput[]
-            };
+            //   ].filter(Boolean) as prisma.UserWhereInput[]
+            // };
+
+               const filters: prisma.UserWhereInput = {
+                role: {
+                    notIn: ["ADMIN", "SUPER_ADMIN"]
+                },
+                 
+                  AND: [
+                    search
+                      ? {
+                        OR: [
+                        { fullname: { contains: search, mode: "insensitive" }, },
+                        { username: { contains: search, mode: "insensitive" }, },
+                        { email: { contains: search, mode: "insensitive" }, },
+                         
+                        ].filter(Boolean)
+                      }
+                      : undefined,
+            
+                    
+                  ].filter(Boolean) as prisma.UserWhereInput[]
+                };
 
         const result = await swrCache(cacheKey, async () => {
 
@@ -139,6 +169,7 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                         fullname: true,
                         email: true,
                         phone_number: true,
+                        avatar: true,
                         role: true,
                         address: true,
                         kyc: {
