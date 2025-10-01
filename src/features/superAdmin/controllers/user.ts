@@ -172,6 +172,7 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                         avatar: true,
                         role: true,
                         address: true,
+                        suspended: true,
                         kyc: {
                             select: {
                                 status: true
@@ -287,8 +288,14 @@ export const suspendAdminStatus = async (req: Request, res: Response, next: Next
         const admin = await Prisma.user.findUnique({where: {id: userId}});
 
          if(!admin){
-            return next(new InternalServerError("Unauthorise", 403));
+            return next(new InternalServerError("invalid user", 403));
         }
+
+
+        await Prisma.user.update({
+            where: {id: userId},
+            data: {suspended: true}
+        })
 
     
         if(message){
@@ -304,7 +311,7 @@ export const suspendAdminStatus = async (req: Request, res: Response, next: Next
  
         await deleteMatchingKeys("admins:*");
 
-        new CustomResponse(200, true, "successfully", res);
+        new CustomResponse(200, true, "User suspended successfully", res);
 
     } catch (error) {
         next(new InternalServerError("Internal server error", 500));
