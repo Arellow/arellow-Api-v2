@@ -17,8 +17,8 @@ import { UserRole } from '@prisma/client';
     occupation: Joi.string().required().min(3),
     phonenumber: Joi.string().required().min(3),
     state: Joi.string().required().min(3),
-    employer_name: Joi.string().required().min(3),
-    level_of_employment: Joi.string().required().min(3)
+    employer_name: Joi.string().optional(),
+    level_of_employment: Joi.string().optional()
 });
 
 
