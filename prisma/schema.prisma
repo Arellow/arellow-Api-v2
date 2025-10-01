@@ -118,13 +118,13 @@ model User {
   properties         Property[] @relation("UserProperties")
   approvedProperties Property[] @relation("ApprovedProperties")
 
-  mortgage             MortgageCalculationDraft[]
-  Campaign             Campaign[]
-  preQualifications    PreQualification[]
+  mortgage          MortgageCalculationDraft[]
+  Campaign          Campaign[]
+  preQualifications PreQualification[]
   // featuredContributors BlogFeaturedContributor[]  @relation("UserFeaturedContributors")
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-  Blog                 Blog[]
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  Blog              Blog[]
 
   kyc             Kyc?
   tickets         Ticket[]
@@ -221,8 +221,8 @@ model Property {
   bathrooms    Int
   squareMeters String
 
-  floors     Int
-  price      PriceModel
+  floors Int
+  price  PriceModel
 
   yearBuilt  Int
   stage      PropertyStage?
@@ -242,7 +242,6 @@ model Property {
 
   viewsCount  Int @default(0)
   sharesCount Int @default(0)
-
 
   media       Media[]
   salesStatus SalesStatus @default(SELLING)
@@ -452,27 +451,6 @@ type PropertyAddress {
   location String
 }
 
-model PreQualification {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  name                String
-  role                String?
-  email               String
-  phone               String
-  home_address        String?
-  state               String
-  city                String
-  property_category   String
-  neighbourhood       String?
-  monthly_budget      Float
-  down_payment_goal   Float
-  business_or_civil   String?
-  employer_name       String?
-  level_of_employment String?
-  bank_name           String?
-  userId              String   @db.ObjectId
-  user                User     @relation(fields: [userId], references: [id])
-  createdAt           DateTime @default(now())
-}
 
 model MortgageCalculationDraft {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -518,22 +496,21 @@ model State {
 
 // -------------------------------------- Blog Start -------------------------------
 
-
 model Blog {
-  id                   String                    @id @default(auto()) @map("_id") @db.ObjectId
-  userId               String                    @db.ObjectId
-  user                 User                      @relation(fields: [userId], references: [id])
-  title                String
-  content              String
-  author               String
-  banner               String                   @db.String
-  socialMediaLinks     String[]                  @default([]) @db.String
-  tags                 String[]                  @default(["tech"])
-  category             BlogCategory              @default(INTERNAL)
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  isPublished          Boolean                   @default(false)
-  timeToRead           Int                       @default(5)
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String       @db.ObjectId
+  user             User         @relation(fields: [userId], references: [id])
+  title            String
+  content          String
+  author           String
+  banner           String       @db.String
+  socialMediaLinks String[]     @default([]) @db.String
+  tags             String[]     @default(["tech"])
+  category         BlogCategory @default(INTERNAL)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  isPublished      Boolean      @default(false)
+  timeToRead       Int          @default(5)
 
   // blogId    String   @db.ObjectId
   // contributors      BlogFeaturedContributor     @relation(fields: [blogId], references: [id])
@@ -563,16 +540,45 @@ enum BlogCategory {
 
 
 
-// -------------------------------------- Notification start -----------------------------
+// -------------------------------------- PreQualification start -----------------------------
+
+model PreQualification {
+  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+  fullname            String
+  email               String
+  phonenumber         String
+  occupation          String
+  home_address        String
+  state               String
+  city                String
+  neighbourhood       String
+  monthly_budget      Float
+  down_payment_goal   Float
+  employer_name       String?
+  level_of_employment String?
+  bank_name           String
+  status          PropertyStatus @default(PENDING)
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------------------------- PreQualification ends -----------------------------
+
+
+
+// -------------------------------------- Notification start --------------------------------
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
+  id        String               @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String               @db.ObjectId
   avatar    String?
   title     String
   message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  read      Boolean              @default(false)
+  createdAt DateTime             @default(now())
   category  NotificationCategory @default(GENERAL)
 }
 
@@ -586,6 +592,7 @@ enum NotificationCategory {
   ADMIN
   GENERAL
 }
+
 // -------------------------------------- Notification End -------------------------------
 
 // -------------------------------------- reward start -----------------------------

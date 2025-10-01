@@ -10,6 +10,7 @@ import advertRoutes from './advertiseWithUs/route';
 import projectRoutes from './project/routes/project.route';
 import propertyRequestRoutes from './requestProperties/routes/propertyrequest.route';
 import { sendMail } from '../utils/nodemailer';
+import prequalificationRoutes from './prequalify/route';
 const appRouter = express.Router();
 
 
@@ -23,6 +24,7 @@ const appRouter = express.Router();
  appRouter.use("/project",projectRoutes );
  appRouter.use("/advertiseMent", advertRoutes);
  appRouter.use("/propertyrequest", propertyRequestRoutes);
+ appRouter.use("/prequalification", prequalificationRoutes);
  appRouter.post("/send-email", sendMail);
 
 

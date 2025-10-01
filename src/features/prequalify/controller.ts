@@ -1,255 +1,224 @@
 import { Request, Response, NextFunction } from "express";
-import { PropertyService } from "./service";
 import { InternalServerError } from "../../lib/appError";
 import CustomResponse from "../../utils/helpers/response.util";
-import { PreQualificationDto } from "./dto";
 import { createPrequalificationMailOptions } from "../../utils/mailer";
 import { mailController } from "../../utils/nodemailer";
+import { Prisma } from "../../lib/prisma";
+import { deleteMatchingKeys, swrCache } from "../../lib/cache";
 
-const propertyService = new PropertyService();
+
 
 export const createPreQualification = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id as string;
-  const data: PreQualificationDto = req.body;
+) => {
+  const userId = req?.user?.id!;
 
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
+  const {
+    bank_name,
+    city,
+    down_payment_goal,
+    email,
+    fullname,
+    home_address,
+    monthly_budget,
+    neighbourhood,
+    occupation,
+    phonenumber,
+    state,
+    employer_name,
+    level_of_employment
+  } = req.body;
 
   try {
-    const result = await propertyService.createPreQualification(data, userId);
 
-    const userMailOptions = await createPrequalificationMailOptions(
-      data.email,
-      data.name,
-      data.email,
-      data.phone,
-      data.state,
-      data.city,
-      data.property_category,
-      data.neighbourhood || null,
-      data.monthly_budget,
-      data.down_payment_goal,
-      false
-    );
-  
+    const response = await Prisma.preQualification.create({
+      data: {
+        bank_name,
+        city,
+        down_payment_goal: Number(down_payment_goal),
+        email,
+        fullname,
+        home_address,
+        monthly_budget: Number(monthly_budget),
+        neighbourhood,
+        occupation,
+        phonenumber,
+        state,
+        employer_name,
+        level_of_employment,
+        userId,
+      },
+    });
+
+        const userMailOptions = await createPrequalificationMailOptions({email, fullname, isAdmin: false });
+
     mailController({from: "noreply@arellow.com", ...userMailOptions})
-    
 
-    // Email options for the admin
-    const adminMailOptions = await createPrequalificationMailOptions(
-      process.env.ADMIN_EMAIL || "",
-      data.name,
-      data.email,
-      data.phone,
-      data.state,
-      data.city,
-      data.property_category,
-      data.neighbourhood || null,
-      data.monthly_budget,
-      data.down_payment_goal,
-      true
-    );
-     mailController({from: "noreply@arellow.com", ...adminMailOptions})
-    
+    await deleteMatchingKeys("PreQualification:*");
 
     new CustomResponse(
       201,
       true,
-      "Pre-qualification request created successfully",
-      res,
-      result
-    );
-  } catch (error) {
-    console.error("Create pre-qualification request error:", error);
-    next(
-      new InternalServerError("Failed to create pre-qualification request.")
-    );
-  }
-};
-
-export const getAllPreQualifications = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id as string;
-  const { page, limit } = req.query;
-
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    const result = await propertyService.getAllPreQualifications(
-      userId,
-      page ? parseInt(page as string) : 1,
-      limit ? parseInt(limit as string) : 10
-    );
-    new CustomResponse(
-      200,
-      true,
-      "Pre-qualification requests fetched successfully",
-      res,
-      result
-    );
-  } catch (error) {
-    console.error("Get all pre-qualification requests error:", error);
-    next(
-      new InternalServerError("Failed to fetch pre-qualification requests.")
-    );
-  }
-};
-
-export const getPreQualificationById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id as string;
-  const { id } = req.params;
-
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
-
-  if (!id) {
-    res.status(400).json({
-      status: "failed",
-      message: "Pre-qualification request ID is required",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    const result = await propertyService.getPreQualificationById(id, userId);
-    if (!result) {
-      res.status(404).json({
-        status: "failed",
-        message: "Pre-qualification request not found",
-        succeeded: false,
-      });
-      return;
-    }
-    new CustomResponse(
-      200,
-      true,
-      "Pre-qualification request fetched successfully",
-      res,
-      result
-    );
-  } catch (error) {
-    console.error("Get pre-qualification request error:", error);
-    next(new InternalServerError("Failed to fetch pre-qualification request."));
-  }
-};
-
-export const updatePreQualification = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id as string;
-  const { id } = req.params;
-  const data: Partial<PreQualificationDto> = req.body;
-
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
-
-  if (!id) {
-    res.status(400).json({
-      status: "failed",
-      message: "Pre-qualification request ID is required",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    const result = await propertyService.updatePreQualification(
-      id,
-      data,
-      userId
-    );
-    new CustomResponse(
-      200,
-      true,
-      "Pre-qualification request updated successfully",
-      res,
-      result
-    );
-  } catch (error) {
-    console.error("Update pre-qualification request error:", error);
-    next(
-      new InternalServerError("Failed to update pre-qualification request.")
-    );
-  }
-};
-
-export const deletePreQualification = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const userId = req.user?.id as string;
-  const { id } = req.params;
-
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
-    });
-    return;
-  }
-
-  if (!id) {
-    res.status(400).json({
-      status: "failed",
-      message: "Pre-qualification request ID is required",
-      succeeded: false,
-    });
-    return;
-  }
-
-  try {
-    await propertyService.deletePreQualification(id, userId);
-    new CustomResponse(
-      200,
-      true,
-      "Pre-qualification request deleted successfully",
+      "Pre-Qualification successfully",
       res
     );
   } catch (error) {
-    console.error("Delete pre-qualification request error:", error);
-    next(
-      new InternalServerError("Failed to delete pre-qualification request.")
-    );
+    next(new InternalServerError("Pre-Qualification  request failed"));
   }
 };
+
+
+
+export const preQualificationDetail = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const user = req?.user
+
+  // const cacheKey = `PreQualification:${id}:${user}`;
+
+  // const cached = await redis.get(cacheKey);
+  // if (cached) {
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "successfully. from cache",
+  //     data: JSON.parse(cached)
+  //   });
+  //   return
+  // }
+
+  try {
+
+   
+
+
+    const response = await Prisma.preQualification.findUnique({
+      where: { id },
+      include: {
+        user: {
+          omit: {
+            password: true,
+
+
+          }
+        }
+      }
+    });
+
+
+    if (!response) {
+      return next(new InternalServerError("Pre qualification not found", 404));
+    }
+
+
+    new CustomResponse(200, true, "successfully", res, response);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+
+
+};
+
+
+export const preQualificationStatus = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const {status} = req.body;
+ 
+  try {
+
+   
+    const response = await Prisma.preQualification.findUnique({where: { id }});
+
+
+    if (!response) {
+      return next(new InternalServerError("Pre qualification not found", 404));
+    }
+
+
+    await Prisma.preQualification.update({
+      where: {id},
+      data: {status}
+    })
+
+
+
+
+    new CustomResponse(200, true, "successfully", res, response);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+
+
+};
+
+
+
+
+export const getPreQualifications = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+
+    const {
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+
+    const cacheKey = `PreQualification:${JSON.stringify(req.query)}`;
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [prequalification, total] = await Promise.all([
+        Prisma.preQualification.findMany({
+          where: {},
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                avatar: true,
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.preQualification.count({ where: {} })
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+      return {
+        data: prequalification,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+
+  }
+
+};
+
+
+
