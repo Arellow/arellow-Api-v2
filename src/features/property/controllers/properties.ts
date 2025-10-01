@@ -235,7 +235,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
 
     const result = await swrCache(cacheKey, async () => {
-      const [properties, total] = await Promise.all([
+      const [properties, total, allListed, propertySelling, propertySold] = await Promise.all([
         Prisma.property.findMany({
           where: filters,
           include: {
@@ -283,7 +283,11 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
           skip: (pageNumber - 1) * pageSize,
           take: pageSize
         }),
-        Prisma.property.count({ where: filters })
+        Prisma.property.count({ where: filters }),
+
+        Prisma.property.count({ where: {userId, status: "APPROVED", archived: false} }),
+        Prisma.property.count({ where: {userId, salesStatus: "SELLING", status: "APPROVED", archived: false} }),
+        Prisma.property.count({ where: {userId, salesStatus: "SOLD", status: "APPROVED", archived: false} }),
       ]);
 
       const totalPages = Math.ceil(total / pageSize);
@@ -298,6 +302,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
       return {
         data: dataWithIsLiked,
+        stat: {allListed, propertySelling, propertySold},
         pagination: {
           total,
           page: pageNumber,
