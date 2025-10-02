@@ -238,7 +238,6 @@ export const createKyc = async (
                 return next(new InternalServerError(error.response?.data?.message, error.response?.status));
             }
 
-            console.log({error})
 
             const status = error.response?.status || 500;
             let errormessage = error.response?.data?.message || 'verification failed';

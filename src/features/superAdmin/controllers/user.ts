@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../../lib/prisma";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { actionRole, Prisma as prisma, UserRole } from "@prisma/client";
+import { actionRole, KycDocumentType, KycStatus, Prisma as prisma, UserRole } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { DuplicateError, InternalServerError } from "../../../lib/appError";
@@ -291,6 +291,37 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
         AdminPermission: {connect: {id: adminPermission.id}}
       }
     });
+
+
+
+      const kycPayload = {
+                    userId: newUser.id,
+                    documentType: KycDocumentType.NIN,
+                    status: KycStatus.VERIFIED,
+                    documentNumber: "12345",
+                    documentPhoto: "",
+                    tryCount: 1,
+                    ninData: {
+                        nin: "12345",
+                        firstname: "Arellow",
+                        lastname: "Arellow",
+                        middlename: "Arellow",
+                        phone: "",
+                        gender: "N/A",
+                        birthdate: "",
+                        photo: "",
+                        residence: {
+                            address1: "",
+                            town: "",
+                            lga: "",
+                            state: ""
+                        } 
+                       
+                    }
+                };
+    
+               
+     await Prisma.kyc.create({ data: kycPayload });
 
     
 
