@@ -62,6 +62,9 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
                         email: true,
                         avatar: true,
                         suspended: true,
+                        AdminPermission: {
+                            select: {action: true}
+                        }
                      },
                     skip,
                     take: limit,
