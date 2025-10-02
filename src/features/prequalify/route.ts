@@ -26,9 +26,9 @@ import { UserRole } from '@prisma/client';
 const prequalificationRoutes = express.Router();
 
 prequalificationRoutes.post("/", authenticate,  validateSchema(createPrequalificationSchema), createPreQualification);
-prequalificationRoutes.patch("/", authenticate, authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("MORGAGE"), preQualificationStatus);
+prequalificationRoutes.patch("/", authenticate, authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("MORTGAGE"), preQualificationStatus);
 prequalificationRoutes.get("/:id", authenticate, preQualificationDetail);
-prequalificationRoutes.get("/",authenticate, authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("MORGAGE"), getPreQualifications);
+prequalificationRoutes.get("/",authenticate, authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("MORTGAGE"), getPreQualifications);
 
 
 
