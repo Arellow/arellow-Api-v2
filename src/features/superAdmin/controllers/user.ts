@@ -258,6 +258,7 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
         email,
         password: hashedPassword,
         phone_number: cleanedPhoneNumber,
+        is_verified: true,
         role: "ADMIN",
         fullname,
         address: {
@@ -404,7 +405,7 @@ export const addAdminRole = async (req: Request, res: Response, next: NextFuncti
 
     await deleteMatchingKeys("admins:*")
 
-     new CustomResponse(200, true, "Admin added", res,);
+     new CustomResponse(200, true, "Admin role updated", res,);
 
     } catch (error) {
         next(new InternalServerError("Internal server error", 500));
