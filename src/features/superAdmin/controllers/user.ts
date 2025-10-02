@@ -343,14 +343,16 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
 }
 
 export const addAdminRole = async (req: Request, res: Response, next: NextFunction) => {
-    const {email, action}: {email:  string, action: actionRole[]}  = req.body;
+    const userId = req.params.userId as string;
+    const { action}: {email:  string, action: actionRole[]}  = req.body;
 
     const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+
 
     try {
 
          const user = await Prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { id: userId},
       include: {
         kyc: true
       }

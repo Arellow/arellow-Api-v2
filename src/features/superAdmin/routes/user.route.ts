@@ -9,7 +9,7 @@ import { validateSchema } from '../../../middlewares/propertyParsingAndValidatio
 const userRoutes =  express.Router();
 //User management routes
 userRoutes.get("/users",authenticate, requireRole(UserRole.SUPER_ADMIN), getUsersController );
-userRoutes.put("/:userId/role", validateSchema(addAdminSchema),authenticate,  requireRole(UserRole.SUPER_ADMIN),  addAdminRole);
+userRoutes.put("/:userId/role", authenticate,  requireRole(UserRole.SUPER_ADMIN),  addAdminRole);
 userRoutes.patch("/:userId/suspend", validateSchema(addAdminSchema),authenticate,  requireRole(UserRole.SUPER_ADMIN),  suspendAdminStatus);
 userRoutes.get("/admins",authenticate, requireRole(UserRole.SUPER_ADMIN), getAllAdmins );
 userRoutes.post("/createadmin",authenticate, requireRole(UserRole.SUPER_ADMIN), createAdmin );
