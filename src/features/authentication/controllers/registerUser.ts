@@ -50,4 +50,21 @@ export class RegisterController {
       // }
     }
   }
+
+
+  static async registerAdmin(req: Request, res: Response, next: NextFunction){
+
+    try {
+      
+    } catch (error) {
+      
+    }
+
+  }
+
+
+
 }
+
+
+

@@ -19,7 +19,8 @@ export const userResponse = async({ res, user, message }: { res: Response, user:
         role: user.role,
         kyc: user.kyc,
         suspended: user.suspended,
-        address: user.address
+        address: user.address,
+        AdminPermission: user?.AdminPermission?.action  || []
 
     };
 

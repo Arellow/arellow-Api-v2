@@ -1781,6 +1781,7 @@ export const archiveProperty = async (req: Request, res: Response, next: NextFun
       where: { id },
       data: { archived: true, status: PropertyStatus.TRASHED },
     });
+    
 
     await deleteMatchingKeys(`property:${id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);

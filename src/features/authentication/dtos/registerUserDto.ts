@@ -1,4 +1,4 @@
-import {  UserRole, PropertyAddress } from "@prisma/client";
+import {  UserRole, PropertyAddress, actionRole } from "@prisma/client";
 
 
 export interface RegisterDTO {
@@ -26,6 +26,8 @@ export interface UserResponseDTO {
   role: UserRole,
   kyc?: any,
   address: PropertyAddress | null
+   AdminPermission:  any
+    
 
 }
 

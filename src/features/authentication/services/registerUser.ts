@@ -60,6 +60,11 @@ export class AuthService {
           select: {
             status: true
           }
+        },
+        AdminPermission: {
+          select: {
+            action: true
+          }
         }
       }
     });

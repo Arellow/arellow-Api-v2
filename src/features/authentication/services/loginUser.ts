@@ -19,6 +19,11 @@ export class AuthService {
             status: true
           }
         }, 
+        AdminPermission: {
+          select: {
+            action: true
+          }
+        }
       },
       
     });
@@ -29,6 +34,7 @@ export class AuthService {
     if (!passwordMatch) {
       throw new UnAuthorizedError("Invalid credentials.");
     }
+
 
     return user;
 

@@ -5,10 +5,10 @@ import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { actionRole, Prisma as prisma, UserRole } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
-import { InternalServerError } from "../../../lib/appError";
+import { DuplicateError, InternalServerError } from "../../../lib/appError";
 import { mailController } from "../../../utils/nodemailer";
 import { accountSuspendMailOption } from "../../../utils/mailer";
-
+import bcrypt from "bcryptjs";
 
 
 export const getAllAdmins = async (req: Request, res: Response, next: NextFunction) => {
@@ -214,7 +214,98 @@ export const getUsersController = async (req: Request, res: Response, next: Next
 };
 
 
-export const addAdmin = async (req: Request, res: Response, next: NextFunction) => {
+export const createAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    const {email, action, username, password, phone_number, fullname
+
+
+    }: {email:  string, action: actionRole[], username: string, password:  string, phone_number: {phone: string, country: string}, fullname: string}  = req.body;
+
+    const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+
+
+    try {
+
+
+     const existingUser = await Prisma.user.findUnique({
+      where: { email },
+    });
+
+    const existingUserName = await Prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUser) {
+      return next(new DuplicateError("Email already exists."));
+     
+    }
+
+    if (existingUserName) {
+      return next(new DuplicateError("User name already exists."));
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const cleanedPhoneNumber = phone_number.phone.replace(/[^\d+]/g, '');
+
+    const newUser = await Prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        phone_number: cleanedPhoneNumber,
+        role: "ADMIN",
+        fullname,
+        address: {
+          country: phone_number.country,
+          city: "",
+          location: "",
+          state: ""
+        },
+        setting: {
+          emailNotification: true,
+          pushNotification: true,
+          smsNotification: false
+        }
+      }
+    });
+
+
+
+     if (!newUser) {
+      return next(new InternalServerError("Admin registration failed", 500));
+    }
+
+
+
+   const adminPermission =  await Prisma.adminPermission.create({
+             data: {
+                 userId: newUser.id,
+                 action: parsedAction,
+                 
+             }
+         })
+
+         await Prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        AdminPermission: {connect: {id: adminPermission.id}}
+      }
+    });
+
+    
+
+
+    await deleteMatchingKeys("admins:*")
+
+     new CustomResponse(200, true, "Admin added", res,);
+
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
+    }
+
+}
+
+export const addAdminRole = async (req: Request, res: Response, next: NextFunction) => {
     const {email, action}: {email:  string, action: actionRole[]}  = req.body;
 
     const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
@@ -240,21 +331,40 @@ export const addAdmin = async (req: Request, res: Response, next: NextFunction) 
         return next(new InternalServerError("User kyc is not verify", 403));
     }
 
-    await Prisma.adminPermission.create({
-        data: {
-            userId: user.id,
-            action: parsedAction
-        }
-    })
 
 
-    if(user.role !== UserRole.ADMIN){
-        await Prisma.user.update({
-            where: {id: user.id},
-            data: {role: UserRole.ADMIN}
-        })
+  const  isAdminPermission =   await Prisma.adminPermission.findUnique({
+        where: {userId: user.id}
+     })
 
-    }
+     if(isAdminPermission) {
+         await Prisma.adminPermission.update({
+            where: {userId: user.id},
+             data: {
+                 action: parsedAction
+             }
+         })
+
+     } else {
+         await Prisma.adminPermission.create({
+             data: {
+                 userId: user.id,
+                 action: parsedAction
+             }
+         })
+
+     }
+
+
+
+
+    // if(user.role !== UserRole.ADMIN){
+    //     await Prisma.user.update({
+    //         where: {id: user.id},
+    //         data: {role: UserRole.ADMIN}
+    //     })
+
+    // }
 
     await deleteMatchingKeys("admins:*")
 
