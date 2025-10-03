@@ -139,6 +139,21 @@ model User {
   rewardHistories RewardHistory[]
   rewardRequests  RewardRequest[]
   setting         Setting?
+
+
+
+
+  // Chat relations
+  chatParticipants ChatParticipant[]
+  messages         Message[] @relation("UserMessages")
+
+  // Video meetings
+  organizerMeetings   VideoMeeting[] @relation("OrganizerMeetings")
+  participantMeetings VideoMeeting[] @relation("ParticipantMeetings")
+
+
+
+  
 }
 
 type Setting {
@@ -174,6 +189,7 @@ enum actionRole {
   CAMPAIGN
   REWARD
   SUPPORT
+  USER
 }
 
 model Ticket {
@@ -252,6 +268,11 @@ model Property {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+
+  // chat start here
+   chats     Chat[]
+   
 }
 
 enum SalesStatus {
@@ -631,3 +652,85 @@ model RewardRequest {
 }
 
 //-------------------------- reward ends ------------------------------
+
+
+
+
+
+//-------------------------- Chat Start ------------------------------
+
+
+
+model Chat {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  propertyId   String?         @db.ObjectId
+  property     Property?       @relation(fields: [propertyId], references: [id])
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model ChatParticipant {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId     String   @db.ObjectId
+  chat       Chat     @relation(fields: [chatId], references: [id])
+
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+
+  lastReadAt DateTime?
+}
+
+model Message {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  content         String?
+  type            MessageType @default(TEXT)
+
+  attachmentUrl   String?
+  attachmentMime  String?
+  attachmentName  String?
+  attachmentSize  Int?
+
+  chatId    String   @db.ObjectId
+  chat      Chat     @relation(fields: [chatId], references: [id])
+
+  senderId  String   @db.ObjectId
+  sender    User     @relation("UserMessages", fields: [senderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+
+model VideoMeeting {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  title         String?
+  scheduledAt   DateTime
+  status        MeetingStatus @default(SCHEDULED)
+
+  organizerId   String        @db.ObjectId
+  organizer     User          @relation("OrganizerMeetings", fields: [organizerId], references: [id])
+
+  participantId String        @db.ObjectId
+  participant   User          @relation("ParticipantMeetings", fields: [participantId], references: [id])
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}

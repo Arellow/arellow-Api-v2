@@ -296,13 +296,19 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
                     select: {
                         createdAt: true,
                         phone_number: true,
-                        email: true
+                        email: true,
+                        fullname: true,
+                        avatar: true,
+                        
+
                     }
 
                 }
             }
         });
 
+
+        // user. lastSeen: onlineUsers.has(id) ? null : userLastSeen.get(id) ?? null,
 
 
         if (!user) {
@@ -636,7 +642,8 @@ export const rejectKyc = async (req: Request, res: Response, next: NextFunction)
         await Prisma.kyc.update({
             where: { id },
             data: {
-                status: "REJECTED"
+                status: "REJECTED",
+                statusText: rejectionReason
             }
         });
 
