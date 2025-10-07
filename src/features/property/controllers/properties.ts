@@ -63,6 +63,8 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
             is_verified: true,
             avatar: true,
             createdAt: true,
+            lastSeen: true,
+            online: true,
             approvedProperties: {
               where: {archived: false, status: "APPROVED"},
               include: {
@@ -256,12 +258,6 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
                 username: true,
                 is_verified: true,
                 avatar: true,
-                // approvedProperties: {
-                //   include: {
-                //     _count: true
-                //   }
-                // }
-
               }
             },
             amenities: {

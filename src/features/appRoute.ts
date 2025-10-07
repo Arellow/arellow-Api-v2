@@ -17,7 +17,7 @@ const appRouter = express.Router();
 
  appRouter.use("/auth", authRoutes);
  appRouter.use("/user", usersRoutes);
- appRouter.use("/reward", rewardRoutes);
+ appRouter.use("/rewards", rewardRoutes);
  appRouter.use("/superAdmin", userRoutes);
 //  appRouter.use("/blog",blogRoutes );
  appRouter.use("/campaign",campaignRoutes );
@@ -26,7 +26,7 @@ const appRouter = express.Router();
  appRouter.use("/advertiseMent", advertRoutes);
  appRouter.use("/propertyrequest", propertyRequestRoutes);
  appRouter.use("/prequalification", prequalificationRoutes);
- appRouter.use("/chats", chatRoutes);
+ appRouter.use("/chat", chatRoutes);
  appRouter.post("/send-email", sendMail);
 
 

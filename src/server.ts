@@ -48,22 +48,21 @@ import { PORT } from "./utils/constants.util";
 import indexMiddleware from "./middlewares/index.middleware";
 import errorHandler from "./middlewares/errors.middleware";
 import { isLoginUser } from "./middlewares/auth.middleware";
-import { setupSocket } from "./socketServer";
+import { initSocketIO } from "./features/userchat/route/socketServer";
 
 
 const app = express();
-const httpServer = http.createServer(app);
 
-// ✅ Setup socket.io
-const io = setupSocket(httpServer);
-export { io }; // so you can use it in controllers if needed
+const server = http.createServer(app);
+
+// assign user to API routes
+app.use(isLoginUser)
+
+// Attach socket.io
+initSocketIO(server);
 
 
-// Protected API routes
-app.use("/api", isLoginUser);
-
-
-// ✅ Middlewares
+// Middlewares
 indexMiddleware(app);
 
 // Public route
@@ -76,26 +75,21 @@ app.get("/", (req, res) => {
 // Custom error handling middleware
 app.use(errorHandler);
 
-// ✅ Server Start
+// erver Start
 (async () => {
   logger.info(`Attempting to run server on port ${PORT}`);
 
-  httpServer.listen(PORT, () => {
-    logger.info(`🚀 Listening on port ${PORT}`);
+  server.listen(PORT, () => {
+    logger.info(`Listening on port ${PORT}`);
   });
 })();
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
   logger.info("Shutting down gracefully...");
-  httpServer.close();
+  server.close();
   process.exit(0);
 });
 
 export default app;
-
-
-
-
-
 

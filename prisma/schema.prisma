@@ -35,6 +35,7 @@ enum UserPhotoType {
   PROFILE
   KYC
   TICKET
+  CHAT
 }
 
 model UserMedia {
@@ -143,17 +144,15 @@ model User {
 
 
 
-  // Chat relations
-  chatParticipants ChatParticipant[]
-  messages         Message[] @relation("UserMessages")
+  // Chat relations 
 
-  // Video meetings
-  organizerMeetings   VideoMeeting[] @relation("OrganizerMeetings")
-  participantMeetings VideoMeeting[] @relation("ParticipantMeetings")
+conversationIds String[] @db.ObjectId
+  conversations   Conversation[] @relation("UserConversations", fields: [conversationIds], references: [id])
 
+  online     Boolean @default(false)
+  lastSeen   DateTime?
 
-
-  
+  message Message[]
 }
 
 type Setting {
@@ -270,9 +269,9 @@ model Property {
   updatedAt DateTime @updatedAt
 
 
-  // chat start here
-   chats     Chat[]
-   
+  // chat  start here
+  messages  Message[]
+
 }
 
 enum SalesStatus {
@@ -353,6 +352,8 @@ enum MediaType {
   PHOTO
   VIDEO
   TOUR_3D
+  AUDIO
+  FILE
 }
 
 enum PhotoType {
@@ -657,80 +658,143 @@ model RewardRequest {
 
 
 
-//-------------------------- Chat Start ------------------------------
+//-------------------------- old Chat Start ------------------------------
 
 
 
-model Chat {
-  id           String          @id @default(auto()) @map("_id") @db.ObjectId
-  propertyId   String?         @db.ObjectId
-  property     Property?       @relation(fields: [propertyId], references: [id])
+// model Chat {
+//   id           String          @id @default(auto()) @map("_id") @db.ObjectId
+//   propertyId   String?         @db.ObjectId
+//   property     Property?       @relation(fields: [propertyId], references: [id])
 
-  participants ChatParticipant[]
-  messages     Message[]
+//   participants ChatParticipant[]
+//   messages     Message[]
 
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-}
+//   createdAt    DateTime        @default(now())
+//   updatedAt    DateTime        @updatedAt
+// }
 
-model ChatParticipant {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  chatId     String   @db.ObjectId
-  chat       Chat     @relation(fields: [chatId], references: [id])
+// model ChatParticipant {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   chatId     String   @db.ObjectId
+//   chat       Chat     @relation(fields: [chatId], references: [id])
 
-  userId     String   @db.ObjectId
-  user       User     @relation(fields: [userId], references: [id])
+//   userId     String   @db.ObjectId
+//   user       User     @relation(fields: [userId], references: [id])
 
-  lastReadAt DateTime?
-}
+//   lastReadAt DateTime?
+// }
 
-model Message {
-  id              String      @id @default(auto()) @map("_id") @db.ObjectId
-  content         String?
-  type            MessageType @default(TEXT)
+// model Message {
+//   id              String      @id @default(auto()) @map("_id") @db.ObjectId
+//   content         String?
+//   type            MessageType @default(TEXT)
 
-  attachmentUrl   String?
-  attachmentMime  String?
-  attachmentName  String?
-  attachmentSize  Int?
+//   attachmentUrl   String?
+//   attachmentMime  String?
+//   attachmentName  String?
+//   attachmentSize  Int?
 
-  chatId    String   @db.ObjectId
-  chat      Chat     @relation(fields: [chatId], references: [id])
+//   chatId    String   @db.ObjectId
+//   chat      Chat     @relation(fields: [chatId], references: [id])
 
-  senderId  String   @db.ObjectId
-  sender    User     @relation("UserMessages", fields: [senderId], references: [id])
+//   senderId  String   @db.ObjectId
+//   sender    User     @relation("UserMessages", fields: [senderId], references: [id])
 
-  createdAt DateTime @default(now())
-}
+//   createdAt DateTime @default(now())
+//   status    MessageStatus @default(SENT)
+// }
+
+// enum MessageType {
+//   TEXT
+//   IMAGE
+//   VIDEO
+//   AUDIO
+//   FILE
+// }
+
+
+// enum MessageStatus {
+//   SENT
+//   DELIVERED
+//   READ
+// }
+
+
+// model VideoMeeting {
+//   id            String        @id @default(auto()) @map("_id") @db.ObjectId
+//   title         String?
+//   scheduledAt   DateTime
+//   status        MeetingStatus @default(SCHEDULED)
+
+//   organizerId   String        @db.ObjectId
+//   organizer     User          @relation("OrganizerMeetings", fields: [organizerId], references: [id])
+
+//   participantId String        @db.ObjectId
+//   participant   User          @relation("ParticipantMeetings", fields: [participantId], references: [id])
+
+//   createdAt     DateTime      @default(now())
+//   updatedAt     DateTime      @updatedAt
+// }
+
+// enum MeetingStatus {
+//   SCHEDULED
+//   ONGOING
+//   COMPLETED
+//   CANCELLED
+// }
+
+
+// ..............................old chat stop here .................................
+
+
+// ..............................new chat start .........................
 
 enum MessageType {
   TEXT
-  IMAGE
-  VIDEO
+  PHOTO
   AUDIO
+  VOICE_RECORDING
+  VIDEO
   FILE
+  PROPERTY_SHARE
+  VIDEO_CALL_SCHEDULE
 }
 
 
-model VideoMeeting {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  title         String?
-  scheduledAt   DateTime
-  status        MeetingStatus @default(SCHEDULED)
+model Conversation {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  type        String    @default("ONE_ON_ONE") // ONE_ON_ONE or GROUP
+  userIds     String[]  @db.ObjectId  // Explicit: List of user IDs
+  users       User[]    @relation("UserConversations", fields: [userIds], references: [id])
+  lastMessage String?   // ID of the last message for sorting
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  organizerId   String        @db.ObjectId
-  organizer     User          @relation("OrganizerMeetings", fields: [organizerId], references: [id])
+  messages Message[]
 
-  participantId String        @db.ObjectId
-  participant   User          @relation("ParticipantMeetings", fields: [participantId], references: [id])
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  @@map("conversations")
 }
 
-enum MeetingStatus {
-  SCHEDULED
-  ONGOING
-  COMPLETED
-  CANCELLED
+model Message {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  content         String?          // Text or URL for media
+  type            MessageType
+  conversationId  String           @db.ObjectId
+  senderId        String           @db.ObjectId
+  propertyId      String?          @db.ObjectId // For PROPERTY_SHARE
+  videoCallDetails Json?           // For VIDEO_CALL_SCHEDULE: { date: DateTime, duration: Int, link: String }
+  readByIds       String[]         @db.ObjectId  // Explicit: List of user IDs who read it
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender        User         @relation(fields: [senderId], references: [id])
+  property      Property?    @relation(fields: [propertyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("messages")
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([readByIds])
 }
