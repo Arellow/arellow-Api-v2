@@ -5,6 +5,7 @@ import CustomResponse from "../../../utils/helpers/response.util";
 import { swrCache } from "../../../lib/cache";
 import { Notification } from "@prisma/client";
 import { format, isToday, isYesterday } from "date-fns";
+import { processImage } from "../../../utils/imagesprocess";
 
 
 
@@ -157,29 +158,66 @@ export const notificationDelete = async(req: Request, res: Response, next: NextF
 
 
 export const createNotification = async (req: Request, res: Response, next: NextFunction) => {
-  const { message, title } = req.body;
+  const { message, title , type, target} = req.body;
 
+
+ const parsedtype: string[] = typeof type === 'string' ? JSON.parse(type) : type;
+// 
   try {
 
-    const users = await Prisma.user.findMany();
 
-    if (!users || users.length === 0) {
-      return next(new InternalServerError("No users found", 404));
-    }
+     let avatar = "";
+      
+          if (req.file) {
+      
+            avatar = await processImage({
+              folder: "notification_container",
+              image: req.file,
+              photoType: "NOTIFICATION",
+              type: "PHOTO"
+            });
+      
+          }
 
-    const notifications = users.map(user => {
-      return Prisma.notification.create({
-        data: {
-          message,
-          title,
-          userId: user.id,
-          category: "GENERAL"
-        },
+   
+    if(parsedtype.includes("notification")){
+      const users = await Prisma.user.findMany({
+        where: {role: target}
       });
-    });
+  
+      if (!users || users.length === 0) {
+        return next(new InternalServerError("No users found", 404));
+      }
+
+
+      
 
   
-    await Promise.all(notifications);
+      const notifications = users.map(user => {
+        return Prisma.notification.create({
+          data: {
+            message,
+            title,
+            userId: user.id,
+            category: "GENERAL",
+            avatar: avatar || ""
+          },
+        });
+      });
+  
+    
+      await Promise.all(notifications);
+
+    }
+
+
+
+     if(parsedtype.includes("email")){
+
+
+
+     }
+
 
     return new CustomResponse(200, true, "Notifications sent to all users", res);
   } catch (error) {
@@ -263,3 +301,5 @@ export const userNotificationsForMobile = async (
     next(new InternalServerError("Failed to fetch notifications"));
   }
 };
+
+

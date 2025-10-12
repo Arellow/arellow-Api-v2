@@ -20,7 +20,7 @@ const appRouter = express.Router();
  appRouter.use("/rewards", rewardRoutes);
  appRouter.use("/superAdmin", userRoutes);
 //  appRouter.use("/blog",blogRoutes );
- appRouter.use("/campaign",campaignRoutes );
+ appRouter.use("/campaigns",campaignRoutes );
  appRouter.use("/properties",propertyRoutes );
  appRouter.use("/project",projectRoutes );
  appRouter.use("/advertiseMent", advertRoutes);

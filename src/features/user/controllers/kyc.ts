@@ -299,6 +299,8 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
                         email: true,
                         fullname: true,
                         avatar: true,
+                        lastSeen: true,
+                        online: true
                         
 
                     }
@@ -308,7 +310,7 @@ export const kycDetail = async (req: Request, res: Response, next: NextFunction)
         });
 
 
-        // user. lastSeen: onlineUsers.has(id) ? null : userLastSeen.get(id) ?? null,
+    
 
 
         if (!user) {

@@ -74,7 +74,7 @@ usersRoutes.get('/mobilenotifications', authenticate, userNotificationsForMobile
 usersRoutes.get('/notifications', authenticate, userNotifications);
 usersRoutes.get('/notification/:id/detail', authenticate, notificationDetail);
 usersRoutes.delete('/notification/:id/delete', authenticate, notificationDelete);
-usersRoutes.post('/notification', validateSchema(createNotificationSchema), authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("SUPPORT"), createNotification);
+usersRoutes.post('/notification',   singleupload, validateSchema(createNotificationSchema), authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("SUPPORT"), createNotification);
 usersRoutes.get('/allusers', authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY", "PROJECT",), allUsers);
 usersRoutes.get('/alladmins', authenticate, isVerify, requireRole(UserRole.SUPER_ADMIN), allAdmins);
 

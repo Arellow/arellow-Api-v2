@@ -64,6 +64,8 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
                         suspended: true,
                         phone_number: true,
                         username: true,
+                        lastSeen: true,
+                        online: true,
                         AdminPermission: {
                             select: {action: true}
                         }
@@ -77,19 +79,8 @@ export const getAllAdmins = async (req: Request, res: Response, next: NextFuncti
 
             const totalPages = Math.ceil(total / limit);
 
-             const transformedData = data.map(user => {
-                const { ...rest} =  user;
-                return ({
-                ...rest,
-                lastSeen: Date.now(),
-               
-                })
-            });
-
-
-
             return {
-                data: transformedData,
+                data,
                 pagination: {
                     total,
                     page,
@@ -166,6 +157,8 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                         role: true,
                         address: true,
                         suspended: true,
+                        lastSeen: true,
+                        online: true,
                         kyc: {
                             select: {
                                 status: true
@@ -190,7 +183,6 @@ export const getUsersController = async (req: Request, res: Response, next: Next
                 const {properties, ...rest} =  user;
                 return ({
                 ...rest,
-                lastSeen: Date.now(),
                  approvedPropertyCount: user.properties.length,
                 })
             });

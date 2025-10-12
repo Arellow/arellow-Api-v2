@@ -1,203 +1,377 @@
-import { Request, Response, NextFunction } from "express";
-import { CampaignService } from "../services/service";
-import { BadRequestError, InternalServerError } from "../../../lib/appError";
-import { CreateCampaignDto, UpdateCampaignDto, CampaignFilterDto } from "../dtos/campaign.dto";
+import { NextFunction, Request, Response } from "express";
+import { InternalServerError } from "../../../lib/appError";
+import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
-import { singleupload, getDataUri } from "../../../middlewares/multer";
-import { cloudinary } from "../../../configs/cloudinary";
+import { redis } from "../../../lib/redis";
+import { swrCache } from "../../../lib/cache";
+import { getDateRange } from "../../../utils/getDateRange";
+import { calculateTrend } from "../../../utils/calculateTrend";
 
-const campaignService = new CampaignService();
 
-export const createCampaign = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  if (!userId) {
-    res.status(401).json({
-      status: "failed",
-      message: "Unauthorized access",
-      succeeded: false,
+
+export const AllCampaigns = async (req: Request, res: Response, next: NextFunction) => {
+
+
+     const {
+     
+      page = "1",
+      limit = "10"
+    } = req.query;
+
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+  try {
+
+
+    const cacheKey = `getAllCampaigns`;
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [properties, total] = await Promise.all([
+        Prisma.campaign.findMany({
+
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.campaign.count({ where: {} })
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+      return {
+        data: properties,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
     });
-    return;
-  }
 
-  try {
-    let imageUrl: string | null = null;
-    if (req.file) {
-      try {
-        const fileUri = getDataUri(req.file as any);
-        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
-          folder: "campaign_images",
-          resource_type: "image",
-          allowedFormats: ["jpg", "png", "jpeg"],
-          transformation: [{ width: 500, height: 500, crop: "limit" }],
-        });
-        imageUrl = uploadResult.secure_url;
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        throw new BadRequestError("Failed to upload image to Cloudinary");
-      }
-    }
+    new CustomResponse(200, true, "success", res, result);
 
-    const rawData = req.body;
-    if (!rawData.campaignType || !rawData.localMediaName || !rawData.promotionAd || !rawData.targetAudience || !rawData.features || !rawData.campaignDescription || !rawData.mediaPlatforms || !rawData.startDate || !rawData.endDate) {
-      throw new BadRequestError("All campaign fields are required");
-    }
 
-    const data: CreateCampaignDto = {
-      campaignType: rawData.campaignType as string,
-      localMediaName: rawData.localMediaName as string,
-      promotionAd: rawData.promotionAd as string,
-      targetAudience: rawData.targetAudience as string,
-      features: rawData.features as string,
-      campaignDescription: rawData.campaignDescription as string,
-      imageUrl,
-      mediaPlatforms: JSON.parse(rawData.mediaPlatforms as string) as string[],
-      startDate: new Date(rawData.startDate as string),
-      endDate: new Date(rawData.endDate as string),
-    };
-    const campaign = await campaignService.createCampaign(userId, data);
-    new CustomResponse(200, true, "Campaign created successfully", res, campaign);
+
   } catch (error) {
-    console.error("Campaign creation error:", error);
-    if (error instanceof Error) {
-      next(new InternalServerError(error.message));
-    } else {
-      next(new InternalServerError("Failed to create campaign."));
-    }
+    next(new InternalServerError("Server Error", 500));
   }
+
 };
 
-export const getCampaigns = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
 
-  try {
-    const filter: CampaignFilterDto = {
-      campaignType: req.query.campaignType as string,
-      page: req.query.page ? parseInt(req.query.page as string) : 1,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
-    };
-    const campaigns = await campaignService.getCampaigns(filter);
-    new CustomResponse(200, true, "Campaigns fetched successfully", res, campaigns);
-  } catch (error) {
-    next(new InternalServerError("Failed to fetch campaigns."));
-  }
-};
 
-export const getCampaign = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
 
-  const id = req.params.id as string;
-  try {
-    const campaign = await campaignService.getCampaign(id);
-    new CustomResponse(200, true, "Campaign fetched successfully", res, campaign);
-  } catch (error) {
-    console.error("Campaign fetch error:", error);
-    next(new InternalServerError("Failed to fetch campaign."));
-  }
-};
+export const campaignDashbroad = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id!;
 
-export const updateCampaign = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  const id = req.params.id as string;
+    const limit = 10;
+    const filterTime = req.query.filterTime || "this_year";
 
-  console.log("Entering updateCampaign, req.user:", req.user, "req.body:", req.body, "req.file:", req.file, "req.params.id:", id);
+    const cacheKey = `campaignDashbroad:${limit}:${filterTime}`;
 
-  if (!userId || !id) {
-    res.status(400).json({
-      status: "failed",
-      message: "User ID and campaign ID are required",
-      succeeded: false,
-    });
-    return;
-  }
+    const { current, previous } = getDateRange(filterTime.toString());
 
-  try {
-    let imageUrl: string | null = null;
-    if (req.file) {
-      try {
-        console.log("Processing file upload, req.file:", req.file);
-        const fileUri = getDataUri(req.file as any);
-        console.log("Generated Data URI (first 50 chars):", fileUri.content.substring(0, 50) + "...");
-        const uploadResult = await cloudinary.uploader.upload(fileUri.content, {
-          folder: "campaign_images",
-          resource_type: "image",
-          allowedFormats: ["jpg", "png", "jpeg"],
-          transformation: [{ width: 500, height: 500, crop: "limit" }],
-        });
-        imageUrl = uploadResult.secure_url;
-        console.log("Cloudinary upload successful, imageUrl:", imageUrl);
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        throw new Error("Failed to upload image to Cloudinary");
-      }
+
+
+    try {
+
+
+        const result = await swrCache(cacheKey, async () => {
+
+            const [
+                //property locations
+                propertyLocationData, totalPropertyLocationData,
+
+                //rewards
+                rewards,
+
+                // property
+                listedCurrent,
+                listedPrevious,
+
+                pendingCurrent,
+                pendingPrevious,
+
+                sellingCurrent,
+                sellingPrevious,
+
+                soldCurrent,
+                soldPrevious,
+
+                rejectedCurrent,
+                rejectedPrevious,
+
+                
+                buyAbilityCurrent,
+                buyAbilityPrevious,
+
+                propertyRequestCurrent,
+                propertyRequestPrevious,
+
+
+
+            ] = await Promise.all([
+
+                Prisma.property.findMany({
+                    where: { userId, archived: false },
+                    select: { location: true, status: true, title: true },
+                    orderBy: { createdAt: "desc" },
+                }
+                ),
+                Prisma.property.count({ where: { userId, archived: false, } }),
+
+
+
+                Prisma.rewardHistory.findMany({
+                    where: { userId },
+                    select: {
+                        id: true,
+                        points: true,
+                        type: true,
+                        reason: true,
+                        createdAt: true
+                    }
+                }),
+
+
+                //   PROPERTIES
+                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+
+                // buy ability
+                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+
+                // property request
+                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+
+
+            ]);
+
+
+            const listedStats = calculateTrend(listedCurrent, listedPrevious);
+            const pendingStats = calculateTrend(pendingCurrent, pendingPrevious);
+            const sellingStats = calculateTrend(sellingCurrent, sellingPrevious);
+            const soldStats = calculateTrend(soldCurrent, soldPrevious);
+            const rejectedStats = calculateTrend(rejectedCurrent, rejectedPrevious);
+
+            const buyAbilityStats = calculateTrend(buyAbilityCurrent, buyAbilityPrevious);
+            const propertyRequestStats = calculateTrend(propertyRequestCurrent, propertyRequestPrevious);
+
+
+            const totalEarning = rewards.reduce((v, c) => {
+
+                if (c.type == "CREDIT") {
+                    v.CREDIT += c.points;
+                }
+
+                if (c.type == "DEBIT") {
+                    v.DEBIT += c.points;
+                }
+
+                return v;
+            }, { CREDIT: 0, DEBIT: 0 });
+
+            let withdrawableEarning = 0;
+            const difference = totalEarning.CREDIT - totalEarning.DEBIT;
+
+            if (totalEarning.DEBIT > totalEarning.CREDIT) {
+                withdrawableEarning = 0;
+            } else if (difference >= 200) {
+                withdrawableEarning = difference - 200;
+            } else {
+                withdrawableEarning = 0;
+            }
+
+            return {
+
+                stats: {
+                   
+                    listedProperty: {
+                        count: listedCurrent,
+                        percentage: listedStats.percentage,
+                        trend: listedStats.trend
+                    },
+                    pendingListingProperty: {
+                        count: pendingCurrent,
+                        percentage: pendingStats.percentage,
+                        trend: pendingStats.trend
+                    },
+                    sellingListedProperty: {
+                        count: sellingCurrent,
+                        percentage: sellingStats.percentage,
+                        trend: sellingStats.trend
+                    },
+                    soldListedProperty: {
+                        count: soldCurrent,
+                        percentage: soldStats.percentage,
+                        trend: soldStats.trend
+                    },
+                    rejectedListedProperty: {
+                        count: rejectedCurrent,
+                        percentage: rejectedStats.percentage,
+                        trend: rejectedStats.trend
+                    },
+                    buyPropertyAbility: {
+                        count: buyAbilityCurrent,
+                        percentage: buyAbilityStats.percentage,
+                        trend: buyAbilityStats.trend
+                    },
+                    propertyRequest: {
+                        count: propertyRequestCurrent,
+                        percentage: propertyRequestStats.percentage,
+                        trend: propertyRequestStats.trend
+                    },
+
+                },
+                rewardData: {
+                    totalEarning,
+                    withdrawableEarning,
+                    rewards
+                },
+                propertyLocations: {
+                    locations: propertyLocationData,
+                    totalProperty: totalPropertyLocationData
+
+                }
+
+
+            }
+        })
+
+
+        await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+        new CustomResponse(200, true, "Fetched successfully", res, result);
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
     }
-
-    const data: Partial<UpdateCampaignDto> = {};
-    if (req.body.campaignType !== undefined) data.campaignType = req.body.campaignType;
-    if (req.body.localMediaName !== undefined) data.localMediaName = req.body.localMediaName;
-    if (req.body.promotionAd !== undefined) data.promotionAd = req.body.promotionAd;
-    if (req.body.targetAudience !== undefined) data.targetAudience = req.body.targetAudience;
-    if (req.body.features !== undefined) data.features = req.body.features;
-    if (req.body.campaignDescription !== undefined) data.campaignDescription = req.body.campaignDescription;
-    if (req.body.mediaPlatforms !== undefined) data.mediaPlatforms = JSON.parse(req.body.mediaPlatforms) as string[];
-    if (req.body.startDate !== undefined) data.startDate = new Date(req.body.startDate);
-    if (req.body.endDate !== undefined) data.endDate = new Date(req.body.endDate);
-    if (imageUrl !== undefined) data.imageUrl = imageUrl;
-
-    console.log("Constructed data for service:", data);
-
-    if (Object.keys(data).length === 0) {
-      res.status(400).json({
-        status: "failed",
-        message: "No fields provided for update",
-        succeeded: false,
-      });
-      return;
-    }
-
-    const campaign = await campaignService.updateCampaign(userId, id, data);
-    console.log("Service returned campaign:", campaign);
-    new CustomResponse(200, true, "Updated successfully", res, campaign);
-  } catch (error) {
-    console.error("Campaign update error:", error);
-    next(new InternalServerError("Failed to update campaign."));
-  }
 };
 
-export const deleteCampaign = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.id as string;
-  const id = req.params.id as string;
 
-  if (!userId || !id) {
-    res.status(400).json({
-      status: "failed",
-      message: "User ID and campaign ID are required",
-      succeeded: false,
-    });
-    return;
-  }
+// export const getPropertiesStatsByUser = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const userId = req.user?.id;
+//     const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
 
-  try {
-    await campaignService.deleteCampaign(id);
-    new CustomResponse(200, true, "Campaign deleted", res);
-  } catch (error) {
-    next(new InternalServerError("Failed to delete campaign."));
-  }
-};
+//     const { current, previous } = getDateRange(filterTime.toString());
+//     const pageNumber = parseInt(page as string, 10);
+//     const pageSize = parseInt(limit as string, 10);
+
+//     const cacheKey = `getPropertiesStats:${userId}:${JSON.stringify(req.query)}`;
+
+//     const result = await swrCache(cacheKey, async () => {
+//       const baseWhere = { userId, archived: false };
+
+//       const [properties, total] = await Promise.all([
+//         Prisma.property.findMany({
+//           where: baseWhere,
+//           select: {
+//             id: true,
+//             title: true,
+//             status: true,
+//             createdAt: true,
+//             sharesCount: true,
+//             viewsCount: true,
+//             media: {
+//               select: {
+//                 url: true,
+//                 altText: true,
+//                 type: true,
+//                 photoType: true,
+//                 sizeInKB: true
+//               }
+//             }
+//           },
+//           orderBy: { createdAt: "desc" },
+//           skip: (pageNumber - 1) * pageSize,
+//           take: pageSize
+//         }),
+//         Prisma.property.count({ where: baseWhere })
+//       ]);
+
+//       // For each property, calculate like-based performance
+//       const enrichedProperties = await Promise.all(
+//         properties.map(async (property) => {
+//           const propertyId = property.id;
+
+//           const [currentLikes, previousLikes] = await Promise.all([
+//             Prisma.userPropertyLike.count({
+//               where: {
+//                 propertyId,
+//                 createdAt: { gte: current.start, lte: current.end }
+//               }
+//             }),
+//             Prisma.userPropertyLike.count({
+//               where: {
+//                 propertyId,
+//                 createdAt: { gte: previous.start, lte: previous.end }
+//               }
+//             })
+//           ]);
+
+//           const { percentage, trend } = calculateTrend(currentLikes, previousLikes);
+
+//           return {
+//             slug: `#Arw-${propertyId.slice(-3)}`,
+//             performance: {
+//               likes: {
+//                 current: currentLikes,
+//                 previous: previousLikes,
+//               },
+//               percentage,
+//               trend
+//             },
+//             ...property
+//           };
+//         })
+//       );
+
+//       const totalPages = Math.ceil(total / pageSize);
+
+//       return {
+//         data: enrichedProperties,
+//         pagination: {
+//           total,
+//           page: pageNumber,
+//           pageSize,
+//           totalPages,
+//           nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
+//           prevPage: pageNumber > 1 ? pageNumber - 1 : null,
+//           canGoNext: pageNumber < totalPages,
+//           canGoPrev: pageNumber > 1
+//         }
+//       };
+//     });
+
+//     new CustomResponse(200, true, "success", res, result);
+//   } catch (error) {
+//     console.error(error);
+//     next(new InternalServerError("Server Error", 500));
+//   }
+// };
