@@ -37,6 +37,7 @@ enum UserPhotoType {
   TICKET
   CHAT
   NOTIFICATION
+  CAMPAIGN
 }
 
 model UserMedia {

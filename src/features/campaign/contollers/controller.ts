@@ -6,6 +6,7 @@ import { redis } from "../../../lib/redis";
 import { swrCache } from "../../../lib/cache";
 import { getDateRange } from "../../../utils/getDateRange";
 import { calculateTrend } from "../../../utils/calculateTrend";
+import { processImage } from "../../../utils/imagesprocess";
 
 
 
@@ -375,3 +376,77 @@ export const campaignDashbroad = async (req: Request, res: Response, next: NextF
 //     next(new InternalServerError("Server Error", 500));
 //   }
 // };
+
+
+
+
+export const createCampaign = async (req: Request, res: Response, next: NextFunction) => {
+  const { 
+      campaignAddress,
+           campaignName,
+           endDate,
+           startDate, 
+           campaignPlaceMent,
+  } = req.body;
+
+  try {
+
+
+     let avatar = "";
+      
+          if (req.file) {
+      
+            avatar = await processImage({
+              folder: "campaign_container",
+              image: req.file,
+              photoType: "CAMPAIGN",
+              type: "PHOTO"
+            });
+      
+          }
+
+   
+    await Prisma.campaign.create({
+          data: {
+           campaignAddress,
+           campaignName,
+           endDate,
+           startDate, 
+           campaignPlaceMent,
+            avatar: avatar || ""
+          },
+        });
+
+
+
+
+
+    return new CustomResponse(200, true, "Campaign created successfully", res);
+  } catch (error) {
+    return next(new InternalServerError("Server Error", 500));
+  }
+};
+
+
+export const clickCampaign = async (req: Request, res: Response, next: NextFunction) => {
+
+    const {id} = req.params
+  
+
+  try {
+
+   const campaign =  await Prisma.campaign.findUnique({where: {id}});
+
+   if(campaign){
+     await Prisma.campaign.update({where: {id}, data: {clicks: {
+        increment: 1
+     }}})
+
+   }
+
+
+    return new CustomResponse(200, true, "Campaign created successfully", res);
+  } catch (error) {
+    return next(new InternalServerError("Server Error", 500));
+  }
+};
