@@ -398,7 +398,7 @@ If ispropertyRequest is true Extract property search filters from this user mess
 
 
 
-        if (filterItems?.ispropertyRequest && properties.length !== 0) {
+        if (!filterItems?.ispropertyRequest && properties.length !== 0) {
 
           const tempId1 = `temp_${Date.now()}_${Math.random() * 1000}`;
 

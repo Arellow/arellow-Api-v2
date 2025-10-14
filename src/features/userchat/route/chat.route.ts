@@ -449,7 +449,7 @@ chatRoutes.post('/token', authenticate, async(req, res) => {
       privilegeExpiredTs
     );
 
-    res.json({ creatortoken, recipienttoken });
+    res.json({ creatortoken, recipienttoken, creatorUID: uid1, recipientUID:  uid2 });
   } catch (error) {
     console.error('Token generation failed:', error);
     res.status(500).json({ error: 'Failed to generate tokens' });
