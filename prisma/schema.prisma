@@ -498,8 +498,8 @@ model Campaign {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
   campaignName      String
-  campaignPlaceMent CampaignPlaceMent @default(LANDING)
-  avatar            String?
+  campaignPlaceMent CampaignPlaceMent[] @default([LANDING])
+  avatar            String
   campaignAddress   CampaignAddress
   startDate         DateTime
   endDate           DateTime

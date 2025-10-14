@@ -6,7 +6,48 @@ import { redis } from "../../../lib/redis";
 import { swrCache } from "../../../lib/cache";
 import { getDateRange } from "../../../utils/getDateRange";
 import { calculateTrend } from "../../../utils/calculateTrend";
-import { processImage } from "../../../utils/imagesprocess";
+import { deleteImage, processImage } from "../../../utils/imagesprocess";
+import { CampaignAddress, CampaignPlaceMent } from "@prisma/client";
+
+
+
+
+
+
+
+export const AllActiveCampaigns = async (req: Request, res: Response, next: NextFunction) => {
+  const campaignPlaceMent = req.query.campaignPlaceMent as CampaignPlaceMent  || "LANDING";
+
+
+    const today = new Date();
+
+
+  try {
+
+
+    const result = await Prisma.campaign.findMany({ 
+       where: {
+        campaignPlaceMent: {has:campaignPlaceMent},
+        startDate: {
+          lte: today,
+        },
+        endDate: {
+          gte: today,
+        },
+      },
+      orderBy: { createdAt: "desc" },})
+
+       new CustomResponse(200, true, "success", res, result);
+
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+
+};
+
+
+
 
 
 
@@ -382,42 +423,71 @@ export const campaignDashbroad = async (req: Request, res: Response, next: NextF
 
 export const createCampaign = async (req: Request, res: Response, next: NextFunction) => {
   const { 
-      campaignAddress,
-           campaignName,
+    campaignName,
+    campaignPlaceMent,
+    campaignAddress,
            endDate,
            startDate, 
-           campaignPlaceMent,
   } = req.body;
+
+
+   const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
+       
+        const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
 
   try {
 
 
-     let avatar = "";
+
+
+      if (!req.file) {
+         return next(new InternalServerError("Avatar not found", 404));
+       }
+
+
+     const website = campaignAddress.website?.toLowerCase();
+
+if (website && (website.includes('http://') || website.includes('https://'))) {
+  return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
+}
+   
+         
       
-          if (req.file) {
-      
-            avatar = await processImage({
+        const  avatar = await processImage({
               folder: "campaign_container",
               image: req.file,
               photoType: "CAMPAIGN",
               type: "PHOTO"
             });
       
-          }
+
+
+      if (!avatar) {
+         return next(new InternalServerError("Avatar uploa failed", 404));
+       }
+   
+
+          
 
    
-    await Prisma.campaign.create({
+  const  campaign = await Prisma.campaign.create({
           data: {
-           campaignAddress,
+           campaignAddress: parsedCampaignAddress,
            campaignName,
            endDate,
            startDate, 
-           campaignPlaceMent,
+           campaignPlaceMent: parsedCampaignPlaceMent,
             avatar: avatar || ""
           },
         });
 
 
+        if (!campaign) {
+
+         await  deleteImage(avatar);
+
+         return next(new InternalServerError("Failed to create campaign", 404));
+       }
 
 
 
@@ -426,6 +496,9 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
     return next(new InternalServerError("Server Error", 500));
   }
 };
+
+
+
 
 
 export const clickCampaign = async (req: Request, res: Response, next: NextFunction) => {
@@ -438,6 +511,7 @@ export const clickCampaign = async (req: Request, res: Response, next: NextFunct
    const campaign =  await Prisma.campaign.findUnique({where: {id}});
 
    if(campaign){
+
      await Prisma.campaign.update({where: {id}, data: {clicks: {
         increment: 1
      }}})
@@ -446,6 +520,30 @@ export const clickCampaign = async (req: Request, res: Response, next: NextFunct
 
 
     return new CustomResponse(200, true, "Campaign created successfully", res);
+  } catch (error) {
+    return next(new InternalServerError("Server Error", 500));
+  }
+};
+
+
+export const deleteCampaign = async (req: Request, res: Response, next: NextFunction) => {
+
+    const {id} = req.params
+  
+
+  try {
+
+   const campaign =  await Prisma.campaign.findUnique({where: {id}});
+
+   if(campaign){
+     await  deleteImage(campaign.avatar);
+
+     await Prisma.campaign.delete({where: {id}})
+
+   }
+
+
+    return new CustomResponse(200, true, "Campaign deleted successfully", res);
   } catch (error) {
     return next(new InternalServerError("Server Error", 500));
   }

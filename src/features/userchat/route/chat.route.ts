@@ -363,41 +363,6 @@ chatRoutes.get('/user/:userid', authenticate, async (req, res) => {
 
 chatRoutes.post('/token', authenticate, async(req, res) => {
 
-
-  // const { channelName , privilegeExpiredTs} = req.body;
-  // const userId = req.user?.id!;
-
-  // const appID = process.env.AGORA_APP_ID!;
-  // const appCertificate = process.env.AGORA_APP_CERTIFICATE!;
-  // const role = RtcRole.PUBLISHER;
-
-
-  // const uid1 = hashUid(req.body.uid);
-  // const uid2 = hashUid(userId);
-
-
-
-  // const creatortoken =  RtcTokenBuilder.buildTokenWithUid(
-  //   appID,
-  //   appCertificate,
-  //   channelName,
-  //   uid1,
-  //   role,
-  //   privilegeExpiredTs
-  // );
-  // const recipienttoken =  RtcTokenBuilder.buildTokenWithUid(
-  //   appID,
-  //   appCertificate,
-  //   channelName,
-  //   uid2,
-  //   role,
-  //   privilegeExpiredTs
-  // );
-
-  // res.json({ creatortoken,  recipienttoken});
-
-
-
   const { channelName, privilegeExpiredTs, uid } = req.body;
   const userId = req.user?.id!;
 
@@ -451,7 +416,6 @@ chatRoutes.post('/token', authenticate, async(req, res) => {
 
     res.json({ creatortoken, recipienttoken, creatorUID: uid1, recipientUID:  uid2 });
   } catch (error) {
-    console.error('Token generation failed:', error);
     res.status(500).json({ error: 'Failed to generate tokens' });
   }
 

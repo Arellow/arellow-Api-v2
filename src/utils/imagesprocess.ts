@@ -26,23 +26,23 @@ const imagesToUpload =  images.map(image => {
       folder, 
     });
 
-  const url =  cloudinary.url(result?.public_id, {
-    transformation: [
-      {
-        quality: "auto",
-        fetch_format: "auto",
-      },
-      {
-        width: 500,
-        height: 500,
-        crop: "fill",
-        gravity: "auto",
-      },
+  // const url =  cloudinary.url(result?.public_id, {
+  //   transformation: [
+  //     {
+  //       quality: "auto",
+  //       fetch_format: "auto",
+  //     },
+  //     {
+  //       width: 500,
+  //       height: 500,
+  //       crop: "fill",
+  //       gravity: "auto",
+  //     },
       
-    ],
+  //   ],
    
 
-  });
+  // });
 
   await Prisma.userMedia.create({
     data: {
@@ -50,14 +50,14 @@ const imagesToUpload =  images.map(image => {
     //   public_id: result?.public_id,
     type : "PHOTO",
     photoType,
-    url,
+    url: result.url,
     publicId: result?.public_id,
 
     },
   });
 
 
-  return url;
+  return result.url;
 
   })
 });
@@ -120,34 +120,34 @@ export async function processImage({image, folder , photoType , type}:{image: an
       folder, 
     });
 
-  const url =  cloudinary.url(result?.public_id, {
-    transformation: [
-      {
-        quality: "auto",
-        fetch_format: "auto",
-      },
-      {
-        width: 500,
-        height: 500,
-        crop: "fill",
-        gravity: "auto",
-      },
+  // const url =  cloudinary.url(result?.public_id, {
+  //   transformation: [
+  //     {
+  //       quality: "auto",
+  //       fetch_format: "auto",
+  //     },
+  //     {
+  //       width: 500,
+  //       height: 500,
+  //       crop: "fill",
+  //       gravity: "auto",
+  //     },
       
-    ],
+  //   ],
    
 
-  });
+  // });
 
 
     await Prisma.userMedia.create({
     data: {
     type,
     photoType,
-    url,
+    url: result.url,
     publicId: result?.public_id,
     },
   });
-    return url;
+    return result.url;
 
 
 }
