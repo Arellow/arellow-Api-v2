@@ -50,14 +50,14 @@ const imagesToUpload =  images.map(image => {
     //   public_id: result?.public_id,
     type : "PHOTO",
     photoType,
-    url: result.url,
+    url: result.secure_url,
     publicId: result?.public_id,
 
     },
   });
 
 
-  return result.url;
+  return result.secure_url;
 
   })
 });
@@ -143,11 +143,11 @@ export async function processImage({image, folder , photoType , type}:{image: an
     data: {
     type,
     photoType,
-    url: result.url,
+    url: result.secure_url,
     publicId: result?.public_id,
     },
   });
-    return result.url;
+    return result.secure_url;
 
 
 }
