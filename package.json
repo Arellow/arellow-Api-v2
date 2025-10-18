@@ -65,6 +65,9 @@
     "pino": "^9.7.0",
     "socket.io": "^4.8.1"
   },
+  "overrides": {
+  "ws": "^8.18.3"
+},
   "engines": {
     "node": ">=18.x"
   }
