@@ -43,19 +43,6 @@ export const createProjectSchema = Joi.object({
 
 
 
-export const createPropertySchema = Joi.object({
-
-
-
-
-
-
-
-
-});
-
-
-
 
 
 
