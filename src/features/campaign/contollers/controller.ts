@@ -548,3 +548,90 @@ export const deleteCampaign = async (req: Request, res: Response, next: NextFunc
     return next(new InternalServerError("Server Error", 500));
   }
 };
+
+
+export const updateCampaign = async (req: Request, res: Response, next: NextFunction) => {
+
+    const {id} = req.params;
+
+
+      const { 
+    campaignName,
+    campaignPlaceMent,
+    campaignAddress,
+           endDate,
+           startDate, 
+  } = req.body;
+
+     const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
+       
+        const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
+
+  
+           if (!req.file) {
+         return next(new InternalServerError("Avatar not found", 404));
+       }
+
+  try {
+
+
+
+     const website = campaignAddress.website?.toLowerCase();
+
+if (website && (website.includes('http://') || website.includes('https://'))) {
+  return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
+}
+   
+         
+      
+        const  avatar = await processImage({
+              folder: "campaign_container",
+              image: req.file,
+              photoType: "CAMPAIGN",
+              type: "PHOTO"
+            });
+      
+
+
+      if (!avatar) {
+         return next(new InternalServerError("Avatar uploa failed", 404));
+       }
+       
+
+   
+
+   const campaign =  await Prisma.campaign.findUnique({where: {id}});
+
+   if(campaign){
+     await  deleteImage(campaign.avatar);
+
+
+
+        
+  const  newcampaign = await Prisma.campaign.create({
+          data: {
+           campaignAddress: parsedCampaignAddress,
+           campaignName,
+           endDate,
+           startDate, 
+           campaignPlaceMent: parsedCampaignPlaceMent,
+            avatar: avatar || ""
+          },
+        });
+
+
+        if (!newcampaign) {
+
+         await  deleteImage(avatar);
+
+         return next(new InternalServerError("Failed to update campaign", 404));
+       }
+
+   }
+
+
+    return new CustomResponse(200, true, "Campaign updated successfully", res);
+  } catch (error) {
+    return next(new InternalServerError("Server Error", 500));
+  }
+};
