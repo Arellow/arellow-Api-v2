@@ -494,7 +494,8 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
 
     return new CustomResponse(200, true, "Campaign created successfully", res);
   } catch (error) {
-    return next(new InternalServerError("Server Error", 500));
+    next(error)
+    // return next(new InternalServerError("Server Error", 500));
   }
 };
 
