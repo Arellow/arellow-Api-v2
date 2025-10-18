@@ -16,18 +16,18 @@ import { CampaignAddress, CampaignPlaceMent } from "@prisma/client";
 
 
 export const AllActiveCampaigns = async (req: Request, res: Response, next: NextFunction) => {
-  const campaignPlaceMent = req.query.campaignPlaceMent as CampaignPlaceMent  || "LANDING";
+  const campaignPlaceMent = req.query.campaignPlaceMent as CampaignPlaceMent || "LANDING";
 
 
-    const today = new Date();
+  const today = new Date();
 
 
   try {
 
 
-    const result = await Prisma.campaign.findMany({ 
-       where: {
-        campaignPlaceMent: {has:campaignPlaceMent},
+    const result = await Prisma.campaign.findMany({
+      where: {
+        campaignPlaceMent: { has: campaignPlaceMent },
         startDate: {
           lte: today,
         },
@@ -35,9 +35,10 @@ export const AllActiveCampaigns = async (req: Request, res: Response, next: Next
           gte: today,
         },
       },
-      orderBy: { createdAt: "desc" },})
+      orderBy: { createdAt: "desc" },
+    })
 
-       new CustomResponse(200, true, "success", res, result);
+    new CustomResponse(200, true, "success", res, result);
 
 
   } catch (error) {
@@ -54,15 +55,15 @@ export const AllActiveCampaigns = async (req: Request, res: Response, next: Next
 export const AllCampaigns = async (req: Request, res: Response, next: NextFunction) => {
 
 
-     const {
-     
-      page = "1",
-      limit = "10"
-    } = req.query;
+  const {
+
+    page = "1",
+    limit = "10"
+  } = req.query;
 
 
-    const pageNumber = parseInt(page as string, 10);
-    const pageSize = parseInt(limit as string, 10);
+  const pageNumber = parseInt(page as string, 10);
+  const pageSize = parseInt(limit as string, 10);
   try {
 
 
@@ -113,206 +114,206 @@ export const AllCampaigns = async (req: Request, res: Response, next: NextFuncti
 
 
 export const campaignDashbroad = async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id!;
+  const userId = req.user?.id!;
 
-    const limit = 10;
-    const filterTime = req.query.filterTime || "this_year";
+  const limit = 10;
+  const filterTime = req.query.filterTime || "this_year";
 
-    const cacheKey = `campaignDashbroad:${limit}:${filterTime}`;
+  const cacheKey = `campaignDashbroad:${limit}:${filterTime}`;
 
-    const { current, previous } = getDateRange(filterTime.toString());
-
-
-
-    try {
-
-
-        const result = await swrCache(cacheKey, async () => {
-
-            const [
-                //property locations
-                propertyLocationData, totalPropertyLocationData,
-
-                //rewards
-                rewards,
-
-                // property
-                listedCurrent,
-                listedPrevious,
-
-                pendingCurrent,
-                pendingPrevious,
-
-                sellingCurrent,
-                sellingPrevious,
-
-                soldCurrent,
-                soldPrevious,
-
-                rejectedCurrent,
-                rejectedPrevious,
-
-                
-                buyAbilityCurrent,
-                buyAbilityPrevious,
-
-                propertyRequestCurrent,
-                propertyRequestPrevious,
+  const { current, previous } = getDateRange(filterTime.toString());
 
 
 
-            ] = await Promise.all([
-
-                Prisma.property.findMany({
-                    where: { userId, archived: false },
-                    select: { location: true, status: true, title: true },
-                    orderBy: { createdAt: "desc" },
-                }
-                ),
-                Prisma.property.count({ where: { userId, archived: false, } }),
+  try {
 
 
+    const result = await swrCache(cacheKey, async () => {
 
-                Prisma.rewardHistory.findMany({
-                    where: { userId },
-                    select: {
-                        id: true,
-                        points: true,
-                        type: true,
-                        reason: true,
-                        createdAt: true
-                    }
-                }),
+      const [
+        //property locations
+        propertyLocationData, totalPropertyLocationData,
 
+        //rewards
+        rewards,
 
-                //   PROPERTIES
-                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+        // property
+        listedCurrent,
+        listedPrevious,
 
-                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
+        pendingCurrent,
+        pendingPrevious,
 
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: previous.start, lte: previous.end } } }),
+        sellingCurrent,
+        sellingPrevious,
 
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: previous.start, lte: previous.end } } }),
+        soldCurrent,
+        soldPrevious,
 
-                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
+        rejectedCurrent,
+        rejectedPrevious,
 
 
-                // buy ability
-                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+        buyAbilityCurrent,
+        buyAbilityPrevious,
 
-
-                // property request
-                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.propertyRequest.count({ where: { createdById:  userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+        propertyRequestCurrent,
+        propertyRequestPrevious,
 
 
 
-            ]);
+      ] = await Promise.all([
+
+        Prisma.property.findMany({
+          where: { userId, archived: false },
+          select: { location: true, status: true, title: true },
+          orderBy: { createdAt: "desc" },
+        }
+        ),
+        Prisma.property.count({ where: { userId, archived: false, } }),
 
 
-            const listedStats = calculateTrend(listedCurrent, listedPrevious);
-            const pendingStats = calculateTrend(pendingCurrent, pendingPrevious);
-            const sellingStats = calculateTrend(sellingCurrent, sellingPrevious);
-            const soldStats = calculateTrend(soldCurrent, soldPrevious);
-            const rejectedStats = calculateTrend(rejectedCurrent, rejectedPrevious);
 
-            const buyAbilityStats = calculateTrend(buyAbilityCurrent, buyAbilityPrevious);
-            const propertyRequestStats = calculateTrend(propertyRequestCurrent, propertyRequestPrevious);
-
-
-            const totalEarning = rewards.reduce((v, c) => {
-
-                if (c.type == "CREDIT") {
-                    v.CREDIT += c.points;
-                }
-
-                if (c.type == "DEBIT") {
-                    v.DEBIT += c.points;
-                }
-
-                return v;
-            }, { CREDIT: 0, DEBIT: 0 });
-
-            let withdrawableEarning = 0;
-            const difference = totalEarning.CREDIT - totalEarning.DEBIT;
-
-            if (totalEarning.DEBIT > totalEarning.CREDIT) {
-                withdrawableEarning = 0;
-            } else if (difference >= 200) {
-                withdrawableEarning = difference - 200;
-            } else {
-                withdrawableEarning = 0;
-            }
-
-            return {
-
-                stats: {
-                   
-                    listedProperty: {
-                        count: listedCurrent,
-                        percentage: listedStats.percentage,
-                        trend: listedStats.trend
-                    },
-                    pendingListingProperty: {
-                        count: pendingCurrent,
-                        percentage: pendingStats.percentage,
-                        trend: pendingStats.trend
-                    },
-                    sellingListedProperty: {
-                        count: sellingCurrent,
-                        percentage: sellingStats.percentage,
-                        trend: sellingStats.trend
-                    },
-                    soldListedProperty: {
-                        count: soldCurrent,
-                        percentage: soldStats.percentage,
-                        trend: soldStats.trend
-                    },
-                    rejectedListedProperty: {
-                        count: rejectedCurrent,
-                        percentage: rejectedStats.percentage,
-                        trend: rejectedStats.trend
-                    },
-                    buyPropertyAbility: {
-                        count: buyAbilityCurrent,
-                        percentage: buyAbilityStats.percentage,
-                        trend: buyAbilityStats.trend
-                    },
-                    propertyRequest: {
-                        count: propertyRequestCurrent,
-                        percentage: propertyRequestStats.percentage,
-                        trend: propertyRequestStats.trend
-                    },
-
-                },
-                rewardData: {
-                    totalEarning,
-                    withdrawableEarning,
-                    rewards
-                },
-                propertyLocations: {
-                    locations: propertyLocationData,
-                    totalProperty: totalPropertyLocationData
-
-                }
+        Prisma.rewardHistory.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            points: true,
+            type: true,
+            reason: true,
+            createdAt: true
+          }
+        }),
 
 
-            }
-        })
+        //   PROPERTIES
+        Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+        Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+        Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+        Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: previous.start, lte: previous.end } } }),
+
+        Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
 
 
-        await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+        // buy ability
+        Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: previous.start, lte: previous.end } } }),
 
-        new CustomResponse(200, true, "Fetched successfully", res, result);
-    } catch (error) {
-        next(new InternalServerError("Internal server error", 500));
-    }
+
+        // property request
+        Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: current.start, lte: current.end } } }),
+        Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+
+
+      ]);
+
+
+      const listedStats = calculateTrend(listedCurrent, listedPrevious);
+      const pendingStats = calculateTrend(pendingCurrent, pendingPrevious);
+      const sellingStats = calculateTrend(sellingCurrent, sellingPrevious);
+      const soldStats = calculateTrend(soldCurrent, soldPrevious);
+      const rejectedStats = calculateTrend(rejectedCurrent, rejectedPrevious);
+
+      const buyAbilityStats = calculateTrend(buyAbilityCurrent, buyAbilityPrevious);
+      const propertyRequestStats = calculateTrend(propertyRequestCurrent, propertyRequestPrevious);
+
+
+      const totalEarning = rewards.reduce((v, c) => {
+
+        if (c.type == "CREDIT") {
+          v.CREDIT += c.points;
+        }
+
+        if (c.type == "DEBIT") {
+          v.DEBIT += c.points;
+        }
+
+        return v;
+      }, { CREDIT: 0, DEBIT: 0 });
+
+      let withdrawableEarning = 0;
+      const difference = totalEarning.CREDIT - totalEarning.DEBIT;
+
+      if (totalEarning.DEBIT > totalEarning.CREDIT) {
+        withdrawableEarning = 0;
+      } else if (difference >= 200) {
+        withdrawableEarning = difference - 200;
+      } else {
+        withdrawableEarning = 0;
+      }
+
+      return {
+
+        stats: {
+
+          listedProperty: {
+            count: listedCurrent,
+            percentage: listedStats.percentage,
+            trend: listedStats.trend
+          },
+          pendingListingProperty: {
+            count: pendingCurrent,
+            percentage: pendingStats.percentage,
+            trend: pendingStats.trend
+          },
+          sellingListedProperty: {
+            count: sellingCurrent,
+            percentage: sellingStats.percentage,
+            trend: sellingStats.trend
+          },
+          soldListedProperty: {
+            count: soldCurrent,
+            percentage: soldStats.percentage,
+            trend: soldStats.trend
+          },
+          rejectedListedProperty: {
+            count: rejectedCurrent,
+            percentage: rejectedStats.percentage,
+            trend: rejectedStats.trend
+          },
+          buyPropertyAbility: {
+            count: buyAbilityCurrent,
+            percentage: buyAbilityStats.percentage,
+            trend: buyAbilityStats.trend
+          },
+          propertyRequest: {
+            count: propertyRequestCurrent,
+            percentage: propertyRequestStats.percentage,
+            trend: propertyRequestStats.trend
+          },
+
+        },
+        rewardData: {
+          totalEarning,
+          withdrawableEarning,
+          rewards
+        },
+        propertyLocations: {
+          locations: propertyLocationData,
+          totalProperty: totalPropertyLocationData
+
+        }
+
+
+      }
+    })
+
+
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+
+    new CustomResponse(200, true, "Fetched successfully", res, result);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
 };
 
 
@@ -422,72 +423,72 @@ export const campaignDashbroad = async (req: Request, res: Response, next: NextF
 
 
 export const createCampaign = async (req: Request, res: Response, next: NextFunction) => {
-  const { 
+  const {
     campaignName,
     campaignPlaceMent,
     campaignAddress,
-           endDate,
-           startDate, 
+    endDate,
+    startDate,
   } = req.body;
 
 
-   const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
-       
-        const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
+  const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
+
+  const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
 
   try {
 
 
 
 
-      if (!req.file) {
-         return next(new InternalServerError("Avatar not found", 404));
-       }
+    if (!req.file) {
+      return next(new InternalServerError("Avatar not found", 404));
+    }
 
 
-     const website = campaignAddress.website?.toLowerCase();
+    const website = campaignAddress.website?.toLowerCase();
 
-if (website && (website.includes('http://') || website.includes('https://'))) {
-  return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
-}
-   
-         
-      
-        const  avatar = await processImage({
-              folder: "campaign_container",
-              image: req.file,
-              photoType: "CAMPAIGN",
-              type: "PHOTO"
-            });
-      
+    if (website && (website.includes('http://') || website.includes('https://'))) {
+      return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
+    }
 
 
-      if (!avatar) {
-         return next(new InternalServerError("Avatar uploa failed", 404));
-       }
-   
 
-          
-
-   
-  const  campaign = await Prisma.campaign.create({
-          data: {
-           campaignAddress: parsedCampaignAddress,
-           campaignName,
-           endDate,
-           startDate, 
-           campaignPlaceMent: parsedCampaignPlaceMent,
-            avatar: avatar || ""
-          },
-        });
+    const avatar = await processImage({
+      folder: "campaign_container",
+      image: req.file,
+      photoType: "CAMPAIGN",
+      type: "PHOTO"
+    });
 
 
-        if (!campaign) {
 
-         await  deleteImage(avatar);
+    if (!avatar) {
+      return next(new InternalServerError("Avatar uploa failed", 404));
+    }
 
-         return next(new InternalServerError("Failed to create campaign", 404));
-       }
+
+
+
+
+    const campaign = await Prisma.campaign.create({
+      data: {
+        campaignAddress: parsedCampaignAddress,
+        campaignName,
+        endDate,
+        startDate,
+        campaignPlaceMent: parsedCampaignPlaceMent,
+        avatar: avatar || ""
+      },
+    });
+
+
+    if (!campaign) {
+
+      await deleteImage(avatar);
+
+      return next(new InternalServerError("Failed to create campaign", 404));
+    }
 
 
 
@@ -503,20 +504,24 @@ if (website && (website.includes('http://') || website.includes('https://'))) {
 
 export const clickCampaign = async (req: Request, res: Response, next: NextFunction) => {
 
-    const {id} = req.params
-  
+  const { id } = req.params
+
 
   try {
 
-   const campaign =  await Prisma.campaign.findUnique({where: {id}});
+    const campaign = await Prisma.campaign.findUnique({ where: { id } });
 
-   if(campaign){
+    if (campaign) {
 
-     await Prisma.campaign.update({where: {id}, data: {clicks: {
-        increment: 1
-     }}})
+      await Prisma.campaign.update({
+        where: { id }, data: {
+          clicks: {
+            increment: 1
+          }
+        }
+      })
 
-   }
+    }
 
 
     return new CustomResponse(200, true, "Campaign created successfully", res);
@@ -528,19 +533,19 @@ export const clickCampaign = async (req: Request, res: Response, next: NextFunct
 
 export const deleteCampaign = async (req: Request, res: Response, next: NextFunction) => {
 
-    const {id} = req.params
-  
+  const { id } = req.params
+
 
   try {
 
-   const campaign =  await Prisma.campaign.findUnique({where: {id}});
+    const campaign = await Prisma.campaign.findUnique({ where: { id } });
 
-   if(campaign){
-     await  deleteImage(campaign.avatar);
+    if (campaign) {
+      await deleteImage(campaign.avatar);
 
-     await Prisma.campaign.delete({where: {id}})
+      await Prisma.campaign.delete({ where: { id } })
 
-   }
+    }
 
 
     return new CustomResponse(200, true, "Campaign deleted successfully", res);
@@ -552,82 +557,82 @@ export const deleteCampaign = async (req: Request, res: Response, next: NextFunc
 
 export const updateCampaign = async (req: Request, res: Response, next: NextFunction) => {
 
-    const {id} = req.params;
+  const { id } = req.params;
 
 
-      const { 
+  const {
     campaignName,
     campaignPlaceMent,
     campaignAddress,
-           endDate,
-           startDate, 
+    endDate,
+    startDate,
   } = req.body;
 
-     const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
-       
-        const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
+  const parsedCampaignPlaceMent: CampaignPlaceMent[] = typeof campaignPlaceMent === 'string' ? JSON.parse(campaignPlaceMent) : campaignPlaceMent;
 
-  
-           if (!req.file) {
-         return next(new InternalServerError("Avatar not found", 404));
-       }
+  const parsedCampaignAddress: CampaignAddress = typeof campaignAddress === 'string' ? JSON.parse(campaignAddress) : campaignAddress;
+
+
+  if (!req.file) {
+    return next(new InternalServerError("Avatar not found", 404));
+  }
 
   try {
 
 
 
-     const website = campaignAddress.website?.toLowerCase();
+    const website = campaignAddress.website?.toLowerCase();
 
-if (website && (website.includes('http://') || website.includes('https://'))) {
-  return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
-}
-   
-         
-      
-        const  avatar = await processImage({
-              folder: "campaign_container",
-              image: req.file,
-              photoType: "CAMPAIGN",
-              type: "PHOTO"
-            });
-      
-
-
-      if (!avatar) {
-         return next(new InternalServerError("Avatar uploa failed", 404));
-       }
-       
-
-   
-
-   const campaign =  await Prisma.campaign.findUnique({where: {id}});
-
-   if(campaign){
-     await  deleteImage(campaign.avatar);
+    if (website && (website.includes('http://') || website.includes('https://'))) {
+      return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
+    }
 
 
 
-        
-  const  newcampaign = await Prisma.campaign.create({
-          data: {
-           campaignAddress: parsedCampaignAddress,
-           campaignName,
-           endDate,
-           startDate, 
-           campaignPlaceMent: parsedCampaignPlaceMent,
-            avatar: avatar || ""
-          },
-        });
+    const avatar = await processImage({
+      folder: "campaign_container",
+      image: req.file,
+      photoType: "CAMPAIGN",
+      type: "PHOTO"
+    });
 
 
-        if (!newcampaign) {
 
-         await  deleteImage(avatar);
+    if (!avatar) {
+      return next(new InternalServerError("Avatar uploa failed", 404));
+    }
 
-         return next(new InternalServerError("Failed to update campaign", 404));
-       }
 
-   }
+
+
+    const campaign = await Prisma.campaign.findUnique({ where: { id } });
+
+    if (campaign) {
+      await deleteImage(campaign.avatar);
+
+
+
+
+      const newcampaign = await Prisma.campaign.create({
+        data: {
+          campaignAddress: parsedCampaignAddress,
+          campaignName,
+          endDate,
+          startDate,
+          campaignPlaceMent: parsedCampaignPlaceMent,
+          avatar: avatar || ""
+        },
+      });
+
+
+      if (!newcampaign) {
+
+        await deleteImage(avatar);
+
+        return next(new InternalServerError("Failed to update campaign", 404));
+      }
+
+    }
 
 
     return new CustomResponse(200, true, "Campaign updated successfully", res);
