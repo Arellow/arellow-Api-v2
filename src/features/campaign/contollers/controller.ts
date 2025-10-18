@@ -468,15 +468,12 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
     }
 
 
-
-
-
     const campaign = await Prisma.campaign.create({
       data: {
         campaignAddress: parsedCampaignAddress,
         campaignName,
-        endDate,
-        startDate,
+        endDate: new Date(endDate),
+        startDate: new Date(startDate),
         campaignPlaceMent: parsedCampaignPlaceMent,
         avatar: avatar || ""
       },
