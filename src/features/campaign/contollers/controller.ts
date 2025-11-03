@@ -464,7 +464,7 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
 
 
     if (!avatar) {
-      return next(new InternalServerError("Avatar uploa failed", 404));
+      return next(new InternalServerError("Avatar upload failed", 404));
     }
 
 

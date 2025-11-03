@@ -1,20 +1,20 @@
-// import express from 'express';
-// import { createBlogPost, getBlogs, getBlog, updateBlog, deleteBlog, publishBlog, getFeaturedContributorBlogs, trendingBlog } from '../controllers/blog.controller';
-// import authenticate, { isAdmin } from '../../../middlewares/auth.middleware';
-// import { singleupload } from '../../../middlewares/multer';
+import express from 'express';
+import authenticate, { isSuspended, isVerify, requireKyc } from '../../../middlewares/auth.middleware';
+import { singleupload } from '../../../middlewares/multer';
+import { createBlog } from '../controllers/blog.controller';
 
-// const router = express.Router();
-
+const blogRoutes = express.Router();
+//  authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), 
 
 // router.get('/blogs', getBlogs); 
 // router.get('/trendingBlogs', trendingBlog); 
 // router.get('/blogs/featured-contributors', getFeaturedContributorBlogs); 
 
 
-// router.post('/blogs', authenticate, singleupload, createBlogPost); 
+blogRoutes.post('/', authenticate, isVerify,requireKyc, isSuspended, singleupload, createBlog); 
 // router.get('/blogs/:id', getBlog);
 // router.put('/blogs/:id', authenticate, updateBlog); 
 // router.delete('/blogs/:id', authenticate, deleteBlog); 
 // router.patch('/blogs/:id/publish', authenticate,isAdmin, publishBlog); 
 
-// export default router;
+export default blogRoutes;

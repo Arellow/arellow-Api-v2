@@ -38,6 +38,7 @@ enum UserPhotoType {
   CHAT
   NOTIFICATION
   CAMPAIGN
+  BLOG
 }
 
 model UserMedia {
@@ -521,18 +522,22 @@ model Blog {
   id               String       @id @default(auto()) @map("_id") @db.ObjectId
   userId           String       @db.ObjectId
   user             User         @relation(fields: [userId], references: [id])
+
   title            String
   content          String
-  author           String
-  banner           String       @db.String
-  socialMediaLinks String[]     @default([]) @db.String
-  tags             String[]     @default(["tech"])
+  banner           String       
+  socialMediaLinks Json?
+  tags             String[]     @default(["property"])
+
   category         BlogCategory @default(INTERNAL)
+  status          BlogStatus    @default(PENDING)
+  timeToRead       Int          @default(5) 
+
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-  isPublished      Boolean      @default(false)
-  timeToRead       Int          @default(5)
 
+  // isPublished      Boolean      @default(false)
   // blogId    String   @db.ObjectId
   // contributors      BlogFeaturedContributor     @relation(fields: [blogId], references: [id])
 
@@ -543,6 +548,13 @@ model Blog {
 enum BlogCategory {
   INTERNAL
   EXTERNAL
+}
+
+
+enum BlogStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // model BlogFeaturedContributor {
