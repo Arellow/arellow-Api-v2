@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
-import { InternalServerError } from "../../../lib/appError";
+import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
 import { deleteImage, processImage } from "../../../utils/imagesprocess";
-import { actionRole } from "@prisma/client";
+import {Prisma as prisma, actionRole, BlogCategory, BlogStatus } from "@prisma/client";
 import { getDateRange } from "../../../utils/getDateRange";
-import { swrCache } from "../../../lib/cache";
-
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
+import { mailController } from "../../../utils/nodemailer";
+import { BlogRejectiontMailOption } from "../../../utils/mailer";
 
 export const createBlog = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -73,7 +74,6 @@ export const createBlog = async (req: Request, res: Response, next: NextFunction
     }
 
 };
-
 
 
 export const editBlog = async (req: Request, res: Response, next: NextFunction) => {
@@ -151,37 +151,53 @@ export const editBlog = async (req: Request, res: Response, next: NextFunction) 
 };
 
 
-
-
-
-
-
 export const getBlogs = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
+  const search = (req.query.search as string) || "";
 
     const { current, previous } = getDateRange(filterTime.toString());
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
 
-    const cacheKey = `getBlogs`;
+    
+    
+    const isAdmin = req.user?.role == "SUPER_ADMIN" || req.user?.role == "ADMIN"; 
+    
+    const cacheKey = `getBlogs:${isAdmin ? "admin": userId}`;
+
+        const filters: prisma.BlogWhereInput = {
+            category :     req?.query?.category as BlogCategory, 
+          status: req?.query?.status as BlogStatus,
+          createdAt: { gte: current.start, lte: current.end },
+          userId: isAdmin ? undefined : userId,
+          AND: [
+            search
+              ? {
+                OR: [
+                  { title: iSearch(search) },
+                ].filter(Boolean)
+              }
+              : undefined,
+    
+           
+          ].filter(Boolean) as prisma.BlogWhereInput[]
+        };
+
 
     const result = await swrCache(cacheKey, async () => {
-      const baseWhere = { userId, archived: false };
-
+     
       const [data, total] = await Promise.all([
         Prisma.blog.findMany({
-          where: baseWhere,
-          
+          where: filters,   
           orderBy: { createdAt: "desc" },
           skip: (pageNumber - 1) * pageSize,
           take: pageSize
         }),
-        Prisma.property.count({ where: baseWhere })
+        Prisma.blog.count({ where: filters})
       ]);
 
-    
 
       const totalPages = Math.ceil(total / pageSize);
 
@@ -210,8 +226,141 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
 
 
 
+export const changeBlogStatus = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user?.id;
+
+  const blogId = req.params.id;
+  const { blogStatus , rejectionReason} = req.body;
+
+  const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
 
 
+    if (blogStatus == BlogStatus.REJECTED && !rejectionReason) {
+      return next(new InternalServerError("Rejection reason is required", 400));
+    }
+
+
+  try {
+
+    const blog = await Prisma.blog.findUnique({ where: { id: blogId }, select: {userId: true, user: {select: {email:true, username: true}}} });
+    if (!blog) {
+      return next(new InternalServerError("blog not found", 404));
+    }
+
+
+    // Ownership check:
+    if (!isAdmin && blog.userId !== userId) {
+
+      return next(new UnAuthorizedError("Forbidden: only owner can update status", 403));
+    }
+
+    await Prisma.blog.update({
+      where: { id: blogId },
+      data: {
+        status: blogStatus,
+      },
+    });
+
+    if(blogStatus == BlogStatus.REJECTED){
+
+          const mailOptions = await BlogRejectiontMailOption({
+                       email: blog.user.email,
+                       rejectionReason,
+                       userName: blog.user.username
+                       
+                       });
+            
+                       
+        mailController({from: "info@arellow.com", ...mailOptions});
+
+
+    }
+
+    
+
+      const cacheKey = `getBlogs`;
+        await deleteMatchingKeys(cacheKey);
+
+
+    new CustomResponse(200, true, `status updated to ${blogStatus}`, res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
+export const deleteBlog = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user?.id;
+
+  const blogId = req.params.id;
+  const isAdmin = await adminRequireRole(req, res);
+
+
+
+  try {
+
+    const blog = await Prisma.blog.findUnique({ where: { id: blogId }, select: {userId: true, user: {select: {email:true, username: true}}} });
+    if (!blog) {
+      return next(new InternalServerError("blog not found", 404));
+    }
+
+
+    // Ownership check:
+    if (!isAdmin && blog.userId !== userId) {
+
+      return next(new UnAuthorizedError("Forbidden: only owner can update status", 403));
+    }
+
+    await Prisma.blog.delete({
+      where: { id: blogId },
+
+    });
+    
+
+      const cacheKey = `getBlogs`;
+        await deleteMatchingKeys(cacheKey);
+
+
+    new CustomResponse(200, true, `blog deleted successfully`, res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
+
+export const blogDetail = async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+   
+
+    try {
+
+        // find single
+        const blog = await Prisma.blog.findUnique({
+            where: { id },
+        });
+
+
+
+        if (!blog) {
+            return next(new InternalServerError("blog request not found", 404));
+        }
+
+
+          const recommendedblog = await Prisma.blog.findMany({
+            where: { tags: {hasSome: blog.tags}, status: "APPROVED" },
+            take: 3
+        });
+
+
+        new CustomResponse(200, true, "successfully", res, {blog, recommendedblog});
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
+    }
+
+
+};
 
 
 const adminRequireRole = async (req: Request, res: Response) => {
@@ -265,3 +414,5 @@ const calculateTimeToRead = (content: string) => {
     return Math.ceil(wordCount / wordsPerMinute);  
 };
 
+const iSearch = (field?: string) =>
+  field ? { contains: field, mode: "insensitive" } : undefined;
