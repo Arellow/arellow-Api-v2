@@ -165,7 +165,7 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
     
     const isAdmin = req.user?.role == "SUPER_ADMIN" || req.user?.role == "ADMIN"; 
     
-    const cacheKey = `getBlogs:${isAdmin ? "admin": userId}`;
+    const cacheKey = `getBlogs:${isAdmin ? "admin": userId}:${req.query}`;
 
         const filters: prisma.BlogWhereInput = {
             category :     req?.query?.category as BlogCategory, 
