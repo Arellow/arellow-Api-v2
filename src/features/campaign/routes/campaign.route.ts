@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { singleupload } from "../../../middlewares/multer";
-import { AllActiveCampaigns, AllCampaigns, clickCampaign, createCampaign, deleteCampaign, updateCampaign } from "../contollers/controller";
+import { AllActiveCampaigns, AllCampaigns, campaignDashbroad, clickCampaign, createCampaign, deleteCampaign, getCampaignStats, updateCampaign } from "../contollers/controller";
 import authenticate, { adminRequireRole, isSuspended, requireRole } from "../../../middlewares/auth.middleware";
 import { CampaignAddress, CampaignPlaceMent, UserRole } from "@prisma/client";
 import { createCampaignSchema } from "./campaign.validate";
@@ -9,6 +9,8 @@ import { validateSchema } from "../../../middlewares/propertyParsingAndValidatio
 
 const campaignRoutes = Router();
 
+campaignRoutes.get("/dashboard", campaignDashbroad);
+campaignRoutes.get("/dashboardcharts", getCampaignStats);
 campaignRoutes.get("/active", AllActiveCampaigns);
 campaignRoutes.get("/", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("CAMPAIGN"), AllCampaigns);
 campaignRoutes.post("/", authenticate, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("CAMPAIGN"),  singleupload, (req, res, next) => {

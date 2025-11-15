@@ -511,6 +511,16 @@ model Campaign {
   updatedAt         DateTime          @updatedAt
 }
 
+model CampaignRequest {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  firstName      String
+  lastName      String
+  title      String
+  email      String
+  message      String
+
+}
 model State {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   name  String @unique

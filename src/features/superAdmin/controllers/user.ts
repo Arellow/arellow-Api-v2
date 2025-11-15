@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../../lib/prisma";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { actionRole, KycDocumentType, KycStatus, Prisma as prisma, UserRole } from "@prisma/client";
+import { actionRole, CampaignPlaceMent, KycDocumentType, KycStatus, Prisma as prisma, UserRole } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { DuplicateError, InternalServerError } from "../../../lib/appError";
@@ -448,5 +448,4 @@ export const suspendAdminStatus = async (req: Request, res: Response, next: Next
 
 
 };
-
 
