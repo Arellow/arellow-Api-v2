@@ -348,6 +348,16 @@ export const blogDetail = async (req: Request, res: Response, next: NextFunction
         // find single
         const blog = await Prisma.blog.findUnique({
             where: { id },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  description: true,
+                  avatar: true, 
+                }
+              }
+            }
         });
 
 
@@ -359,6 +369,16 @@ export const blogDetail = async (req: Request, res: Response, next: NextFunction
 
           const recommendedblog = await Prisma.blog.findMany({
             where: { tags: {hasSome: blog.tags}, status: "APPROVED" },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  description: true,
+                  avatar: true, 
+                }
+              }
+            },
             take: 3
         });
 
