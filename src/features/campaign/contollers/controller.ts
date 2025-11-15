@@ -12,9 +12,6 @@ import { CampaignAddress, CampaignPlaceMent } from "@prisma/client";
 import {  getMonth } from "date-fns";
 
 
-
-
-
 export const AllActiveCampaigns = async (req: Request, res: Response, next: NextFunction) => {
   const campaignPlaceMent = req.query.campaignPlaceMent as CampaignPlaceMent || "LANDING";
 
@@ -49,8 +46,63 @@ export const AllActiveCampaigns = async (req: Request, res: Response, next: Next
 
 
 
+export const AllCampaignsRequest = async (req: Request, res: Response, next: NextFunction) => {
 
 
+  const {
+
+    page = "1",
+    limit = "10"
+  } = req.query;
+
+
+  const pageNumber = parseInt(page as string, 10);
+  const pageSize = parseInt(limit as string, 10);
+  try {
+
+
+    const cacheKey = `getAllCampaignsRequest`;
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [campaigns, total] = await Promise.all([
+        Prisma.campaignRequest.findMany({
+
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.campaignRequest.count({ where: {} })
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
+
+      return {
+        data: campaigns,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage,
+          prevPage,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+
+
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+
+};
 
 export const AllCampaigns = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -440,6 +492,64 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
   } catch (error) {
     next(error)
     // return next(new InternalServerError("Server Error", 500));
+  }
+};
+
+export const requestCampaign = async (req: Request, res: Response, next: NextFunction) => {
+  const { firstName,lastName, title , email , phoneNumber , message } = req.body;
+
+  try {
+
+    await Prisma.campaignRequest.create({
+      data: {
+        email, firstName, lastName, message, title, phoneNumber
+      }
+    });
+
+
+
+
+      const adminPermission = await Prisma.adminPermission.findMany({
+            where: {  },
+          });
+    
+
+          adminPermission.forEach(async(v) => {
+           const hasAccess = v.action.some((role) =>
+            ["CAMPAIGN"].includes(role)
+          );
+
+          if(hasAccess){
+            Prisma.notification.create({
+              data: {userId: v.userId, title: "Advertisement request", 
+                message: `
+
+                user details:
+                first name: ${firstName}
+                last name: ${lastName}
+                email: ${email}
+                phone number: ${phoneNumber}
+                email: ${email}
+
+                 message details:
+                 title: ${title}
+                message: ${message}
+
+                `}
+            })
+            
+          }
+          })
+    
+
+
+      
+
+
+    return new CustomResponse(200, true, "Request created successfully", res);
+  } catch (error) {
+    // next(error)
+    return next(new InternalServerError("Server Error", 500));
   }
 };
 

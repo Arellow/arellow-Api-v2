@@ -20,3 +20,13 @@ export const createCampaignSchema = Joi.object({
 });
 
 
+export const createCampaignRequestSchema = Joi.object({
+   firstName: Joi.string().required().min(1),
+      lastName: Joi.string().required().min(1),
+      title: Joi.string().required().min(1),
+      phoneNumber: Joi.string().required().min(1),
+      message: Joi.string().required().min(1),
+      email: Joi.string().trim().email().lowercase().required(),
+
+});
+

@@ -513,12 +513,15 @@ model Campaign {
 
 model CampaignRequest {
   id String @id @default(auto()) @map("_id") @db.ObjectId
-
   firstName      String
   lastName      String
   title      String
   email      String
+  phoneNumber      String
   message      String
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
 }
 model State {

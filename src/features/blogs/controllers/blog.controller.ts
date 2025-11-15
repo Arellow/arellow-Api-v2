@@ -162,10 +162,9 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
     const pageSize = parseInt(limit as string, 10);
 
     
-    
     const isAdmin = req.user?.role == "SUPER_ADMIN" || req.user?.role == "ADMIN"; 
     
-    const cacheKey = `getBlogs:${isAdmin ? "admin": userId}:${req.query}`;
+    const cacheKey = `getBlogs:${isAdmin ? "admin": userId}:${JSON.stringify(req.query)}`;
 
         const filters: prisma.BlogWhereInput = {
           ...req?.query?.isLanding !== "true" &&  {category : req?.query?.category as BlogCategory || "INTERNAL"}, 
