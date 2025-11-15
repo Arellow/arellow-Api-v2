@@ -109,6 +109,7 @@ model User {
   password     String
   phone_number String
   role         UserRole
+  description String?           
   avatar       String           @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified  Boolean          @default(false)
   suspended    Boolean          @default(false)

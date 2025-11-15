@@ -168,10 +168,10 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
     const cacheKey = `getBlogs:${isAdmin ? "admin": userId}:${req.query}`;
 
         const filters: prisma.BlogWhereInput = {
-            category :     req?.query?.category as BlogCategory, 
-          status: req?.query?.status as BlogStatus,
-          createdAt: { gte: current.start, lte: current.end },
-          userId: isAdmin ? undefined : userId,
+          ...req?.query?.isLanding !== "true" &&  {category : req?.query?.category as BlogCategory || "INTERNAL"}, 
+          ...req?.query?.isLanding !== "true" &&  {status: req?.query?.status as BlogStatus},
+          ...req?.query?.isLanding !== "true" &&  {createdAt: { gte: current.start, lte: current.end }},
+          ...req?.query?.isLanding !== "true" &&  {userId: isAdmin ? undefined : userId},
           AND: [
             search
               ? {
@@ -188,21 +188,31 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
 
     const result = await swrCache(cacheKey, async () => {
      
-      const [data, total] = await Promise.all([
+      const [data, total, contributorsRaw] = await Promise.all([
         Prisma.blog.findMany({
           where: filters,   
           orderBy: { createdAt: "desc" },
           skip: (pageNumber - 1) * pageSize,
           take: pageSize
         }),
-        Prisma.blog.count({ where: filters})
+        Prisma.blog.count({ where: filters}),
+        Prisma.blog.findMany({
+          where: {status: "APPROVED"},
+          distinct: ["userId"], 
+          select: {user: {select: {id: true, fullname: true, avatar: true, description: true}}}   
+        }),
+
       ]);
 
 
       const totalPages = Math.ceil(total / pageSize);
+      const contributors = contributorsRaw.map(c => c.user);
 
       return {
-        data,
+        ...{
+          blogs: data,
+           ...req?.query?.isLanding === "true" && {contributors},
+        },
         pagination: {
           total,
           page: pageNumber,
