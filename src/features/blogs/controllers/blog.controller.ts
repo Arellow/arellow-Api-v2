@@ -151,6 +151,150 @@ export const editBlog = async (req: Request, res: Response, next: NextFunction) 
 };
 
 
+export const getBlogsContributors = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+  
+    const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
+  const search = (req.query.search as string) || "";
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+    
+    const cacheKey = `getBlogsContributors:${JSON.stringify(req.query)}`;
+
+        const filters: prisma.BlogWhereInput = {
+          status: "APPROVED",
+          AND: [
+            search
+              ? {
+                OR: [
+                  { user: {fullname:  iSearch(search)} },
+                  { user: {description:  iSearch(search)} },
+                ].filter(Boolean)
+              }
+              : undefined,
+    
+           
+          ].filter(Boolean) as prisma.BlogWhereInput[]
+        };
+
+
+    const result = await swrCache(cacheKey, async () => {
+     
+      const [ total, contributorsRaw] = await Promise.all([
+        Prisma.blog.count({ where: filters}),
+        Prisma.blog.findMany({
+          where: filters,
+          distinct: ["userId"], 
+          select: {user: {select: {id: true, fullname: true, avatar: true, description: true}}}   
+        }),
+
+      ]);
+
+
+      const totalPages = Math.ceil(total / pageSize);
+      const contributors = contributorsRaw.map(c => c.user).slice(0,4);
+
+      return {
+       data: contributors,
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
+          prevPage: pageNumber > 1 ? pageNumber - 1 : null,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+  } catch (error) {
+    console.error(error);
+    next(new InternalServerError("Server Error", 500));
+  }
+};
+
+
+
+export const getBlogContributorDetail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+      const { id: userId } = req.params;
+    const { page = "1", limit = "10", } = req.query;
+  const search = (req.query.search as string) || "";
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+
+ 
+    const cacheKey = `getBlogs:${userId}:${JSON.stringify(req.query)}`;
+
+        const filters: prisma.BlogWhereInput = {
+          status:  "APPROVED",
+          AND: [
+            search
+              ? {
+                OR: [
+                  { title: iSearch(search) },
+                ].filter(Boolean)
+              }
+              : undefined,
+    
+           
+          ].filter(Boolean) as prisma.BlogWhereInput[]
+        };
+
+
+    const result = await swrCache(cacheKey, async () => {
+     
+      const [data, total, userDetail] = await Promise.all([
+        Prisma.blog.findMany({
+          where: filters,   
+          orderBy: { createdAt: "desc" },
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize
+        }),
+        Prisma.blog.count({ where: filters}),
+        Prisma.user.findUnique({
+          where: {id: userId},
+           select: {id: true, fullname: true, avatar: true, description: true}
+        })
+
+      ]);
+
+
+      const totalPages = Math.ceil(total / pageSize);
+      
+
+      return {
+        ...{
+          userDetail,
+          blogs: data,
+        },
+        pagination: {
+          total,
+          page: pageNumber,
+          pageSize,
+          totalPages,
+          nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
+          prevPage: pageNumber > 1 ? pageNumber - 1 : null,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+  } catch (error) {
+    // console.error(error);
+    next(new InternalServerError("Server Error", 500));
+  }
+};
+
+
 export const getBlogs = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
@@ -205,7 +349,7 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
 
 
       const totalPages = Math.ceil(total / pageSize);
-      const contributors = contributorsRaw.map(c => c.user);
+      const contributors = contributorsRaw.map(c => c.user).slice(0,4);
 
       return {
         ...{

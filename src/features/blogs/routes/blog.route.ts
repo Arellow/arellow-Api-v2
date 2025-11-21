@@ -1,7 +1,7 @@
 import express from 'express';
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 import { singleupload } from '../../../middlewares/multer';
-import { blogDetail, changeBlogStatus, createBlog, deleteBlog, editBlog, getBlogs } from '../controllers/blog.controller';
+import { blogDetail, changeBlogStatus, createBlog, deleteBlog, editBlog, getBlogContributorDetail, getBlogs, getBlogsContributors } from '../controllers/blog.controller';
 import { UserRole } from '@prisma/client';
 
 const blogRoutes = express.Router();
@@ -13,6 +13,8 @@ blogRoutes.post('/', authenticate, isVerify,requireKyc, isSuspended, singleuploa
 blogRoutes.patch('/:id', authenticate, isVerify,requireKyc, isSuspended, singleupload, editBlog); 
 blogRoutes.get('/:id', blogDetail);
 blogRoutes.delete('/:id', authenticate,isVerify,requireKyc, isSuspended, deleteBlog); 
+blogRoutes.get('/contributor/:id', getBlogContributorDetail); 
+blogRoutes.get('/contributors', getBlogsContributors); 
 blogRoutes.get('/', getBlogs); 
 blogRoutes.put('/:id', authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("BLOG"),  changeBlogStatus); 
 
