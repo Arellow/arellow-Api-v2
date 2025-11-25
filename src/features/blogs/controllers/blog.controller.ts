@@ -194,7 +194,7 @@ export const getBlogsContributors = async (req: Request, res: Response, next: Ne
 
 
       const totalPages = Math.ceil(total / pageSize);
-      const contributors = contributorsRaw.map(c => c.user).slice(0,4);
+      const contributors = contributorsRaw.map(c => c.user);
 
       return {
        data: contributors,
