@@ -5,19 +5,16 @@ import { blogDetail, changeBlogStatus, createBlog, deleteBlog, editBlog, getBlog
 import { UserRole } from '@prisma/client';
 
 const blogRoutes = express.Router();
-//  authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PROPERTY"), 
 
+blogRoutes.get('/contributors', getBlogsContributors); 
+blogRoutes.get('/contributor/:id', getBlogContributorDetail); 
+blogRoutes.get('/:id', blogDetail);
+blogRoutes.get('/', getBlogs); 
 
 
 blogRoutes.post('/', authenticate, isVerify,requireKyc, isSuspended, singleupload, createBlog); 
 blogRoutes.patch('/:id', authenticate, isVerify,requireKyc, isSuspended, singleupload, editBlog); 
-blogRoutes.get('/:id', blogDetail);
 blogRoutes.delete('/:id', authenticate,isVerify,requireKyc, isSuspended, deleteBlog); 
-blogRoutes.get('/contributor/:id', getBlogContributorDetail); 
-blogRoutes.get('/contributors', getBlogsContributors); 
-blogRoutes.get('/', getBlogs); 
 blogRoutes.put('/:id', authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("BLOG"),  changeBlogStatus); 
-
-// router.patch('/blogs/:id/publish', authenticate,isAdmin, publishBlog); 
 
 export default blogRoutes;

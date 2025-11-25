@@ -213,7 +213,7 @@ export const getBlogsContributors = async (req: Request, res: Response, next: Ne
 
     new CustomResponse(200, true, "success", res, result);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     next(new InternalServerError("Server Error", 500));
   }
 };
