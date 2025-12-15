@@ -71,6 +71,7 @@ export class UserService {
 
     if (data.fullname !== undefined) updatedData.fullname = data.fullname;
     if (data.username !== undefined) updatedData.username = data.username;
+    // if (data.description !== undefined) updatedData.description = data.description;
     if (data.phone_number.phone !== undefined) updatedData.phone_number = data.phone_number.phone;
     if (data.phone_number.country !== undefined) updatedData.address.country = data.phone_number.country;
    

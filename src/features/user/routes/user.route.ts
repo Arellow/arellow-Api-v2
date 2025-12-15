@@ -50,8 +50,8 @@ usersRoutes.get("/detail", authenticate, getUserById);
 
 usersRoutes.patch(
   "/profile",
-  authenticate,
   validateSchema(updateUserSchema),
+  authenticate,
   updateUser
 );
 

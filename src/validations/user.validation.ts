@@ -3,6 +3,7 @@ import Joi from 'joi';
 export const updateUserSchema = Joi.object({
   username: Joi.string().min(3).max(30),
   fullname: Joi.string().min(2).max(100),
+  description: Joi.string().min(2),
   phone_number: Joi.object({
       phone: Joi.string()
         .required()

@@ -1,0 +1,747 @@
+// // npx prisma db push
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "mongodb"
+//   // url      = env("DATABASE_URL")
+// }
+
+// model Company {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name        String
+//   description String?
+//   website     String?
+//   users       User[]
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+// }
+
+// enum KycStatus {
+//   PENDING
+//   VERIFIED
+//   REJECTED
+// }
+
+// enum KycDocumentType {
+//   NIN
+//   PASSPORT
+//   NATIONALID
+// }
+
+// enum UserPhotoType {
+//   PROFILE
+//   KYC
+//   TICKET
+//   CHAT
+//   NOTIFICATION
+//   CAMPAIGN
+//   BLOG
+// }
+
+// model UserMedia {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+
+//   type      MediaType
+//   photoType UserPhotoType? // Optional if not PHOTO
+
+//   url      String
+//   publicId String
+//   caption  String?
+//   altText  String?
+//   order    Int?
+
+//   width    Int?
+//   height   Int?
+//   duration Float?
+//   sizeInKB Float?
+//   format   String?
+
+//   createdAt DateTime @default(now())
+//   Ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+//   ticketId  String?  @db.ObjectId
+// }
+
+// model Kyc {
+//   id             String          @id @default(auto()) @map("_id") @db.ObjectId
+//   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   userId         String          @db.ObjectId
+//   documentType   KycDocumentType @default(NIN)
+//   ninData        NIN_Data?
+//   documentNumber String
+//   statusText     String?
+//   documentPhoto  String
+//   tryCount       Int             @default(0)
+//   status         KycStatus       @default(PENDING)
+//   createdAt      DateTime        @default(now())
+//   updatedAt      DateTime        @updatedAt
+
+//   @@unique(userId)
+// }
+
+// type NIN_Data {
+//   nin        String
+//   firstname  String
+//   lastname   String
+//   middlename String?
+//   phone      String?
+//   gender     String?
+//   birthdate  String?
+//   photo      String?
+//   address    String?
+//   residence  Residence?
+// }
+
+// type Residence {
+//   address1 String?
+//   town     String?
+//   lga      String?
+//   state    String?
+// }
+
+// model User {
+//   id           String           @id @default(auto()) @map("_id") @db.ObjectId
+//   email        String           @unique
+//   fullname     String
+//   username     String           @unique
+//   password     String
+//   phone_number String
+//   role         UserRole
+//   description String?           
+//   avatar       String           @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
+//   is_verified  Boolean          @default(false)
+//   suspended    Boolean          @default(false)
+//   address      PropertyAddress?
+//   points       Int              @default(0)
+
+//   companyId String?            @db.ObjectId
+//   company   Company?           @relation(fields: [companyId], references: [id])
+//   likes     UserPropertyLike[]
+
+//   properties         Property[] @relation("UserProperties")
+//   approvedProperties Property[] @relation("ApprovedProperties")
+
+//   mortgage          MortgageCalculationDraft[]
+//   preQualifications PreQualification[]
+//   // featuredContributors BlogFeaturedContributor[]  @relation("UserFeaturedContributors")
+//   createdAt         DateTime                   @default(now())
+//   updatedAt         DateTime                   @updatedAt
+//   Blog              Blog[]
+
+//   kyc             Kyc?
+//   tickets         Ticket[]
+//   AdminPermission AdminPermission?
+
+//   propertyRequests PropertyRequest[] @relation("PropertyRequest_createdBy")
+
+//   developerAssignments        DeveloperAssignment[] @relation("DeveloperAssigned")
+//   developerAssignmentsCreated DeveloperAssignment[] @relation("DeveloperAssignedBy")
+
+//   // reward
+//   rewardHistories RewardHistory[]
+//   rewardRequests  RewardRequest[]
+//   setting         Setting?
+
+//   // Chat relations 
+
+//   conversationIds String[]       @db.ObjectId
+//   conversations   Conversation[] @relation("UserConversations", fields: [conversationIds], references: [id])
+
+//   online   Boolean   @default(false)
+//   lastSeen DateTime?
+
+//   message Message[]
+// }
+
+// type Setting {
+//   pushNotification  Boolean @default(true)
+//   emailNotification Boolean @default(true)
+//   smsNotification   Boolean @default(false)
+// }
+
+// enum UserRole {
+//   ADMIN
+//   SUPER_ADMIN
+//   REALTOR
+//   DEVELOPER
+//   BUYER
+// }
+
+// model AdminPermission {
+//   id     String       @id @default(auto()) @map("_id") @db.ObjectId
+//   action actionRole[]
+//   // resource String[]
+//   userId String       @db.ObjectId
+//   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique(userId)
+// }
+
+// enum actionRole {
+//   KYC
+//   BLOG
+//   PROPERTY
+//   PROJECT
+//   MORTGAGE
+//   CAMPAIGN
+//   REWARD
+//   SUPPORT
+//   USER
+// }
+
+// model Ticket {
+//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
+//   title        String
+//   category     String
+//   slug         String
+//   description  String
+//   ticketPhotos UserMedia[]
+//   status       ticketStatus @default(PENDING)
+//   createdAt    DateTime     @default(now())
+//   updatedAt    DateTime     @updatedAt
+
+//   userId String @db.ObjectId
+//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
+
+// enum ticketStatus {
+//   ONGOING
+//   RESOLVED
+//   PENDING
+// }
+
+// enum PropertyStatus {
+//   PENDING
+//   APPROVED
+//   REJECTED
+//   TRASHED
+// }
+
+// model Property {
+//   id           String           @id @default(auto()) @map("_id") @db.ObjectId
+//   title        String
+//   description  String
+//   category     PropertyCategory
+//   features     String[]
+//   amenities    Amenity[]
+//   country      String
+//   state        String
+//   city         String
+//   neighborhood String
+//   location     GeoPoint
+
+//   bedrooms     Int
+//   bathrooms    Int
+//   squareMeters String
+
+//   floors Int
+//   price  PriceModel
+
+//   yearBuilt  Int
+//   stage      PropertyStage?
+//   progress   PropertyProgress?
+//   stagePrice PriceModel?
+
+//   userId String @db.ObjectId
+//   user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
+
+//   status          PropertyStatus @default(PENDING)
+//   rejectionReason String?
+//   approvedById    String?        @db.ObjectId
+//   approvedBy      User?          @relation("ApprovedProperties", fields: [approvedById], references: [id])
+
+//   likedBy    UserPropertyLike[]
+//   likesCount Int                @default(0)
+
+//   viewsCount  Int @default(0)
+//   sharesCount Int @default(0)
+
+//   media       Media[]
+//   salesStatus SalesStatus @default(SELLING)
+
+//   archived              Boolean @default(false)
+//   isFeatureProperty     Boolean @default(false)
+//   is_Property_A_Project Boolean @default(false)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   // chat  start here
+//   messages Message[]
+
+//   AiProperty AiProperty[]
+// }
+
+// enum SalesStatus {
+//   SELLING
+//   SOLD
+// }
+
+// enum PropertyStage {
+//   OffPlanStage    @map("Off-plan stage")
+//   CarcassStage    @map("Carcass stage")
+//   CompletionStage @map("Completion stage")
+// }
+
+// enum PropertyProgress {
+//   Zero       @map("0% ongoing")
+//   Ten        @map("10% ongoing")
+//   Twenty     @map("20% ongoing")
+//   Thirty     @map("30% ongoing")
+//   Forty      @map("40% ongoing")
+//   Fifty      @map("50% ongoing")
+//   Sixty      @map("60% ongoing")
+//   Seventy    @map("70% ongoing")
+//   Eighty     @map("80% ongoing")
+//   Ninety     @map("90% ongoing")
+//   OneHundred @map("100% ongoing")
+// }
+
+// enum PropertyCategory {
+//   Apartment
+//   Bungalow
+//   Duplex
+//   Detached_House         @map("Detached House")
+//   Semi_detached_House    @map("Semi-detached House")
+//   Mansion
+//   Penthouse
+//   Studio_Apartment       @map("Studio Apartment")
+//   Shared_Apartment       @map("Shared Apartment")
+//   Serviced_Apartment     @map("Serviced Apartment")
+//   Co_living_Space        @map("Co-living Space")
+//   Office_Space           @map("Office Space")
+//   Commercial_Property    @map("Commercial Property")
+//   Warehouse
+//   Short_let              @map("Short-let")
+//   Hostel_Student_Housing @map("Hostel / Student Housing")
+// }
+
+// model Amenity {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name       String
+//   photoUrl   String
+//   propertyId String   @db.ObjectId
+//   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+// }
+
+// model UserPropertyLike {
+//   id         String @id @default(auto()) @map("_id") @db.ObjectId
+//   userId     String @db.ObjectId
+//   propertyId String @db.ObjectId
+
+//   user      User     @relation(fields: [userId], references: [id])
+//   property  Property @relation(fields: [propertyId], references: [id])
+//   createdAt DateTime @default(now())
+
+//   @@unique([userId, propertyId])
+// }
+
+// type GeoPoint {
+//   lat Float
+//   lng Float
+// }
+
+// type PriceModel {
+//   currency String
+//   amount   Float
+// }
+
+// enum MediaType {
+//   PHOTO
+//   VIDEO
+//   TOUR_3D
+//   AUDIO
+//   FILE
+// }
+
+// enum PhotoType {
+//   FRONT_VIEW
+//   LIVING_ROOM
+//   KITCHEN
+//   FLOOR_PLAN
+//   PRIMARY_ROOM
+//   OTHER
+// }
+
+// model Media {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+//   propertyId String   @db.ObjectId
+
+//   type      MediaType
+//   photoType PhotoType?
+
+//   url      String
+//   publicId String
+//   caption  String?
+//   altText  String?
+//   order    Int?
+
+//   width    Int?
+//   height   Int?
+//   duration Float?
+//   sizeInKB Float?
+//   format   String?
+
+//   createdAt DateTime @default(now())
+// }
+
+// model ResetPassword {
+//   id          String @id @default(auto()) @map("_id") @db.ObjectId
+//   userId      String
+//   resetString String
+//   createdAt   Int
+//   expiresAt   Int
+// }
+
+// model Subscribe {
+//   id    String  @id @default(auto()) @map("_id") @db.ObjectId
+//   email String?
+//   phone String?
+// }
+
+// model PropertyRequest {
+//   id                String           @id @default(auto()) @map("_id") @db.ObjectId
+//   username          String
+//   userRole          String
+//   email             String
+//   phoneNumber       String
+//   propertyCategory  PropertyCategory
+//   features          String[]
+//   title             String
+//   propertyAddress   PropertyAddress
+//   numberOfBedrooms  Int              @default(0)
+//   numberOfBathrooms Int              @default(0)
+//   // budget            Int              @default(0)
+//   budget            PriceModel
+//   description       String?
+
+//   createdBy   User?   @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])
+//   createdById String? @db.ObjectId
+
+//   developerAssignments DeveloperAssignment[]
+
+//   userStatus  PropertyRequestUserStatus  @default(PENDING)
+//   adminStatus PropertyRequestAdminStatus @default(PENDING)
+//   createdAt   DateTime                   @default(now())
+//   updatedAt   DateTime                   @updatedAt
+// }
+
+// model DeveloperAssignment {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+
+//   propertyRequest   PropertyRequest @relation(fields: [propertyRequestId], references: [id])
+//   propertyRequestId String          @db.ObjectId
+
+//   developer   User   @relation("DeveloperAssigned", fields: [developerId], references: [id])
+//   developerId String @db.ObjectId
+
+//   assignedBy   User?   @relation("DeveloperAssignedBy", fields: [assignedById], references: [id])
+//   assignedById String? @db.ObjectId
+
+//   assignedAt DateTime         @default(now())
+//   responseAt DateTime?
+//   status     AssignmentStatus @default(IN_PROGRESS)
+//   comment    String?
+
+//   @@index([propertyRequestId, developerId], name: "assignment_request_developer_unique")
+// }
+
+// enum AssignmentStatus {
+//   IN_PROGRESS
+//   CLOSED
+// }
+
+// enum PropertyRequestAdminStatus {
+//   PENDING
+//   ASSIGNED
+//   CLOSED
+// }
+
+// enum PropertyRequestUserStatus {
+//   PENDING
+//   IN_PROGRESS
+//   SEEN
+// }
+
+// type PropertyAddress {
+//   country  String
+//   city     String
+//   state    String
+//   location String
+// }
+
+// model MortgageCalculationDraft {
+//   id            String   @id @default(auto()) @map("_id") @db.ObjectId
+//   home_location String
+//   home_price    Float
+//   down_payment  Float
+//   userId        String?  @db.ObjectId
+//   user          User?    @relation(fields: [userId], references: [id])
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+// }
+
+// enum CampaignPlaceMent {
+//   LANDING
+//   BLOG
+//   PROPERTY
+// }
+
+// type CampaignAddress {
+//   address     String
+//   website     String
+//   phoneNumber String
+// }
+
+// model Campaign {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+
+//   campaignName      String
+//   campaignPlaceMent CampaignPlaceMent[] @default([LANDING])
+//   avatar            String
+//   campaignAddress   CampaignAddress
+//   startDate         DateTime
+//   endDate           DateTime
+//   clicks            Int               @default(0)
+//   views             Int               @default(0)
+//   createdAt         DateTime          @default(now())
+//   updatedAt         DateTime          @updatedAt
+// }
+
+// model CampaignRequest {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+//   firstName      String
+//   lastName      String
+//   title      String
+//   email      String
+//   phoneNumber      String
+//   message      String
+
+//   createdAt         DateTime          @default(now())
+//   updatedAt         DateTime          @updatedAt
+
+// }
+// model State {
+//   id    String @id @default(auto()) @map("_id") @db.ObjectId
+//   name  String @unique
+//   image String
+// }
+
+// // -------------------------------------- Blog Start -------------------------------
+
+// model Blog {
+//   id               String       @id @default(auto()) @map("_id") @db.ObjectId
+//   userId           String       @db.ObjectId
+//   user             User         @relation(fields: [userId], references: [id])
+
+//   title            String
+//   content          String
+//   banner           String       
+//   socialMediaLinks Json?
+//   tags             String[]     @default(["property"])
+
+//   category         BlogCategory @default(INTERNAL)
+//   status          BlogStatus    @default(PENDING)
+//   timeToRead       Int          @default(5) 
+
+
+//   createdAt        DateTime     @default(now())
+//   updatedAt        DateTime     @updatedAt
+
+//   // isPublished      Boolean      @default(false)
+//   // blogId    String   @db.ObjectId
+//   // contributors      BlogFeaturedContributor     @relation(fields: [blogId], references: [id])
+
+//   // @@index([userId])
+//   // @@map("blogs")
+// }
+
+// enum BlogCategory {
+//   INTERNAL
+//   EXTERNAL
+// }
+
+
+// enum BlogStatus {
+//   PENDING
+//   APPROVED
+//   REJECTED
+// }
+
+// // model BlogFeaturedContributor {
+// //   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+// //   userId    String   @db.ObjectId
+// //   user      User     @relation(fields: [userId], references: [id], name: "UserFeaturedContributors")
+// //   featured  Boolean  @default(true)
+// //   createdAt DateTime @default(now())
+// //   updatedAt DateTime @updatedAt
+// //   blog      Blog[]
+
+// //   // @@unique([userId, blogId])
+// //   // @@index([userId])
+// // }
+// // -------------------------------------- Blog End -------------------------------
+
+// // -------------------------------------- PreQualification start -----------------------------
+
+// model PreQualification {
+//   id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+//   fullname            String
+//   email               String
+//   phonenumber         String
+//   occupation          String
+//   home_address        String
+//   state               String
+//   city                String
+//   neighbourhood       String
+//   monthly_budget      Float
+//   down_payment_goal   Float
+//   employer_name       String?
+//   level_of_employment String?
+//   bank_name           String
+//   status              PropertyStatus @default(PENDING)
+
+//   userId    String   @db.ObjectId
+//   user      User     @relation(fields: [userId], references: [id])
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+// // -------------------------------------- PreQualification ends -----------------------------
+
+// // -------------------------------------- Notification start --------------------------------
+
+// model Notification {
+//   id        String               @id @default(auto()) @map("_id") @db.ObjectId
+//   userId    String               @db.ObjectId
+//   avatar    String?
+//   title     String
+//   message   String
+//   read      Boolean              @default(false)
+//   createdAt DateTime             @default(now())
+//   category  NotificationCategory @default(GENERAL)
+// }
+
+// enum NotificationCategory {
+//   PROPERTY
+//   PROJECT
+//   REQUEST
+//   SUPPORT
+//   CHAT
+//   ACCOUNT
+//   ADMIN
+//   GENERAL
+// }
+
+// // -------------------------------------- Notification End -------------------------------
+
+// // -------------------------------------- reward start -----------------------------
+// enum RewardType {
+//   CREDIT
+//   DEBIT
+// }
+
+// enum RequestStatus {
+//   PENDING
+//   APPROVED
+//   REJECTED
+// }
+
+// model RewardHistory {
+//   id        String     @id @default(auto()) @map("_id") @db.ObjectId
+//   userId    String     @db.ObjectId
+//   user      User       @relation(fields: [userId], references: [id])
+//   points    Int
+//   type      RewardType
+//   reason    String
+//   createdAt DateTime   @default(now())
+// }
+
+// model RewardRequest {
+//   id                String        @id @default(auto()) @map("_id") @db.ObjectId
+//   userId            String        @db.ObjectId
+//   user              User          @relation(fields: [userId], references: [id])
+//   requestPoints     Int
+//   bankAccountName   String
+//   bankAccountNumber String
+//   bankName          String
+//   status            RequestStatus @default(PENDING)
+//   createdAt         DateTime      @default(now())
+//   processedAt       DateTime      @updatedAt
+// }
+
+// //-------------------------- reward ends ------------------------------
+
+// // .............................. chat start .........................
+
+// enum MessageType {
+//   TEXT
+//   PHOTO
+//   AUDIO
+//   VOICE_RECORDING
+//   VIDEO
+//   FILE
+//   PROPERTY_SHARE
+//   VIDEO_CALL_SCHEDULE
+// }
+
+// model Conversation {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   type        String   @default("ONE_ON_ONE") // ONE_ON_ONE or GROUP
+//   userIds     String[] @db.ObjectId // Explicit: List of user IDs
+//   users       User[]   @relation("UserConversations", fields: [userIds], references: [id])
+//   lastMessage String? // ID of the last message for sorting
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+
+//   messages Message[]
+
+//   @@map("conversations")
+// }
+
+// model Message {
+//   id               String      @id @default(auto()) @map("_id") @db.ObjectId
+//   content          String?
+//   type             MessageType
+//   conversationId   String      @db.ObjectId
+//   senderId         String      @db.ObjectId
+//   propertyId       String?     @db.ObjectId
+//   videoCallDetails Json?
+//   readByIds        String[]    @db.ObjectId
+
+//   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+//   sender       User         @relation(fields: [senderId], references: [id])
+//   property     Property?    @relation(fields: [propertyId], references: [id])
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([conversationId])
+//   @@index([senderId])
+//   @@index([readByIds])
+//   @@map("messages")
+// }
+
+// // Ai message 
+
+// model AiMessage {
+//   id         String       @id @default(auto()) @map("_id") @db.ObjectId
+//   content    String?
+//   userId     String       @db.ObjectId
+//   senderId   String
+//   properties AiProperty[]
+//   isAi       Boolean      @default(false)
+//   createdAt  DateTime     @default(now())
+// }
+
+// model AiProperty {
+//   id         String    @id @default(auto()) @map("_id") @db.ObjectId
+//   property   Property? @relation(fields: [propertyId], references: [id])
+//   propertyId String?   @db.ObjectId
+
+//   AiMessage   AiMessage? @relation(fields: [aiMessageId], references: [id])
+//   aiMessageId String?    @db.ObjectId
+// }

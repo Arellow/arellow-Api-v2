@@ -32,8 +32,9 @@ export const updateUser = async (
 ): Promise<void> => {
   const userId = req.user?.id!;
   const data = req.body as UserUpdateDto;
+  console.log({userId, data})
 
-  const allowedFields = ["fullname", "username", "phone_number"];
+  const allowedFields = ["fullname", "username", "phone_number", "description"];
   const invalidFields = Object.keys(data).filter((key) => !allowedFields.includes(key));
   if (invalidFields.length > 0) {
     throw new BadRequestError(`Cannot update fields: ${invalidFields.join(", ")}`);
