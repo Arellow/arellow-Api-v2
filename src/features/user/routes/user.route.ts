@@ -67,8 +67,8 @@ usersRoutes.patch(
   updateNotificationSetting
 );
 
-usersRoutes.put("/:userId/suspend", suspendUser);
-usersRoutes.delete("/:userId", deleteUser);
+usersRoutes.put("/:userId/suspend",  authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("USER"), suspendUser);
+usersRoutes.delete("/:userId",  authenticate, isVerify, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("USER"), deleteUser);
 
 usersRoutes.get('/mobilenotifications', authenticate, userNotificationsForMobile);
 usersRoutes.get('/notifications', authenticate, userNotifications);

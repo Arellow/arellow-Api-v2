@@ -23,6 +23,7 @@ export interface UserUpdateDto {
 
 export interface UserSuspendDto {
   reason?: string;
+  status: boolean
 }
 
 export interface UserSettingsDto {
