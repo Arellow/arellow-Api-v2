@@ -4,7 +4,7 @@ import { getAllStates } from '../controllers/seedPropImages';
 import {
     approveProperty, archiveProperty, likeProperty, rejectProperty, singleProperty,
     unArchiveProperty, unLikeProperty, deleteProperty, statusProperty, getLikedPropertiesByUser,
-    getPropertiesByUser, mediaForProperty, 
+    getPropertiesByUser,
     getAllProperties,
     getAllArchivedProperties,
     getArchivedPropertiesByUser,
@@ -13,6 +13,7 @@ import {
     shareProperty,
     getProperties,
     getAffordableProperties,
+    getTopPerforming,
     // featureProperties,
     // recentProperties, 
     // sellingProperties,
@@ -44,6 +45,7 @@ propertyRoutes.get("/seed", getAllStates);
 // propertyRoutes.get("/featured", featureProperties);
 // propertyRoutes.get("/listing", authenticate, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), propertiesListing);
 
+propertyRoutes.get("/leaderboard", getTopPerforming);
 propertyRoutes.get("/affordable", getAffordableProperties);
 
 propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
@@ -110,7 +112,7 @@ adminRequireRole("PROPERTY"),
 
 propertyRoutes.post("/:id/like", authenticate, isSuspended, likeProperty);
 propertyRoutes.delete('/:id/like', authenticate, isSuspended, unLikeProperty);
-propertyRoutes.patch("/:propertyId/media", authenticate, isSuspended, mediaForProperty);
+// propertyRoutes.patch("/:propertyId/media", authenticate, isSuspended, mediaForProperty);
 propertyRoutes.post("/:id/share", shareProperty);
 
 

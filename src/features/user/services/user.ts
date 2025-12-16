@@ -218,7 +218,7 @@ export class UserService {
       const user = await Prisma.user.update({
         where: { id: userId },
         data: {
-          suspended: true,
+          suspended: data.status,
         },
         include: {
           properties: true,

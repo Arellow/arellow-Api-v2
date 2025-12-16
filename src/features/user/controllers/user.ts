@@ -32,7 +32,6 @@ export const updateUser = async (
 ): Promise<void> => {
   const userId = req.user?.id!;
   const data = req.body as UserUpdateDto;
-  console.log({userId, data})
 
   const allowedFields = ["fullname", "username", "phone_number", "description"];
   const invalidFields = Object.keys(data).filter((key) => !allowedFields.includes(key));
@@ -45,7 +44,7 @@ export const updateUser = async (
     const user = await userService.updateUser(userId, data);
     new CustomResponse(200, true, "User updated successfully", res, user);
   } catch (error) {
-    console.error("[updateUser] error:", error);
+    // console.error("[updateUser] error:", error);
     next(error);
   }
 };
@@ -114,7 +113,7 @@ export const suspendUser = async (
     const user = await userService.suspendUser(userId, data);
     new CustomResponse(200, true, "User suspended successfully", res, user);
   } catch (error) {
-    console.error("[suspendUser] error:", error);
+    // console.error("[suspendUser] error:", error);
     next(error);
   }
 };

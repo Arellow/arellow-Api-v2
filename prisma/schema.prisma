@@ -283,11 +283,14 @@ model Property {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  soldAt DateTime?
 
   // chat  start here
   messages Message[]
 
   AiProperty AiProperty[]
+
+  @@index([salesStatus, updatedAt, soldAt, userId])
 }
 
 enum SalesStatus {
@@ -535,6 +538,7 @@ model CampaignRequest {
   email      String
   phoneNumber      String
   message      String
+  country      String
 
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt

@@ -14,7 +14,8 @@ import { mapEnumValue } from "../../../utils/enumMap";
 import { PropertyCategoryMap, PropertyProgressMap, PropertyStageMap } from "../routes/property.validate";
 import { canUserAffordProperty } from "../../../utils/buyabilitycalculator";
 import { MediaType, PropertyCategory, PropertyProgress, PropertyStage, PropertyStatus, SalesStatus } from "../../../../generated/prisma/enums";
-import { Prisma  as prisma, } from "../../../../generated/prisma/client";
+import { Prisma as prisma, } from "../../../../generated/prisma/client";
+import { getDateRange } from "../../../utils/getDateRange";
 
 
 const mediaUploader: IMediaUploader = new DirectMediaUploader();
@@ -23,7 +24,7 @@ const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
 export const singleProperty = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-   const userId = req.user?.id;
+  const userId = req.user?.id;
 
   const cacheKey = `property:${id}:${userId || ""}`;
 
@@ -67,12 +68,12 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
             lastSeen: true,
             online: true,
             approvedProperties: {
-              where: {archived: false, status: "APPROVED"},
+              where: { archived: false, status: "APPROVED" },
               include: {
                 _count: true,
                 amenities: true,
                 media: true,
-                
+
               }
             }
 
@@ -90,27 +91,27 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
 
     let isLiked = false;
 
-if (userId) {
-  const like = await Prisma.userPropertyLike.findFirst({
-    where: {
-      userId,
-      propertyId: id
+    if (userId) {
+      const like = await Prisma.userPropertyLike.findFirst({
+        where: {
+          userId,
+          propertyId: id
+        }
+      });
+
+      isLiked = !!like;
     }
-  });
-
-  isLiked = !!like;
-}
 
 
-if(userId !== property.userId){
-  await Prisma.property.update({
-      where: { id },
-      data: { viewsCount: { increment: 1 } },
-  })
-}
+    if (userId !== property.userId) {
+      await Prisma.property.update({
+        where: { id },
+        data: { viewsCount: { increment: 1 } },
+      })
+    }
 
 
-  const totalViews = await Prisma.property.aggregate({
+    const totalViews = await Prisma.property.aggregate({
       _sum: {
         viewsCount: true
       },
@@ -125,16 +126,16 @@ if(userId !== property.userId){
     property.stage = mapEnumValue(PropertyStageMap, property?.stage) as PropertyStage;
     property.progress = mapEnumValue(PropertyProgressMap, property.progress) as PropertyProgress;
     property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
-    
 
-const {user, ...other} = property;
+
+    const { user, ...other } = property;
 
 
     const responseData = {
       ...other,
       isLiked,
-      user: {...user, totalViewsCount}
-      
+      user: { ...user, totalViewsCount }
+
     };
 
     await redis.set(cacheKey, JSON.stringify(responseData), "EX", 60);
@@ -282,9 +283,9 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
         }),
         Prisma.property.count({ where: filters }),
 
-        Prisma.property.count({ where: {userId, status: "APPROVED", archived: false} }),
-        Prisma.property.count({ where: {userId, salesStatus: "SELLING", status: "APPROVED", archived: false} }),
-        Prisma.property.count({ where: {userId, salesStatus: "SOLD", status: "APPROVED", archived: false} }),
+        Prisma.property.count({ where: { userId, status: "APPROVED", archived: false } }),
+        Prisma.property.count({ where: { userId, salesStatus: "SELLING", status: "APPROVED", archived: false } }),
+        Prisma.property.count({ where: { userId, salesStatus: "SOLD", status: "APPROVED", archived: false } }),
       ]);
 
       const totalPages = Math.ceil(total / pageSize);
@@ -299,7 +300,7 @@ export const getPropertiesByUser = async (req: Request, res: Response, next: Nex
 
       return {
         data: dataWithIsLiked,
-        stat: {allListed, propertySelling, propertySold},
+        stat: { allListed, propertySelling, propertySold },
         pagination: {
           total,
           page: pageNumber,
@@ -370,8 +371,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       status: "APPROVED",
-      ...req?.query?.isFeatureProperty && {isFeatureProperty},
-      ...req?.query?.is_Property_A_Project && {is_Property_A_Project},
+      ...req?.query?.isFeatureProperty && { isFeatureProperty },
+      ...req?.query?.is_Property_A_Project && { is_Property_A_Project },
       AND: [
         search
           ? {
@@ -417,48 +418,48 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
 
 
     const include: any = {
-  media: {
-    select: {
-      url: true,
-      altText: true,
-      type: true,
-      photoType: true,
-      sizeInKB: true
-    }
-  },
-  user: {
-    select: {
-      email: true,
-      fullname: true,
-      username: true,
-      is_verified: true,
-      avatar: true,
-      // approvedProperties: {
-      //   include: {
-      //     _count: true
-      //   }
-      // }
-    }
-  },
-  amenities: {
-    select: {
-      name: true,
-      photoUrl: true
-    }
-  }
-};
+      media: {
+        select: {
+          url: true,
+          altText: true,
+          type: true,
+          photoType: true,
+          sizeInKB: true
+        }
+      },
+      user: {
+        select: {
+          email: true,
+          fullname: true,
+          username: true,
+          is_verified: true,
+          avatar: true,
+          // approvedProperties: {
+          //   include: {
+          //     _count: true
+          //   }
+          // }
+        }
+      },
+      amenities: {
+        select: {
+          name: true,
+          photoUrl: true
+        }
+      }
+    };
 
-// Only include likedBy if user is logged in
-if (userId) {
-  include.likedBy = {
-    where: {
-      userId: userId
-    },
-    select: {
-      id: true
+    // Only include likedBy if user is logged in
+    if (userId) {
+      include.likedBy = {
+        where: {
+          userId: userId
+        },
+        select: {
+          id: true
+        }
+      };
     }
-  };
-}
 
 
     const result = await swrCache(cacheKey, async () => {
@@ -482,15 +483,15 @@ if (userId) {
       const paginated = shuffled.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 
 
-  //  const dataWithIsLiked = properties.map(({ likedBy, ...rest }) => ({
-  // ...rest,
-  // isLiked: Array.isArray(likedBy) && likedBy.length > 0
-  // }));
+      //  const dataWithIsLiked = properties.map(({ likedBy, ...rest }) => ({
+      // ...rest,
+      // isLiked: Array.isArray(likedBy) && likedBy.length > 0
+      // }));
 
-   const dataWithIsLiked = paginated.map(({ likedBy, ...rest }) => ({
-  ...rest,
-  isLiked: Array.isArray(likedBy) && likedBy.length > 0
-  }));
+      const dataWithIsLiked = paginated.map(({ likedBy, ...rest }) => ({
+        ...rest,
+        isLiked: Array.isArray(likedBy) && likedBy.length > 0
+      }));
 
 
       return {
@@ -528,54 +529,54 @@ export const getAffordableProperties = async (
 ) => {
 
 
-   const userId = req.user?.id;
+  const userId = req.user?.id;
   try {
-   
+
 
 
     const include: any = {
-  media: {
-    select: {
-      url: true,
-      altText: true,
-      type: true,
-      photoType: true,
-      sizeInKB: true
-    }
-  },
-  user: {
-    select: {
-      email: true,
-      fullname: true,
-      username: true,
-      is_verified: true,
-      avatar: true,
-      // approvedProperties: {
-      //   include: {
-      //     _count: true
-      //   }
-      // }
-    }
-  },
-  amenities: {
-    select: {
-      name: true,
-      photoUrl: true
-    }
-  }
-};
+      media: {
+        select: {
+          url: true,
+          altText: true,
+          type: true,
+          photoType: true,
+          sizeInKB: true
+        }
+      },
+      user: {
+        select: {
+          email: true,
+          fullname: true,
+          username: true,
+          is_verified: true,
+          avatar: true,
+          // approvedProperties: {
+          //   include: {
+          //     _count: true
+          //   }
+          // }
+        }
+      },
+      amenities: {
+        select: {
+          name: true,
+          photoUrl: true
+        }
+      }
+    };
 
-// Only include likedBy if user is logged in
-if (userId) {
-  include.likedBy = {
-    where: {
-      userId: userId
-    },
-    select: {
-      id: true
+    // Only include likedBy if user is logged in
+    if (userId) {
+      include.likedBy = {
+        where: {
+          userId: userId
+        },
+        select: {
+          id: true
+        }
+      };
     }
-  };
-}
 
 
 
@@ -591,7 +592,7 @@ if (userId) {
         status: 'APPROVED',
         salesStatus: 'SELLING'
       },
-     include,
+      include,
     });
 
     // Step 2: Filter properties based on affordability
@@ -605,10 +606,10 @@ if (userId) {
 
 
 
-       const dataWithIsLiked = affordableProperties.map(({ likedBy, ...rest }) => ({
-  ...rest,
-  isLiked: Array.isArray(likedBy) && likedBy.length > 0
-  }));
+    const dataWithIsLiked = affordableProperties.map(({ likedBy, ...rest }) => ({
+      ...rest,
+      isLiked: Array.isArray(likedBy) && likedBy.length > 0
+    }));
 
 
 
@@ -616,7 +617,7 @@ if (userId) {
 
 
     // Step 3: Return response
-    new CustomResponse(200, true, "Affordable properties fetched", res, { data: dataWithIsLiked,});
+    new CustomResponse(200, true, "Affordable properties fetched", res, { data: dataWithIsLiked, });
   } catch (error) {
     next(new InternalServerError("Failed to fetch affordable properties"));
   }
@@ -668,8 +669,8 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       // status: "APPROVED",
-      ...isFeatureProperty && {isFeatureProperty},
-      ...is_Property_A_Project && {is_Property_A_Project},
+      ...isFeatureProperty && { isFeatureProperty },
+      ...is_Property_A_Project && { is_Property_A_Project },
       AND: [
         search
           ? {
@@ -788,7 +789,7 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
 export const getLikedPropertiesByUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-   
+
     const {
       salesStatus,
       bathrooms,
@@ -815,14 +816,14 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
 
-        const cacheKey = `saved:${userId}:${JSON.stringify(req.query)}`;
+    const cacheKey = `saved:${userId}:${JSON.stringify(req.query)}`;
 
 
-      const featuresArray = (features as string)?.split(",").filter(v => v !== "") ?? [];
+    const featuresArray = (features as string)?.split(",").filter(v => v !== "") ?? [];
     const amenitiesArray = (amenities as string)?.split(",").filter(v => v !== "") ?? [];
 
 
-     const matchedCategory = getValidCategory(search);
+    const matchedCategory = getValidCategory(search);
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       AND: [
@@ -877,7 +878,7 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
         Prisma.property.findMany({
           where: {
             likedBy: {
-              some: {userId}
+              some: { userId }
             },
             ...filters
           },
@@ -915,14 +916,17 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
                 id: true
               }
             }
-          },}),
-        Prisma.property.count({where: {
-          likedBy: {
-          some: {
-            userId: userId
+          },
+        }),
+        Prisma.property.count({
+          where: {
+            likedBy: {
+              some: {
+                userId: userId
+              }
+            }
           }
-        }
-        }})
+        })
       ]);
 
       const totalPages = Math.ceil(total / pageSize);
@@ -961,8 +965,6 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
   }
 
 };
-
-
 
 
 
@@ -1751,6 +1753,165 @@ export const getArchivedPropertiesByUser = async (req: Request, res: Response, n
 
 };
 
+export const getTopPerforming = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+
+
+    const { current, previous } = getDateRange("this_month");
+    const cacheKey = `getTopPerforming`;
+
+
+    const realtorMap = new Map<
+      string,
+      {
+        name: string;
+        avatar: string;
+        bio: string;
+        propertiesSold: number;
+        totalSoldAmount: number;
+        currency: string;
+      }
+    >();
+
+
+    const leaderboardMap = new Map<
+      string,
+      {
+        name: string;
+        avatar: string;
+        bio: string;
+        propertiesSold: number;
+        totalSoldAmount: number;
+        currency: string;
+      }
+    >();
+
+
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [soldProperties, properties] = await Promise.all([
+        Prisma.property.findMany({
+          where: {
+            salesStatus: 'SOLD',
+            user: {
+              role: { notIn: ["ADMIN", "SUPER_ADMIN"] },
+            },
+          },
+          select: {
+            userId: true,
+            price: {
+              select: {
+                amount: true,
+                currency: true,
+              },
+            },
+            user: {
+              select: {
+                fullname: true,
+                avatar: true,
+                description: true
+              },
+            },
+          },
+        }),
+
+        Prisma.property.findMany({
+          where: {
+            salesStatus: 'SOLD',
+            soldAt: {
+              gte: current.start,
+              lt: current.end,
+            },
+            user: {
+              role: { notIn: ["ADMIN", "SUPER_ADMIN"] },
+            },
+          },
+          select: {
+            userId: true,
+            price: {
+              select: {
+                amount: true,
+                currency: true,
+              },
+            },
+            user: {
+              select: {
+                fullname: true,
+                avatar: true,
+                description: true
+              },
+            },
+          },
+        })
+      ]);
+
+
+
+      for (const property of soldProperties) {
+        const realtorId = property.userId;
+
+        if (!realtorMap.has(realtorId)) {
+          realtorMap.set(realtorId, {
+            name: property.user.fullname,
+            avatar: property.user.avatar,
+            bio: property.user.description || "",
+            propertiesSold: 0,
+            totalSoldAmount: 0,
+            currency: property.price.currency,
+          });
+        }
+
+        const realtor = realtorMap.get(realtorId)!;
+        realtor.propertiesSold += 1;
+        realtor.totalSoldAmount += property.price.amount;
+      }
+
+
+      const topRealtors = [...realtorMap.values()]
+        .sort((a, b) => b.propertiesSold - a.propertiesSold)
+        .slice(0, 10);
+
+
+      for (const property of properties) {
+        const realtorId = property.userId;
+
+        if (!leaderboardMap.has(realtorId)) {
+          leaderboardMap.set(realtorId, {
+            name: property.user.fullname,
+            avatar: property.user.avatar,
+            bio: property.user.description || "",
+            propertiesSold: 0,
+            totalSoldAmount: 0,
+            currency: property.price.currency,
+          });
+        }
+
+        const realtor = leaderboardMap.get(realtorId)!;
+        realtor.propertiesSold += 1;
+        realtor.totalSoldAmount += property.price.amount;
+      }
+
+      const monthlyLeaderboard = [...leaderboardMap.values()].sort(
+        (a, b) => b.propertiesSold - a.propertiesSold
+      )[0];
+
+      return {
+        topRealtors,
+        monthlyLeaderboard: monthlyLeaderboard || topRealtors[0]
+
+      };
+    });
+
+    new CustomResponse(200, true, "success", res, result);
+
+
+  } catch (error) {
+    next(new InternalServerError("Server Error", 500));
+  }
+
+};
+
 
 
 
@@ -1778,7 +1939,7 @@ export const archiveProperty = async (req: Request, res: Response, next: NextFun
       where: { id },
       data: { archived: true, status: PropertyStatus.TRASHED },
     });
-    
+
 
     await deleteMatchingKeys(`property:${id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);
@@ -1961,11 +2122,12 @@ export const statusProperty = async (req: Request, res: Response, next: NextFunc
       where: { id: propertyId },
       data: {
         salesStatus,
+        soldAt: new Date()
       },
     });
 
-     const cacheKey = `getPropertiesByUser:${userId}`
-        await deleteMatchingKeys(cacheKey);
+    const cacheKey = `getPropertiesByUser:${userId}`
+    await deleteMatchingKeys(cacheKey);
 
 
     new CustomResponse(200, true, `status updated to ${salesStatus}`, res,);
@@ -2100,7 +2262,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
     const propertyCacheKey = `property:${propertyId}:${userId}`;
     const getPropertiesByUser = `getPropertiesByUser:${userId}`
     const lastestCacheKey = `lastest:${userId}`
-    
+
 
     await deleteMatchingKeys(getPropertiesByUser);
     await deleteMatchingKeys(lastestCacheKey);
@@ -2119,7 +2281,7 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
 export const unLikeProperty = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.user?.id!;
   const propertyId = req.params.id;
-  
+
 
   try {
     // Delete the like relation
@@ -2144,7 +2306,7 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
     const propertyCacheKey = `property:${propertyId}:${userId}`;
     const getPropertiesByUser = `getPropertiesByUser:${userId}`
     const lastestCacheKey = `lastest:${userId}`
-    
+
 
     await deleteMatchingKeys(getPropertiesByUser);
     await deleteMatchingKeys(lastestCacheKey);
@@ -2193,81 +2355,81 @@ export const shareProperty = async (req: Request, res: Response, next: NextFunct
 
 
 // untest route
-export const mediaForProperty = async (req: Request, res: Response, next: NextFunction) => {
-  const { propertyId } = req.params;
-  const files = req.files as Express.Multer.File[];
-  const metaArray = req.body.metadata;
-  const userId = req.user?.id;
+// export const mediaForProperty = async (req: Request, res: Response, next: NextFunction) => {
+//   const { propertyId } = req.params;
+//   const files = req.files as Express.Multer.File[];
+//   const metaArray = req.body.metadata;
+//   const userId = req.user?.id;
 
-  if (!files || files.length === 0 || !metaArray) {
-    new CustomResponse(404, true, "Files and metadata are required", res,);
-    return
-  }
+//   if (!files || files.length === 0 || !metaArray) {
+//     new CustomResponse(404, true, "Files and metadata are required", res,);
+//     return
+//   }
 
-  // Parse metadata array (expecting JSON strings)
-  let metadata;
-  try {
+//   // Parse metadata array (expecting JSON strings)
+//   let metadata;
+//   try {
 
-    const property = await Prisma.property.findUnique({ where: { id: propertyId } });
-    if (!property) {
-      new CustomResponse(404, true, "Property not found", res,);
-      return
-    }
+//     const property = await Prisma.property.findUnique({ where: { id: propertyId } });
+//     if (!property) {
+//       new CustomResponse(404, true, "Property not found", res,);
+//       return
+//     }
 
-    // Ownership check:
-    if (property.userId !== userId) {
-      new CustomResponse(403, true, "Forbidden: only owner can update status", res,);
-      return
-    };
+//     // Ownership check:
+//     if (property.userId !== userId) {
+//       new CustomResponse(403, true, "Forbidden: only owner can update status", res,);
+//       return
+//     };
 
 
-    metadata = Array.isArray(metaArray)
-      ? metaArray.map((m) => JSON.parse(m))
-      : [JSON.parse(metaArray)];
-  } catch {
-    new CustomResponse(404, true, "Invalid metadata JSON", res,);
-    return
-  }
+//     metadata = Array.isArray(metaArray)
+//       ? metaArray.map((m) => JSON.parse(m))
+//       : [JSON.parse(metaArray)];
+//   } catch {
+//     new CustomResponse(404, true, "Invalid metadata JSON", res,);
+//     return
+//   }
 
-  if (metadata.length !== files.length) {
-    new CustomResponse(404, true, "Metadata count must match files count", res,);
-    return
-  }
+//   if (metadata.length !== files.length) {
+//     new CustomResponse(404, true, "Metadata count must match files count", res,);
+//     return
+//   }
 
-  const uploadJobs: UploadJob[] = files.map((file, i) => ({
-    filePath: file.path,
-    propertyId,
-    meta: metadata[i],
-  }));
+//   const uploadJobs: UploadJob[] = files.map((file, i) => ({
+//     filePath: file.path,
+//     propertyId,
+//     meta: metadata[i],
+//   }));
 
-  try {
+//   try {
 
-    const uploaded = await mediaUploader.upload(uploadJobs);
+//     const uploaded = await mediaUploader.upload(uploadJobs);
 
-    if (uploaded.length > 0) {
-      await Prisma.media.createMany({
-        data: uploaded.map((u) => ({
-          propertyId,
-          type: u.type as MediaType,
-          url: u.url,
-          publicId: u.publicId,
-          caption: u.caption,
-          altText: u.altText,
-          order: u.order,
-          width: u.width,
-          height: u.height,
-          duration: u.duration,
-          sizeInKB: u.sizeInKB,
-          format: u.format,
-        })),
-      });
-    }
+//     if (uploaded.length > 0) {
+//       await Prisma.media.createMany({
+//         data: uploaded.map((u) => ({
+//           propertyId,
+//           type: u.type as MediaType,
+//           url: u.url,
+//           publicId: u.publicId,
+//           caption: u.caption,
+//           altText: u.altText,
+//           order: u.order,
+//           width: u.width,
+//           height: u.height,
+//           duration: u.duration,
+//           sizeInKB: u.sizeInKB,
+//           format: u.format,
+//         })),
+//       });
+//     }
 
-    new CustomResponse(200, true, "Upload successful", res, uploaded);
-  } catch (error) {
-    next(new InternalServerError("Upload faile", 500));
-  }
-};
+//     new CustomResponse(200, true, "Upload successful", res, uploaded);
+//   } catch (error) {
+//     next(new InternalServerError("Upload faile", 500));
+//   }
+// };
 
 
 
@@ -2292,3 +2454,5 @@ function shuffleArray<T>(array: T[]): T[] {
     .sort((a, b) => a.sort - b.sort)
     .map(({ item }) => item);
 }
+
+

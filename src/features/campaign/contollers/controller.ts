@@ -503,7 +503,9 @@ export const requestCampaign = async (req: Request, res: Response, next: NextFun
 
     await Prisma.campaignRequest.create({
       data: {
-        email, firstName, lastName, message, title, phoneNumber
+        email, firstName, lastName, message, title,
+         phoneNumber: phoneNumber.phone,
+         country: phoneNumber.country,
       }
     });
 
