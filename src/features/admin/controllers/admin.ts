@@ -30,6 +30,18 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
 
   const { current: currentFilter, previous: previousFilter } = getDateRange(filterTime as string);
 
+      const realtorMap = new Map<
+      string,
+      {
+        name: string;
+        // avatar: string;
+        // bio: string;
+        propertiesSold: number;
+        totalSoldAmount: number;
+        currency: string;
+      }
+    >();
+
 
 
   try {
@@ -38,6 +50,8 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
     const result = await swrCache(cacheKey, async () => {
 
       const [
+
+        leaderBroadPropertiesData,
         recentPropertiesData,
 
 
@@ -75,6 +89,31 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
 
 
       ] = await Promise.all([
+          Prisma.property.findMany({
+          where: {
+            archived: false, status: "APPROVED", salesStatus: "SOLD",
+            user: {
+              role: { notIn: ["ADMIN", "SUPER_ADMIN"] },
+            },
+          },
+          select: {
+            userId: true,
+            price: {
+              select: {
+                amount: true,
+                currency: true,
+              },
+            },
+            user: {
+              select: {
+                fullname: true,
+                avatar: true,
+                description: true
+              },
+            },
+          },
+        }),
+
 
         Prisma.property.findMany({
           where: { archived: false },
@@ -87,7 +126,7 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
             title: true,
             media: true,
             user: {
-              select: { fullname: true },
+              select: { id: true, fullname: true },
             }
 
           },
@@ -268,6 +307,53 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
 
       }));
 
+
+
+        for (const property of leaderBroadPropertiesData) {
+        const realtorId = property.userId;
+
+        if (!realtorMap.has(realtorId)) {
+          realtorMap.set(realtorId, {
+            name: property.user.fullname,
+            // avatar: property.user.avatar,
+            // bio: property.user.description || "",
+            propertiesSold: 0,
+            totalSoldAmount: 0,
+            currency: property.price.currency,
+          });
+        }
+
+        const realtor = realtorMap.get(realtorId)!;
+        realtor.propertiesSold += 1;
+        realtor.totalSoldAmount += property.price.amount;
+      }
+
+
+      const topRealtors = [...realtorMap.values()]
+        .sort((a, b) => b.propertiesSold - a.propertiesSold)
+        .slice(0, 3);
+
+
+        const totalPropertiesSold = topRealtors.reduce(
+  (sum, r) => sum + r.propertiesSold,
+  0
+);
+
+const grandTotalSoldAmount = topRealtors.reduce(
+  (sum, r) => sum + r.totalSoldAmount,
+  0
+);
+
+const leaderboard = topRealtors.map((r) => ({
+  ...r,
+  percentage: Number(
+    ((r.propertiesSold / totalPropertiesSold) * 100).toFixed(2)
+  ),
+}));
+
+
+
+
       return {
 
         stats: {
@@ -324,7 +410,12 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
           //   count: rewardRequest,
           //   percentage: 
           // }
+        },
+        leaderboardData: {
+          leaderboard,
+          grandTotalSoldAmount
         }
+
       }
     })
 

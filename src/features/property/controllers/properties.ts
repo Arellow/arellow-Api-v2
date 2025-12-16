@@ -1793,7 +1793,7 @@ export const getTopPerforming = async (req: Request, res: Response, next: NextFu
       const [soldProperties, properties] = await Promise.all([
         Prisma.property.findMany({
           where: {
-            salesStatus: 'SOLD',
+            archived: false, status: "APPROVED", salesStatus: "SOLD",
             user: {
               role: { notIn: ["ADMIN", "SUPER_ADMIN"] },
             },
@@ -1818,7 +1818,7 @@ export const getTopPerforming = async (req: Request, res: Response, next: NextFu
 
         Prisma.property.findMany({
           where: {
-            salesStatus: 'SOLD',
+            archived: false, status: "APPROVED", salesStatus: "SOLD",
             soldAt: {
               gte: current.start,
               lt: current.end,
