@@ -3,9 +3,10 @@ import { Router } from "express";
 import { singleupload } from "../../../middlewares/multer";
 import { AllActiveCampaigns, AllCampaigns, AllCampaignsRequest, campaignDashbroad, clickCampaign, createCampaign, deleteCampaign, getCampaignStats, requestCampaign, updateCampaign } from "../contollers/controller";
 import authenticate, { adminRequireRole, isSuspended, requireRole } from "../../../middlewares/auth.middleware";
-import { CampaignAddress, CampaignPlaceMent, UserRole } from "@prisma/client";
 import { createCampaignRequestSchema, createCampaignSchema } from "./campaign.validate";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
+import { CampaignPlaceMent, UserRole } from "../../../../generated/prisma/enums";
+import { CampaignAddress } from "../../../../generated/prisma/client";
 
 const campaignRoutes = Router();
 

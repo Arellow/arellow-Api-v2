@@ -2,25 +2,18 @@
 import { NextFunction, Request, Response } from "express";
 import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
-import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
-import { Prisma as prisma, PropertyStatus, SalesStatus, UserRole } from '@prisma/client';
-import { DirectMediaUploader } from "../services/directMediaUploader";
-import { IMediaUploader, UploadJob } from "../services/mediaUploader";
+import { InternalServerError } from "../../../lib/appError";
 
-import { MediaType } from '@prisma/client';
+
 import { mediaUploadQueue } from "../queues/media.queue";
 import { cloudinary } from "../../../configs/cloudinary";
-import { redis } from "../../../lib/redis";
-import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys } from "../../../lib/cache";
 import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
 
 type Amenity = {
   name: string;
   photoUrl: string;
 }
-
-
-const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
 
 

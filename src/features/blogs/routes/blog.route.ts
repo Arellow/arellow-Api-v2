@@ -2,7 +2,7 @@ import express from 'express';
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 import { singleupload } from '../../../middlewares/multer';
 import { blogDetail, changeBlogStatus, createBlog, deleteBlog, editBlog, getBlogContributorDetail, getBlogs, getBlogsContributors } from '../controllers/blog.controller';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../../generated/prisma/enums';
 
 const blogRoutes = express.Router();
 

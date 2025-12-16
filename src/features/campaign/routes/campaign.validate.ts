@@ -1,5 +1,5 @@
-import { CampaignPlaceMent } from "@prisma/client";
 import Joi from "joi";
+import { CampaignPlaceMent } from "../../../../generated/prisma/enums";
 
 
 export const createCampaignSchema = Joi.object({

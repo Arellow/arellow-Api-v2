@@ -1,12 +1,12 @@
 import express from 'express'
 
-import { UserRole } from '@prisma/client';
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 // import { createProjectSchema } from '../../property/routes/property.validate';
 import { createProject } from '../controller/createproject';
 import { createProjectSchema } from './property.validate';
+import { UserRole } from '../../../../generated/prisma/enums';
 const projectRoutes = express.Router();
 
 type Amenity = {

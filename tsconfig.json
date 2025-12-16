@@ -62,28 +62,28 @@
 //   "include": ["api/**/*.ts", "prisma/**/*.ts"]
 // }
 
-// {
-//   "compilerOptions": {
-//     "target": "ES2020",
-//     "module": "commonjs",
-//     "esModuleInterop": true,
-//     "outDir": "dist",
-//     "strict": true,
-//     "skipLibCheck": true,
-//     "typeRoots": ["./src/types", "./node_modules/@types"],
-//   },
-//   "include": ["src/**/*", "api/**/*"]
-// }
-
-
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "target": "ES2023",
-    "strict": true,
+    "target": "ES2020",
+    "module": "commonjs",
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
-    "type": "module"
-  }
+    "outDir": "dist",
+    "strict": true,
+    "skipLibCheck": true,
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+  },
+  "include": ["src/**/*", "api/**/*"]
 }
+
+
+// {
+//   "compilerOptions": {
+//     "module": "ESNext",
+//     "moduleResolution": "node",
+//     "target": "ES2023",
+//     "strict": true,
+//     "esModuleInterop": true,
+//     // "ignoreDeprecations": "",
+//     // "type": "module"
+//   }
+// }

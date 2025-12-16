@@ -1,5 +1,6 @@
-import { PropertyCategory,  } from '@prisma/client';
+
 import Joi from 'joi';
+import { PropertyCategory } from '../../../../generated/prisma/enums';
 
 export const createPropertyRequestSchema = Joi.object({
   username: Joi.string().trim().min(3).max(50),

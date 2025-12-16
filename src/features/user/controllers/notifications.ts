@@ -3,9 +3,10 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { swrCache } from "../../../lib/cache";
-import { Notification } from "@prisma/client";
+
 import { format, isToday, isYesterday } from "date-fns";
 import { processImage } from "../../../utils/imagesprocess";
+import { Notification } from "../../../../generated/prisma/client";
 
 
 

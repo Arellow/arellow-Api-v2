@@ -1,10 +1,11 @@
 import express from 'express'
-import authenticate, { isAdmin, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, {  requireRole } from '../../../middlewares/auth.middleware';
 import { addAdminRole, getAllAdmins, getUsersController, suspendAdminStatus , createAdmin} from '../controllers/user';
 
-import { UserRole } from '@prisma/client';
+
 import { addAdminSchema } from './user.validate';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
+import { UserRole } from '../../../../generated/prisma/enums';
 
 const userRoutes =  express.Router();
 //User management routes

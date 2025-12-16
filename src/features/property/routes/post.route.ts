@@ -19,12 +19,13 @@ import {
     // propertiesListing,
     // getProjects,
 } from '../controllers/properties';
-import { UserRole } from '@prisma/client';
+
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { changeStatusSchema, createPropertySchema } from './property.validate';
 import { createProperty } from '../controllers/createProperty';
 import { updateProperty } from '../controllers/updateProperty';
+import { UserRole } from '../../../../generated/prisma/enums';
 
 type Amenity = {
     name: string;

@@ -1,4 +1,6 @@
-import {  UserRole, PropertyAddress, actionRole } from "@prisma/client";
+
+import { PropertyAddress } from "../../../../generated/prisma/client";
+import { UserRole } from "../../../../generated/prisma/enums";
 
 
 export interface RegisterDTO {

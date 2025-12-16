@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 import http from 'http';
 import { Prisma } from '../../../lib/prisma';
 import OpenAI from 'openai';
-import { Prisma as prisma, PropertyCategory } from '@prisma/client';
+import { PropertyCategory } from '../../../../generated/prisma/enums';
+import {  Prisma as prisma, } from '../../../../generated/prisma/client';
 
 
 interface AuthSocket extends Socket {

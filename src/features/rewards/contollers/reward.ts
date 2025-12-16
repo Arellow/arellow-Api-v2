@@ -6,7 +6,9 @@ import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { getDateRange } from "../../../utils/getDateRange";
 import { calculateTrend } from "../../../utils/calculateTrend";
-import { Prisma as prisma } from '@prisma/client';
+import { Prisma as prisma } from "../../../../generated/prisma/client";
+
+
 
 export const rewardDashbroad = async (req: Request, res: Response, next: NextFunction) => {
 

@@ -1,5 +1,6 @@
-import { PropertyCategory, PropertyProgress, PropertyStage, SalesStatus } from '@prisma/client';
+
 import Joi from 'joi';
+import { PropertyCategory, PropertyProgress, PropertyStage } from '../../../../generated/prisma/enums';
 
 
 export const createProjectSchema = Joi.object({

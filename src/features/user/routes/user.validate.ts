@@ -1,5 +1,6 @@
-import {ticketStatus } from '@prisma/client';
+
 import Joi from 'joi';
+import { ticketStatus } from '../../../../generated/prisma/enums';
 
 
 export const createKycSchema = Joi.object({

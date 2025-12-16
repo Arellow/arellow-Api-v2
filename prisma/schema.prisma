@@ -1,12 +1,28 @@
 // npx prisma db push
 
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "mongodb"
+//   // url      = env("DATABASE_URL")
+// }
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mongodb"
-  // url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Company {
@@ -171,7 +187,7 @@ enum UserRole {
 
 model AdminPermission {
   id     String       @id @default(auto()) @map("_id") @db.ObjectId
-  action actionRole[]
+  action ActionRole[]
   // resource String[]
   userId String       @db.ObjectId
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -179,7 +195,7 @@ model AdminPermission {
   @@unique(userId)
 }
 
-enum actionRole {
+enum ActionRole {
   KYC
   BLOG
   PROPERTY
@@ -540,6 +556,7 @@ model Blog {
   title            String
   content          String
   banner           String       
+  rejectionReason  String?       
   socialMediaLinks Json?
   tags             String[]     @default(["property"])
 

@@ -1,4 +1,5 @@
-import { PropertyStatus, UserRole } from "@prisma/client";
+import { PropertyStatus, UserRole } from "../../../../generated/prisma/enums";
+
 
 export interface UserCreateDto {
   email: string;
@@ -43,6 +44,7 @@ export interface UserResponseDto {
   email: string;
   username: string;
   fullname: string;
+  description: string;
   avatar?: string;
   phone_number: string;
   role: UserRole;

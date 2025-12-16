@@ -2,13 +2,15 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../../lib/prisma";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
-import { actionRole, CampaignPlaceMent, KycDocumentType, KycStatus, Prisma as prisma, UserRole } from "@prisma/client";
+
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { DuplicateError, InternalServerError } from "../../../lib/appError";
 import { mailController } from "../../../utils/nodemailer";
 import { accountSuspendMailOption } from "../../../utils/mailer";
 import bcrypt from "bcryptjs";
+import { ActionRole, KycDocumentType, KycStatus, UserRole } from "../../../../generated/prisma/enums";
+import {  Prisma as prisma, } from "../../../../generated/prisma/client";
 
 
 export const getAllAdmins = async (req: Request, res: Response, next: NextFunction) => {
@@ -215,9 +217,9 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
     const {email, action, username, password, phone_number, fullname
 
 
-    }: {email:  string, action: actionRole[], username: string, password:  string, phone_number: {phone: string, country: string}, fullname: string}  = req.body;
+    }: {email:  string, action: ActionRole[], username: string, password:  string, phone_number: {phone: string, country: string}, fullname: string}  = req.body;
 
-    const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+    const parsedAction: ActionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
 
 
     try {
@@ -336,9 +338,9 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
 
 export const addAdminRole = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.userId as string;
-    const { action}: {email:  string, action: actionRole[]}  = req.body;
+    const { action}: {email:  string, action: ActionRole[]}  = req.body;
 
-    const parsedAction: actionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+    const parsedAction: ActionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
 
 
     try {
@@ -410,7 +412,7 @@ export const addAdminRole = async (req: Request, res: Response, next: NextFuncti
 export const suspendAdminStatus = async (req: Request, res: Response, next: NextFunction) => {
 
     const { userId } = req.params;
-     const {  message } = req.body;
+     const {  message, status } = req.body;
 
     try {
 
@@ -423,7 +425,7 @@ export const suspendAdminStatus = async (req: Request, res: Response, next: Next
 
         await Prisma.user.update({
             where: {id: userId},
-            data: {suspended: true}
+            data: {suspended: status}
         })
 
     
@@ -448,4 +450,6 @@ export const suspendAdminStatus = async (req: Request, res: Response, next: Next
 
 
 };
+
+
 

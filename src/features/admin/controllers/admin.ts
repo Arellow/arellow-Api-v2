@@ -2,7 +2,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../../lib/prisma";
 import { swrCache } from "../../../lib/cache";
-import { CampaignPlaceMent, } from "@prisma/client";
 import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";

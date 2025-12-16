@@ -3,12 +3,13 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { redis } from "../../../lib/redis";
-import {  Prisma as prisma, ticketStatus } from "@prisma/client";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mediaUploadQueue } from "../../property/queues/media.queue";
 import { createTicketMailOption, replyTicketMailOption } from "../../../utils/mailer";
 import { mailController } from "../../../utils/nodemailer";
 import dayjs from "dayjs"
+import { ticketStatus } from "../../../../generated/prisma/enums";
+import { Prisma as prisma, } from "../../../../generated/prisma/client";
 
 function generateSlug(): string {
     const year = new Date().getFullYear();

@@ -3,11 +3,11 @@ import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
 import { deleteImage, processImage } from "../../../utils/imagesprocess";
-import {Prisma as prisma, actionRole, BlogCategory, BlogStatus } from "@prisma/client";
 import { getDateRange } from "../../../utils/getDateRange";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mailController } from "../../../utils/nodemailer";
 import { BlogRejectiontMailOption } from "../../../utils/mailer";
+import { ActionRole, BlogCategory, BlogStatus, Prisma as prisma } from "../../../../generated/prisma/client";
 
 export const createBlog = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -411,6 +411,7 @@ export const changeBlogStatus = async (req: Request, res: Response, next: NextFu
       where: { id: blogId },
       data: {
         status: blogStatus,
+        rejectionReason:  blogStatus == BlogStatus.REJECTED ? rejectionReason : undefined
       },
     });
 
@@ -541,7 +542,7 @@ const adminRequireRole = async (req: Request, res: Response) => {
     const user = req.user;
 
 
-    const allowedRoles: actionRole[] = ["BLOG"];
+    const allowedRoles: ActionRole[] = ["BLOG"];
 
 
     if (!user) {

@@ -1,7 +1,8 @@
 import express from "express";
 import authenticate, { adminRequireRole, isSuspended, requireRole } from "../../../middlewares/auth.middleware";
 import { getRewardHistoryDetail, getRewardRequestDetail, rewardDashbroad, rewardHistory, rewardRequest, rewardStatus } from "../contollers/reward";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../../../generated/prisma/enums";
+
 
 const rewardRoutes = express.Router();
 

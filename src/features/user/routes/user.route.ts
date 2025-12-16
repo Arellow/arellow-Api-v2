@@ -14,12 +14,12 @@ import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requ
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
 import { updateUserSchema } from "../../../validations/user.validation";
 import { approvedKyc, rejectKyc, createKyc, kycDetail, userKycs } from "../controllers/kyc";
-import { UserRole } from "@prisma/client";
 import { documentPhotoupload, multipleupload, singleupload } from "../../../middlewares/multer";
 import { changeTicketSchema, createCustomerSupportSchema, createKycSchema, createNotificationSchema } from "./user.validate";
 import { changeTicketStatus, createCustomerSupport, customerSupportDetail, customerSupports, usercustomerSupportTicket } from "../controllers/customer";
 import { getPropertiesStatsByUser, userDashbroad } from "../controllers/dashbroad";
 import { createNotification, notificationDelete, notificationDetail, userNotifications, userNotificationsForMobile } from "../controllers/notifications";
+import { UserRole } from "../../../../generated/prisma/enums";
 
 const usersRoutes = Router();
 usersRoutes.get("/dashbroad", authenticate, userDashbroad);

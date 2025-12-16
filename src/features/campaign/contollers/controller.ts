@@ -7,9 +7,10 @@ import { swrCache } from "../../../lib/cache";
 import { getDateRange } from "../../../utils/getDateRange";
 import { calculateTrend } from "../../../utils/calculateTrend";
 import { deleteImage, processImage } from "../../../utils/imagesprocess";
-import { CampaignAddress, CampaignPlaceMent } from "@prisma/client";
 
 import {  getMonth } from "date-fns";
+import { CampaignPlaceMent } from "../../../../generated/prisma/enums";
+import { CampaignAddress } from "../../../../generated/prisma/client";
 
 
 export const AllActiveCampaigns = async (req: Request, res: Response, next: NextFunction) => {

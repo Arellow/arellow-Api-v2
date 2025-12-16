@@ -4,8 +4,8 @@ const propertyRequestRoutes = express.Router();
 import { assignDevelopers, createPropertyRequest, propertyRequestDetail, propertyAssignDetail, propertyRequests, propertyAssigns, updateDeveloperAssignment } from '../controllers/request'
 import authenticate, { adminRequireRole, requireRole } from '../../../middlewares/auth.middleware';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-import { UserRole } from '@prisma/client';
 import { createPropertyRequestSchema } from './property.validate';
+import { UserRole } from '../../../../generated/prisma/enums';
 
 //Request property
 propertyRequestRoutes.get("/:id/detail", authenticate, propertyRequestDetail);

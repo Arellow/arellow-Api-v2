@@ -4,12 +4,14 @@ import CustomResponse from '../../../utils/helpers/response.util'
 import dotenv from 'dotenv'
 import { Prisma } from "../../../lib/prisma";
 import { redis } from "../../../lib/redis";
-import { AssignmentStatus, Prisma as prisma, PropertyCategory } from "@prisma/client";
+
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { formatInky } from "../../../utils/constants.util";
 import { emailQueue } from "../queues/email.queue";
 import { User } from "../../../types/custom";
 import { PropertyCategoryMap } from "../../property/routes/property.validate";
+import { AssignmentStatus, PropertyCategory } from "../../../../generated/prisma/enums";
+import { Prisma as prisma } from "../../../../generated/prisma/client";
 dotenv.config();
 
 

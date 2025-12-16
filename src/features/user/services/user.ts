@@ -1,11 +1,14 @@
-import { UserRole } from "@prisma/client";
-import { InternalServerError, NotFoundError } from "../../../lib/appError";
+
+import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController, } from "../../../utils/nodemailer";
 import { UserUpdateDto, UserResponseDto, UserSuspendDto } from "../dtos/user.dto";
 import { Prisma } from "../../../lib/prisma";
 import { deleteImage } from "../../../utils/imagesprocess";
+import { UserRole } from "../../../../generated/prisma/enums";
+import { Prisma as prisma} from "../../../../generated/prisma/client";
 export class UserService {
+
   async getUserById(userId: string): Promise<UserResponseDto> {
     try {
       const user = await Prisma.user.findUnique({
@@ -58,6 +61,7 @@ export class UserService {
   }
 
   async updateUser(userId: string, data: UserUpdateDto): Promise<UserResponseDto> {
+  // async updateUser(userId: string, data: UserUpdateDto){
 
     const updatedData: any = {
       address : {
@@ -71,9 +75,12 @@ export class UserService {
 
     if (data.fullname !== undefined) updatedData.fullname = data.fullname;
     if (data.username !== undefined) updatedData.username = data.username;
-    // if (data.description !== undefined) updatedData.description = data.description;
+    if (data.description !== undefined) updatedData.description = data.description;
     if (data.phone_number.phone !== undefined) updatedData.phone_number = data.phone_number.phone;
     if (data.phone_number.country !== undefined) updatedData.address.country = data.phone_number.country;
+
+
+    // console.log(updatedData)
    
 
     try {
@@ -118,10 +125,23 @@ export class UserService {
       return this.mapToResponse({
         ...user, propertystats,
       });
-    } catch (error) {
-      console.error("[updateUser] Prisma error:", error);
-      throw new InternalServerError("Database error when updating user.");
-    }
+    } catch (error:any) {
+  if (
+    error instanceof prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    throw new BadRequestError("Username already exists");
+  }
+
+  throw new InternalServerError("Database error when updating user.");
+}
+
+    // } catch (error) {
+    //   // console.error("[updateUser] Prisma error:", error);
+    //   // throw new InternalServerError("Database error when updating user.");
+
+
+    // }
   }
 
   async updateUserAvatar(userId: string, avatar:string): Promise<UserResponseDto> {
@@ -230,6 +250,7 @@ export class UserService {
       email: user.email,
       username: user.username,
       fullname: user.fullname,
+      description: user.description,
       avatar: user.avatar,
       phone_number: user.phone_number,
       role: user.role as UserRole,

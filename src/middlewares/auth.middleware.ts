@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt";
-import { actionRole, UserRole} from "@prisma/client";
 import { Prisma } from "../lib/prisma";
+import { UserRole , ActionRole} from "../../generated/prisma/enums";
 
 
 export  async function isLoginUser(
@@ -168,7 +168,7 @@ export function requireRole(...allowedRoles: UserRole[]) {
 }
 
 
-export const adminRequireRole = (...allowedRoles: actionRole[]) => {
+export const adminRequireRole = (...allowedRoles: ActionRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = req?.user;
   

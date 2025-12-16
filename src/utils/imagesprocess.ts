@@ -2,7 +2,8 @@
 import { getDataUri } from '../middlewares/multer';
 import { cloudinary } from '../configs/cloudinary';
 import { Prisma } from '../lib/prisma';
-import { MediaType, UserPhotoType } from '@prisma/client';
+import { MediaType, UserPhotoType } from '../../generated/prisma/enums';
+
 
 
 type TprocessImage = {

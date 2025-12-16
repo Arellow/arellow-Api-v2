@@ -3,7 +3,7 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { redis } from "../../../lib/redis";
-import { KycDocumentType, KycStatus, Prisma as prisma } from "@prisma/client";
+
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { getDataUri } from "../../../middlewares/multer";
 import axios from "axios";
@@ -12,6 +12,8 @@ import { User } from "../../../types/custom";
 import { deleteImage, processImage } from "../../../utils/imagesprocess";
 import { mailController } from "../../../utils/nodemailer";
 import { kycRejectiontMailOption } from "../../../utils/mailer";
+import { KycDocumentType, KycStatus } from "../../../../generated/prisma/enums";
+import { Prisma as prisma  } from "../../../../generated/prisma/client";
 
 interface IRequest {
     documentType: KycDocumentType,

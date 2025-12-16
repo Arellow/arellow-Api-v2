@@ -1,9 +1,9 @@
 import express from 'express'
+import Joi from 'joi';
 import { createPreQualification, getPreQualifications, preQualificationDetail, preQualificationStatus } from './controller';
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../middlewares/auth.middleware';
-import Joi from 'joi';
 import { validateSchema } from '../../middlewares/propertyParsingAndValidation';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../../../generated/prisma/enums';
 
  const createPrequalificationSchema = Joi.object({
      bank_name: Joi.string().required().min(3),
