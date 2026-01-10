@@ -12,11 +12,11 @@ import { getMonth } from "date-fns";
 import { calculateTrend } from "../../../utils/calculateTrend";
 
 
-type IRewards = {
-  CREDIT: number,
-  DEBIT: number,
-  PENDING: number
-};
+// type IRewards = {
+//   CREDIT: number,
+//   DEBIT: number,
+//   PENDING: number
+// };
 
 
 export const adminDashbroad = async (req: Request, res: Response, next: NextFunction) => {
