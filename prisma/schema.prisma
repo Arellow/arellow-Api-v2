@@ -322,10 +322,19 @@ enum PropertyCategory {
   Apartment
   Bungalow
   Duplex
+
+  Detached_Duplex         @map("Detached Duplex")
+  Semi_Detached_Duplex         @map("Semi Detached Duplex")
+  Fully_Detached_Duplex         @map("Fully Detached Duplex")
+
+
   Detached_House         @map("Detached House")
   Semi_detached_House    @map("Semi-detached House")
+
   Mansion
   Penthouse
+  Maisonette
+
   Studio_Apartment       @map("Studio Apartment")
   Shared_Apartment       @map("Shared Apartment")
   Serviced_Apartment     @map("Serviced Apartment")
@@ -336,6 +345,9 @@ enum PropertyCategory {
   Short_let              @map("Short-let")
   Hostel_Student_Housing @map("Hostel / Student Housing")
 }
+
+
+
 
 model Amenity {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId

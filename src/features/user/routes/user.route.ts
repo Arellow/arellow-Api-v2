@@ -9,6 +9,7 @@ import {
   requestReward,
   allUsers,
   allAdmins,
+  userDetail,
 } from "../controllers/user";
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from "../../../middlewares/auth.middleware";
 import { validateSchema } from "../../../middlewares/propertyParsingAndValidation";
@@ -47,6 +48,7 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
 
 usersRoutes.get("/detail", authenticate, getUserById);
+usersRoutes.get("/userdetail/:userId", authenticate, userDetail);
 
 usersRoutes.patch(
   "/profile",

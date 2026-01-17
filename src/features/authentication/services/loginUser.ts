@@ -35,6 +35,10 @@ export class AuthService {
       throw new UnAuthorizedError("Invalid credentials.");
     }
 
+    await Prisma.user.update({where: {email: email.toLowerCase()},
+    data: {lastSeen: new Date()}
+  });
+
 
     return user;
 

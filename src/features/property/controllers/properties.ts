@@ -4,8 +4,8 @@ import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
 
-import { DirectMediaUploader } from "../services/directMediaUploader";
-import { IMediaUploader, UploadJob } from "../services/mediaUploader";
+// import { DirectMediaUploader } from "../services/directMediaUploader";
+// import { IMediaUploader, UploadJob } from "../services/mediaUploader";
 
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
@@ -13,12 +13,12 @@ import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mapEnumValue } from "../../../utils/enumMap";
 import { PropertyCategoryMap, PropertyProgressMap, PropertyStageMap } from "../routes/property.validate";
 import { canUserAffordProperty } from "../../../utils/buyabilitycalculator";
-import { MediaType, PropertyCategory, PropertyProgress, PropertyStage, PropertyStatus, SalesStatus } from "../../../../generated/prisma/enums";
+import { PropertyCategory, PropertyProgress, PropertyStage, PropertyStatus, SalesStatus } from "../../../../generated/prisma/enums";
 import { Prisma as prisma, } from "../../../../generated/prisma/client";
 import { getDateRange } from "../../../utils/getDateRange";
 
 
-const mediaUploader: IMediaUploader = new DirectMediaUploader();
+// const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
 //All get requests
 
@@ -669,8 +669,10 @@ export const getAllProperties = async (req: Request, res: Response, next: NextFu
     const filters: prisma.PropertyWhereInput = {
       archived: false,
       // status: "APPROVED",
-      ...isFeatureProperty && { isFeatureProperty },
-      ...is_Property_A_Project && { is_Property_A_Project },
+      // ...isFeatureProperty && { isFeatureProperty },
+      // ...is_Property_A_Project && { is_Property_A_Project },
+        ...req?.query?.isFeatureProperty && { isFeatureProperty },
+      ...req?.query?.is_Property_A_Project && { is_Property_A_Project },
       AND: [
         search
           ? {

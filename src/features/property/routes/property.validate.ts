@@ -36,48 +36,18 @@ export const createPropertySchema = Joi.object({
 });
 
 
-// export const createProjectSchema = Joi.object({
-//   title: Joi.string().required().min(3),
-//   description: Joi.string().required().min(3),
-//   category: Joi.string().required().valid(...Object.values(PropertyCategory)),
-//   features: Joi.array().items(Joi.string().min(1)),
-//   amenities: Joi.array().items(
-//     Joi.object({
-//       name: Joi.string().required().min(1),
-//       photoUrl: Joi.string().uri().required().min(1)
-//     })
-//   ),
-
-//   country: Joi.string().required().min(1),
-//   state: Joi.string().required().min(1),
-//   city: Joi.string().required().min(1),
-//   neighborhood: Joi.string().required().min(1),
-
-//   bedrooms: Joi.string().required().min(1),
-//   bathrooms: Joi.string().required().min(1),
-//   squareMeters: Joi.string().required().min(1),
-
-//   floors: Joi.string().required().min(1),
-//   price: Joi.string().required().min(1),
-
-//   location: Joi.object({
-//     lat: Joi.string().required().min(1),
-//     lng: Joi.string().required().min(1)
-//   }),
-
-//   isFeatureProperty: Joi.boolean().required(),
-//   yearBuilt: Joi.string().required().min(1),
-//   stagePrice: Joi.number().positive().required(),
-//   stage: Joi.string().required().valid(...Object.values(PropertyStage)),
-//   progress: Joi.string().required().valid(...Object.values(PropertyProgress)),
-// });
-
-
 
 export const PropertyCategoryMap = {
   Apartment: "Apartment",
   Bungalow: "Bungalow",
   Duplex: "Duplex",
+
+  Detached_Duplex: "Detached Duplex",
+    Semi_Detached_Duplex: "Semi Detached Duplex",
+    Fully_Detached_Duplex: "Fully Detached Duplex",
+
+    Maisonette : "Maisonette" ,
+    
   Detached_House: "Detached House",
   Semi_detached_House: "Semi-detached House",
   Mansion: "Mansion",

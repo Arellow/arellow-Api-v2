@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/user";
 import { UserSuspendDto, UserUpdateDto } from "../dtos/user.dto";
 import CustomResponse from "../../../utils/helpers/response.util";
-import { BadRequestError, InternalServerError } from "../../../lib/appError";
+import { BadRequestError, InternalServerError, NotFoundError } from "../../../lib/appError";
 import { processImage } from "../../../utils/imagesprocess";
 import { Prisma } from "../../../lib/prisma";
 const userService = new UserService();
@@ -272,3 +272,155 @@ export const allAdmins = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+
+
+
+export const userDetail = async (req: Request, res: Response, next: NextFunction) => {
+     const { userId } = req.params;
+
+
+      const user = await Prisma.user.findUnique({
+             where: { id: userId },
+             select: {
+              id: true,
+              is_verified: true,
+              fullname: true,
+              avatar: true,
+              createdAt: true,
+              phone_number: true,
+              email: true,
+              lastSeen: true,
+               kyc: {
+                 select: {
+                   status: true,
+                   documentNumber: true,
+                   documentPhoto: true,
+                   documentType: true
+                 }
+               }
+             },
+           });
+           if (!user) {
+             throw new NotFoundError("User not found.");
+           }
+     
+           // Calculate properties listed
+
+           const [ listedCurrent,  sellingCurrent, soldCurrent, ] = await Promise.all([
+              Prisma.property.findMany({ where: {userId, archived: false, status: "APPROVED"},
+              include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+                // approvedProperties: {
+                //   include: {
+                //     _count: true
+                //   }
+                // }
+
+              }
+            }
+          },
+              }),
+             Prisma.property.findMany({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING" } ,
+            include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+                // approvedProperties: {
+                //   include: {
+                //     _count: true
+                //   }
+                // }
+
+              }
+            }
+          },}),
+             Prisma.property.findMany({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD" },
+            include: {
+            media: {
+              select: {
+                url: true,
+                altText: true,
+                type: true,
+                photoType: true,
+                sizeInKB: true
+
+              }
+            },
+            user: {
+              select: {
+                email: true,
+                fullname: true,
+                username: true,
+                is_verified: true,
+                avatar: true,
+                // approvedProperties: {
+                //   include: {
+                //     _count: true
+                //   }
+                // }
+
+              }
+            }
+          },
+            
+            }),
+            ]);
+
+         
+           const propertystats = listedCurrent.reduce((acc, property) => {
+             if (property.status === 'APPROVED') {
+               acc.totalListed += 1;
+     
+               if (property.salesStatus === 'SOLD') {
+                 acc.totalSold += 1;
+               } else if (property.salesStatus === 'SELLING') {
+                 acc.totalSelling += 1;
+               }
+             }
+     
+             return acc;
+           },
+             {
+               totalListed: 0,
+               totalSold: 0,
+               totalSelling: 0,
+             }
+           );
+
+
+  try {
+    new CustomResponse(200, true, "Fetched successfully", res, {user, properties: {propertystats, listedCurrent, sellingCurrent, soldCurrent,}});
+  } catch (error) {
+    next(new InternalServerError("Failed to fetch "));
+  }
+}
