@@ -24,9 +24,10 @@ export class ResendVerificationService {
       throw new BadRequestError("Email is already verified");
     }
 
+
     const verificationToken = generateToken(user.id, user.email);
-    // const verificationUrl = `${process.env.FRONTEND_URL_LOCAL}/verify-email?token=${verificationToken}`;
-  const verificationUrl = `https://arellow.com/verify-email/${verificationToken}`;
+
+  const verificationUrl = `https://arellow.com/authentication/verify-email/${verificationToken}`;
     const mailOptions = await emailVerificationMailOption(
       user.email,
       verificationUrl
