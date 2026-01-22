@@ -22,12 +22,17 @@ campaignRoutes.post("/", authenticate, isSuspended, requireRole(UserRole.ADMIN, 
     
       const parsedCampaignAddress: CampaignAddress = typeof req.body.campaignAddress === 'string' ? JSON.parse(req.body.campaignAddress) : req.body.campaignAddress;
 
+
+      const {campaignAddress, campaignPlaceMent ,...rest} = req.body;
+
         const body = {
-        ...req.body,
+        ...rest,
        campaignAddress: parsedCampaignAddress,
         campaignPlaceMent: parsedCampaignPlaceMent,
     };
+
     req.body = body;
+    
     next()
 },
 

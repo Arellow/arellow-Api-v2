@@ -429,6 +429,7 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
     campaignAddress,
     endDate,
     startDate,
+    
   } = req.body;
 
 
@@ -440,13 +441,12 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
 
 
 
-
     if (!req.file) {
       return next(new InternalServerError("Avatar not found", 404));
     }
 
 
-    const website = campaignAddress.website?.toLowerCase();
+    const website = campaignAddress?.website?.toLowerCase();
 
     if (website && (website.includes('http://') || website.includes('https://'))) {
       return next(new InternalServerError("Website should not include 'http://' or 'https://'", 400));
