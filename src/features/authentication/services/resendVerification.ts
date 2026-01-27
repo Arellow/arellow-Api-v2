@@ -27,7 +27,7 @@ export class ResendVerificationService {
 
     const verificationToken = generateToken(user.id, user.email);
 
-  const verificationUrl = `https://arellow.com/authentication/verify-email/${verificationToken}`;
+  const verificationUrl = encodeURI(`https://arellow.com/authentication/verify-email/${verificationToken}`);
     const mailOptions = await emailVerificationMailOption(
       user.email,
       verificationUrl

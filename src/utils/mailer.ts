@@ -414,45 +414,126 @@ export const emailVerificationMailOption = async (
     to: email,
     subject: "Email Verification",
     html: `
-    
     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Email Verification</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f7f7f7; font-family: Arial, sans-serif;">
-  <center>
-    <table width="100%" bgcolor="#f7f7f7" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td align="center" style="padding: 30px 15px;">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
-            <tr>
-              <td align="center" style="padding: 40px 30px 20px 30px;">
-                <h2 style="margin: 0; font-size: 24px; color: #333333;">Email Verification</h2>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding: 10px 30px 30px 30px; color: #555555; font-size: 16px; line-height: 1.5;">
-                <p style="margin: 0 0 20px 0;">Click the button below to verify your email address:</p>
-                <a href="${verificationLink}" 
-                   style="display: inline-block; background-color: #30e3ca; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold;">
-                  Verify My Email
+
+<body style="margin:0; padding:0; background-color:#f7f7f7;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f7f7f7">
+    <tr>
+      <td align="center" style="padding:30px 15px;">
+
+        <!-- Main container -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0"
+          style="background-color:#ffffff; border-radius:6px;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding:40px 30px 20px 30px;">
+              <h2 style="margin:0; font-family:Arial, sans-serif; color:#333333;">
+                Email Verification
+              </h2>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td align="center" style="padding:10px 30px 30px 30px;
+              font-family:Arial, sans-serif; color:#555555; font-size:16px; line-height:1.5;">
+
+              <p style="margin:0 0 20px 0;">
+                Click the button below to verify your email address:
+              </p>
+
+              <!-- Button (email-safe) -->
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#30e3ca" style="border-radius:4px;">
+                    <a href="${verificationLink}"
+                       target="_blank"
+                       style="
+                        display:inline-block;
+                        padding:12px 25px;
+                        font-family:Arial, sans-serif;
+                        font-size:16px;
+                        color:#ffffff;
+                        text-decoration:none;
+                        font-weight:bold;
+                       ">
+                      Verify My Email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:30px 0 0 0; font-size:14px; color:#888888;">
+                If you didn’t sign up, you can safely ignore this email.
+              </p>
+
+              <!-- Fallback link -->
+              <p style="margin-top:20px; font-size:12px; color:#aaaaaa; word-break:break-all;">
+                Or copy and paste this link into your browser:<br>
+                <a href="${verificationLink}" target="_blank" style="color:#30e3ca;">
+                  ${verificationLink}
                 </a>
-                <p style="margin: 30px 0 0 0; font-size: 14px; color: #888888;">
-                  If you didn’t sign up, please ignore this email.
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </center>
+              </p>
+
+            </td>
+          </tr>
+        </table>
+        <!-- End container -->
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
 
     `
+      
+//     `
+    
+//     <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="UTF-8">
+//   <title>Email Verification</title>
+// </head>
+// <body style="margin:0; padding:0; background-color:#f7f7f7; font-family: Arial, sans-serif;">
+//   <center>
+//     <table width="100%" bgcolor="#f7f7f7" cellpadding="0" cellspacing="0" border="0">
+//       <tr>
+//         <td align="center" style="padding: 30px 15px;">
+//           <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
+//             <tr>
+//               <td align="center" style="padding: 40px 30px 20px 30px;">
+//                 <h2 style="margin: 0; font-size: 24px; color: #333333;">Email Verification</h2>
+//               </td>
+//             </tr>
+//             <tr>
+//               <td align="center" style="padding: 10px 30px 30px 30px; color: #555555; font-size: 16px; line-height: 1.5;">
+//                 <p style="margin: 0 0 20px 0;">Click the button below to verify your email address:</p>
+//                 <a href="${verificationLink}" 
+//                    style="display: inline-block; background-color: #30e3ca; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold;">
+//                   Verify My Email
+//                 </a>
+//                 <p style="margin: 30px 0 0 0; font-size: 14px; color: #888888;">
+//                   If you didn’t sign up, please ignore this email.
+//                 </p>
+//               </td>
+//             </tr>
+//           </table>
+//         </td>
+//       </tr>
+//     </table>
+//   </center>
+// </body>
+// </html>
+
+//     `
   };
 };
 

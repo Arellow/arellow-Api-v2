@@ -84,7 +84,7 @@ export class AuthService {
 
 
     const verificationToken = generateToken(newUser.id, newUser.email);
-    const verificationUrl = `https://arellow.com/authentication/verify-email/${verificationToken}`;
+    const verificationUrl = encodeURI(`https://arellow.com/authentication/verify-email/${verificationToken}`);
     const mailOptions = await emailVerificationMailOption(newUser.email, verificationUrl);
     
     mailController({from: "noreply@arellow.com", ...mailOptions})

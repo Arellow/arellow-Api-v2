@@ -48,7 +48,7 @@ usersRoutes.patch("/ticket/:id/status", authenticate,   validateSchema(changeTic
   usersRoutes.get("/ticket/:id/detail", authenticate, customerSupportDetail);
 
 usersRoutes.get("/detail", authenticate, getUserById);
-usersRoutes.get("/userdetail/:userId", authenticate, userDetail);
+usersRoutes.get("/userdetail/:userId", userDetail);
 
 usersRoutes.patch(
   "/profile",

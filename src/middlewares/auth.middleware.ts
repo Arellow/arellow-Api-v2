@@ -45,29 +45,36 @@ export default async function authenticate(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ success: false, message: "No token provided or malformed token please login" });
+
+   if (!req.user) {
+    res.status(403).json({ success: false, message: "Unauthorized: No user data found" });
     return;
   }
+  next();
 
-  const token = authHeader.split(" ")[1];
+  // const authHeader = req.headers.authorization;
+  // if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  //   res.status(401).json({ success: false, message: "No token provided or malformed token please login" });
+  //   return;
+  // }
 
-  try {
-    const decoded = verifyToken(token);
-    const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
+  // const token = authHeader.split(" ")[1];
 
-    if (!user) {
-      res.status(401).json({ success: false, message: "Invalid user." });
-      return;
-    }
+  // try {
+  //   const decoded = verifyToken(token);
+  //   const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
 
-    req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
+  //   if (!user) {
+  //     res.status(401).json({ success: false, message: "Invalid user." });
+  //     return;
+  //   }
 
-    next();
-  } catch (err) {
-    res.status(401).json({ success: false, message: "Invalid or expired token" });
-  }
+  //   req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
+
+  //   next();
+  // } catch (err) {
+  //   res.status(401).json({ success: false, message: "Invalid or expired token" });
+  // }
 }
 
 
