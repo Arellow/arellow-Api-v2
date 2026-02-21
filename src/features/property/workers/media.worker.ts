@@ -85,19 +85,26 @@ export const mediaWorker = new Worker(
         port: parseInt(process.env.REDIS_PORT || '11071', 10),
         password: process.env.REDIS_PASSWORD || undefined,
         tls: process.env.REDIS_USE_TLS === 'true' ? {} : undefined,
+  },
+    concurrency: 5,
+  removeOnComplete: {
+    age: 3600, 
+    count: 1000
+  },
+  removeOnFail: {
+    age: 86400 
   }
-
-    // redisConnection
-    , concurrency: 5 } // 5 files at once
+  
+  } 
 );
 
 
-mediaWorker.on('progress', (job, progress) => {
-  // update Redis or DB with progress
-  console.log({progress})
-});
+// mediaWorker.on('progress', (job, progress) => {
+//   // update Redis or DB with progress
+//   console.log({progress})
+// });
 
-mediaWorker.on('completed', (job, result) => {
-  // notify user of completion
-  console.log({result})
-});
+// mediaWorker.on('completed', (job, result) => {
+//   // notify user of completion
+//   console.log({result})
+// });

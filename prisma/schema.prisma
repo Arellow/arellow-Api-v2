@@ -1,3 +1,5 @@
+// npx prisma format
+// npx prisma validate
 // npx prisma db push
 
 // generator client {
@@ -55,6 +57,7 @@ enum UserPhotoType {
   NOTIFICATION
   CAMPAIGN
   BLOG
+  PROPERTYVERIFFICATION
 }
 
 model UserMedia {
@@ -75,9 +78,11 @@ model UserMedia {
   sizeInKB Float?
   format   String?
 
-  createdAt DateTime @default(now())
-  Ticket    Ticket?  @relation(fields: [ticketId], references: [id])
-  ticketId  String?  @db.ObjectId
+  createdAt        DateTime        @default(now())
+  Ticket           Ticket?         @relation(fields: [ticketId], references: [id])
+  ticketId         String?         @db.ObjectId
+  propertyVerify   PropertyVerify? @relation(fields: [propertyVerifyId], references: [id])
+  propertyVerifyId String?         @db.ObjectId
 }
 
 model Kyc {
@@ -125,7 +130,7 @@ model User {
   password     String
   phone_number String
   role         UserRole
-  description String?           
+  description  String?
   avatar       String           @default("https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg?semt=ais_hybrid&w=740")
   is_verified  Boolean          @default(false)
   suspended    Boolean          @default(false)
@@ -135,9 +140,13 @@ model User {
   companyId String?            @db.ObjectId
   company   Company?           @relation(fields: [companyId], references: [id])
   likes     UserPropertyLike[]
+  landLikes UserLandLike[]
 
   properties         Property[] @relation("UserProperties")
   approvedProperties Property[] @relation("ApprovedProperties")
+
+  lands         Lands[] @relation("UserLands")
+  approvedLands Lands[] @relation("ApprovedLands")
 
   mortgage          MortgageCalculationDraft[]
   preQualifications PreQualification[]
@@ -281,9 +290,9 @@ model Property {
   isFeatureProperty     Boolean @default(false)
   is_Property_A_Project Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  soldAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  soldAt    DateTime?
 
   // chat  start here
   messages Message[]
@@ -323,13 +332,12 @@ enum PropertyCategory {
   Bungalow
   Duplex
 
-  Detached_Duplex         @map("Detached Duplex")
-  Semi_Detached_Duplex         @map("Semi Detached Duplex")
-  Fully_Detached_Duplex         @map("Fully Detached Duplex")
+  Detached_Duplex       @map("Detached Duplex")
+  Semi_Detached_Duplex  @map("Semi Detached Duplex")
+  Fully_Detached_Duplex @map("Fully Detached Duplex")
 
-
-  Detached_House         @map("Detached House")
-  Semi_detached_House    @map("Semi-detached House")
+  Detached_House      @map("Detached House")
+  Semi_detached_House @map("Semi-detached House")
 
   Mansion
   Penthouse
@@ -345,9 +353,6 @@ enum PropertyCategory {
   Short_let              @map("Short-let")
   Hostel_Student_Housing @map("Hostel / Student Housing")
 }
-
-
-
 
 model Amenity {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -417,6 +422,8 @@ model Media {
   format   String?
 
   createdAt DateTime @default(now())
+  lands     Lands?   @relation(fields: [landsId], references: [id])
+  landsId   String?  @db.ObjectId
 }
 
 model ResetPassword {
@@ -536,26 +543,26 @@ model Campaign {
   campaignAddress   CampaignAddress
   startDate         DateTime
   endDate           DateTime
-  clicks            Int               @default(0)
-  views             Int               @default(0)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  clicks            Int                 @default(0)
+  views             Int                 @default(0)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 }
 
 model CampaignRequest {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  firstName      String
-  lastName      String
-  title      String
-  email      String
-  phoneNumber      String
-  message      String
-  country      String
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastName    String
+  title       String
+  email       String
+  phoneNumber String
+  message     String
+  country     String
 
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 model State {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   name  String @unique
@@ -565,24 +572,23 @@ model State {
 // -------------------------------------- Blog Start -------------------------------
 
 model Blog {
-  id               String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String       @db.ObjectId
-  user             User         @relation(fields: [userId], references: [id])
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 
   title            String
   content          String
-  banner           String       
-  rejectionReason  String?       
+  banner           String
+  rejectionReason  String?
   socialMediaLinks Json?
-  tags             String[]     @default(["property"])
+  tags             String[] @default(["property"])
 
-  category         BlogCategory @default(INTERNAL)
-  status          BlogStatus    @default(PENDING)
-  timeToRead       Int          @default(5) 
+  category   BlogCategory @default(INTERNAL)
+  status     BlogStatus   @default(PENDING)
+  timeToRead Int          @default(5)
 
-
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // isPublished      Boolean      @default(false)
   // blogId    String   @db.ObjectId
@@ -596,7 +602,6 @@ enum BlogCategory {
   INTERNAL
   EXTERNAL
 }
-
 
 enum BlogStatus {
   PENDING
@@ -751,6 +756,8 @@ model Message {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  lands     Lands?   @relation(fields: [landsId], references: [id])
+  landsId   String?  @db.ObjectId
 
   @@index([conversationId])
   @@index([senderId])
@@ -777,4 +784,98 @@ model AiProperty {
 
   AiMessage   AiMessage? @relation(fields: [aiMessageId], references: [id])
   aiMessageId String?    @db.ObjectId
+  lands       Lands?     @relation(fields: [landsId], references: [id])
+  landsId     String?    @db.ObjectId
+}
+
+// property verify
+model PropertyVerify {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  location  String
+  documents UserMedia[]
+
+  contact   Json
+  amount    Float
+  // slug         String
+  // description  String
+  status    ticketStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+enum PropertyVerifyStatus {
+  ONGOING
+  RESOLVED
+  // PENDING
+  UNPAID
+}
+
+// Lands management
+
+model Lands {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String
+  location     GeoPoint
+  country      String
+  state        String
+  city         String
+  neighborhood String
+  price        PriceModel
+  squareMeters String
+
+  category LandCategory
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], name: "UserLands")
+
+  status          PropertyStatus @default(PENDING)
+  rejectionReason String?
+  approvedById    String?        @db.ObjectId
+  approvedBy      User?          @relation("ApprovedLands", fields: [approvedById], references: [id])
+
+  likedBy    UserLandLike[]
+  likesCount Int            @default(0)
+
+  viewsCount  Int @default(0)
+  sharesCount Int @default(0)
+
+  media       Media[]
+  salesStatus SalesStatus @default(SELLING)
+
+  archived Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  soldAt    DateTime?
+
+  // chat  start here
+  messages Message[]
+
+  AiProperty AiProperty[]
+
+  @@index([salesStatus, updatedAt, soldAt, userId])
+}
+
+enum LandCategory {
+  OTHERS
+  GATES_ESTATE
+  GOVERNMENT_ALLOCATION
+  COMMUNNTY
+  MIXED_USED
+  INDUSTRAIL
+  COMMERCIAL
+  ESTATE
+}
+
+model UserLandLike {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  landId String @db.ObjectId
+
+  user User  @relation(fields: [userId], references: [id])
+  land Lands @relation(fields: [landId], references: [id])
+
+  @@unique([userId, landId])
 }
