@@ -3,7 +3,7 @@ import { InternalServerError } from "../../../lib/appError";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { redis } from "../../../lib/redis";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { getDateRange } from "../../../utils/getDateRange";
 import { calculateTrend } from "../../../utils/calculateTrend";
 import { deleteImage, processImage } from "../../../utils/imagesprocess";
@@ -604,6 +604,9 @@ export const deleteCampaign = async (req: Request, res: Response, next: NextFunc
       await Prisma.campaign.delete({ where: { id } })
 
     }
+
+     await deleteMatchingKeys(`getAllCampaignsRequest`);
+     await deleteMatchingKeys(`getAllCampaignsRequest:*`);
 
 
     return new CustomResponse(200, true, "Campaign deleted successfully", res);
