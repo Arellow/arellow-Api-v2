@@ -178,6 +178,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
           },
           //    filePath: file.path,
           meta: {
+            from: "PROPERTY",
             // order: index, // optional
             type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
             photoType: photoType || null,
@@ -224,121 +225,6 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       propertyId: newProperty.id,
 
     });
-
-
-
-
-    // not tested
-
-    // const parsedFeatures: string[] = typeof features === 'string' ? JSON.parse(features) : features;
-    // const parsedAmenities: Amenity[] = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
-
-    // const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
-
-
-    // // Basic validation
-    // if (!title || !description) {
-    //   return next(new InternalServerError("Title and description are required", 400));
-    // }
-
-    // // Validate amenities format if provided
-    // if (parsedAmenities && !Array.isArray(parsedAmenities)) {
-    //   return next(new InternalServerError("Amenities must be an array", 400));
-    // }
-
-
-    // if (parsedAmenities) {
-    //   for (const amenity of parsedAmenities) {
-    //     if (typeof amenity.name !== 'string' || typeof amenity.photoUrl !== 'string') {
-    //       return next(new InternalServerError("Each amenity must have name and photoUrl strings", 400));
-    //     }
-    //   }
-    // }
-
-
-
-    // const propertyAmenities = parsedAmenities.map(amenity => {
-    //   return { name: amenity.name.trim(), photoUrl: amenity.photoUrl.trim() }
-    // });
-
-
-    // const propertyFeatures = parsedFeatures.map(feature => feature.trim());
-
-    // const propertyPrice = { amount: Number(parsedPrice.amount), currency: parsedPrice.currency };
-
-
-    // const getLocation = await getPropertyLocation({ address: neighborhood });
-    // let propertyLocation: { lat: number, lng: number } = { lat: 9.6000359, lng: 7.9999721 };
-
-    // if (getLocation.status !== 'OK' || getLocation.results.length === 0) {
-    //   const response = await getPropertyLocationAlternative({ city });
-    //   const data = response.data[0];
-
-    //   if (data) {
-    //     propertyLocation = { lat: Number(data.lat), lng: Number(data.lon) };
-    //   }
-
-
-    // } else {
-    //   const userlocation = getLocation.results[0].geometry.location;
-
-    //   propertyLocation = { lat: Number(userlocation.lat), lng: Number(userlocation.lng) };
-
-
-    // }
-
-
-
-
-
-    // for (const [fieldName, files] of Object.entries(fields)) {
-    //   const isPhoto = [
-    //     "KITCHEN",
-    //     "FLOOR_PLAN",
-    //     "PRIMARY_ROOM",
-    //     "OTHER",
-    //     "FRONT_VIEW",
-    //     "LIVING_ROOM",
-    //   ].includes(fieldName);
-
-
-    //   const photoType = isPhoto ? fieldName : undefined;
-
-
-
-    //   for (const file of files) {
-
-    //     await mediaUploadQueue.add('upload', {
-    //       propertyId: newProperty.id,
-    //       // file: {
-    //       //   buffer: file.buffer,
-    //       //   originalname: file.originalname,
-    //       // },
-    //       filePath: file.path,
-    //       meta: {
-    //         // order: index, // optional
-    //         type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
-    //         photoType: photoType || null,
-    //       },
-    //     }, {
-    //       removeOnFail: { count: 3 },
-    //       removeOnComplete: true
-    //     }
-    //     );
-
-    //   }
-
-    // }
-
-
-
-    // await deleteMatchingKeys(`getAllProperties:*`);
-    // await deleteMatchingKeys(`getPropertiesByUser:${userId}:*`);
-
-
-    // new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
-    //   propertyId: newProperty.id,
-    // });
 
 
   } catch (error: any) {

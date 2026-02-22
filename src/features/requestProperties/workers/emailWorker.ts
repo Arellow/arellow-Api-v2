@@ -1,11 +1,9 @@
 import { Worker } from "bullmq";
 import dotenv from 'dotenv'
 import { assignPropertyRequestMailOption } from "../../../utils/mailer";
-import sgMail from "@sendgrid/mail";
+import { mailController } from "../../../utils/nodemailer";
 dotenv.config();
 
- 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export const worker = new Worker("email", async (job) => {
   const { email, realtorName, location, propertyType, bedrooms , budget, furnishingStatus, from} = job.data;
@@ -23,7 +21,7 @@ export const worker = new Worker("email", async (job) => {
            });
 
 
-    const respond = sgMail.send({ from, ...mailOptions });
+    const respond = mailController({ from, ...mailOptions });
 
      await job.remove();
 

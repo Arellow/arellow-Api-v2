@@ -61,7 +61,8 @@ export const multipleupload = multer({ storage }).fields([
   { name: "LIVING_ROOM" },
   { name: "VIDEO" },
   { name: "TOUR_3D" },
-  { name: "SupportImages" }
+  { name: "SupportImages" },
+  { name: "LANDS" },
   
 ]);
 

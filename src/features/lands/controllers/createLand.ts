@@ -6,11 +6,8 @@ import { InternalServerError } from "../../../lib/appError";
 import { deleteMatchingKeys } from "../../../lib/cache";
 
 import { getPropertyLocation, getPropertyLocationAlternative } from "../../../lib/propertyLocation";
+import { mediaUploadQueue } from "../../property/queues/media.queue";
 
-type Amenity = {
-    name: string;
-    photoUrl: string; 
-}
 
 
 export const createLand = async (req: Request, res: Response, next: NextFunction)=> {
@@ -28,11 +25,10 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
             category,
             city,
             country,
-            // location,
+            state,
             neighborhood,
             price,
             squareMeters,
-            state,
            
         } = req.body;
 
@@ -93,6 +89,8 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
                 squareMeters: squareMeters,
 
                 price: propertyPrice,
+                status: "APPROVED",
+                salesStatus: "SELLING"
 
             },
         });
@@ -105,12 +103,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
 
         for (const [fieldName, files] of Object.entries(fields)) {
           const isPhoto = [
-            "KITCHEN",
-            "FLOOR_PLAN",
-            "PRIMARY_ROOM",
-            "OTHER",
-            "FRONT_VIEW",
-            "LIVING_ROOM",
+            "LANDS",
           ].includes(fieldName);
 
 
@@ -120,24 +113,25 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
 
           for (const file of files) {
 
-        //     await mediaUploadQueue.add('upload', {
-        //       propertyId: newProperty.id,
-        //       file: {
-        //         buffer: file.buffer,
-        //         originalname: file.originalname,
-        //         mimetype: file.mimetype
-        //       },
-        //     //    filePath: file.path,
-        //       meta: {
-        //         // order: index, // optional
-        //         type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
-        //         photoType: photoType || null,
-        //       },
-        //     },{
-        //       removeOnFail: {count: 3},
-        //       removeOnComplete: true
-        //     }
-        //   );
+            await mediaUploadQueue.add('upload', {
+              propertyId: newLand.id,
+              file: {
+                buffer: file.buffer,
+                originalname: file.originalname,
+                mimetype: file.mimetype
+              },
+            //    filePath: file.path,
+              meta: {
+                from: "LANDS",
+                // order: index, // optional
+                type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
+                photoType: photoType || null,
+              },
+            },{
+              removeOnFail: {count: 3},
+              removeOnComplete: true
+            }
+          );
 
           }
 
@@ -174,7 +168,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
  
 
         new CustomResponse(201, true, "Property created. Media is uploading in background.", res, {
-              propertyId: newLand.id,
+              landId: newLand.id,
             
         });
    

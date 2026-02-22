@@ -398,13 +398,14 @@ enum PhotoType {
   KITCHEN
   FLOOR_PLAN
   PRIMARY_ROOM
+  LANDS
   OTHER
 }
 
 model Media {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  propertyId String   @db.ObjectId
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String?   @db.ObjectId
 
   type      MediaType
   photoType PhotoType?
@@ -422,7 +423,7 @@ model Media {
   format   String?
 
   createdAt DateTime @default(now())
-  lands     Lands?   @relation(fields: [landsId], references: [id])
+  lands     Lands?   @relation(fields: [landsId], references: [id], onDelete: Cascade)
   landsId   String?  @db.ObjectId
 }
 

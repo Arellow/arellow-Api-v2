@@ -29,7 +29,30 @@ export const mediaWorker = new Worker(
 
     const media = uploadResult as any;
 
-    if(meta?.photoType == "TICKET"){
+
+    if(meta?.from === "LANDS"){
+
+       await Prisma.media.create({
+        data: {
+          // propertyId,
+          landsId:propertyId,
+          url: media.secure_url,
+          publicId: media.public_id,
+          // type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
+          type: meta.type,
+          format: media.format,
+          sizeInKB: media.bytes / 1024,
+          // order: meta.order,
+          photoType: meta.photoType,
+          altText: meta.type
+      },
+      });
+    }
+
+
+
+
+    if(meta?.from == "TICKET"){
        await Prisma.userMedia.create({
         data: {
           ticketId: propertyId,
@@ -46,7 +69,10 @@ export const mediaWorker = new Worker(
       });
 
 
-    } else {
+    }
+    
+    
+     if(meta?.from === "PROPERTY"){
       await Prisma.media.create({
         data: {
           propertyId,

@@ -57,6 +57,7 @@ export const createCustomerSupport = async (req: Request, res: Response, next: N
                             originalname: file.originalname,
                         },
                         meta: {
+                            from: "TICKET",
                             type: 'PHOTO',
                             photoType: "TICKET",
                         },

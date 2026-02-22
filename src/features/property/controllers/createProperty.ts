@@ -164,6 +164,7 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
               },
             //    filePath: file.path,
               meta: {
+                from: "PROPERTY",
                 // order: index, // optional
                 type: isPhoto ? 'PHOTO' : fieldName, // VIDEO or TOUR_3D
                 photoType: photoType || null,

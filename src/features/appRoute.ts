@@ -11,6 +11,7 @@ import prequalificationRoutes from './prequalify/route';
 import chatRoutes from './userchat/route/chat.route';
 import blogRoutes from './blogs/routes/blog.route';
 import adminRoutes from './admin/routes/admin.route';
+import landsRoutes from './lands/routes/lands.route';
 const appRouter = express.Router();
 
 
@@ -26,6 +27,7 @@ const appRouter = express.Router();
  appRouter.use("/propertyrequest", propertyRequestRoutes);
  appRouter.use("/prequalification", prequalificationRoutes);
  appRouter.use("/chat", chatRoutes);
+ appRouter.use("/lands", landsRoutes);
 
 
 export default appRouter;

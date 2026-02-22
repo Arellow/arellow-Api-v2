@@ -4,9 +4,6 @@ import { Prisma, } from '../../../lib/prisma';
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError, UnAuthorizedError } from "../../../lib/appError";
 
-// import { DirectMediaUploader } from "../services/directMediaUploader";
-// import { IMediaUploader, UploadJob } from "../services/mediaUploader";
-
 import { cloudinary } from "../../../configs/cloudinary";
 import { redis } from "../../../lib/redis";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
@@ -17,8 +14,6 @@ import { PropertyCategory, PropertyProgress, PropertyStage, PropertyStatus, Sale
 import { Prisma as prisma, } from "../../../../generated/prisma/client";
 import { getDateRange } from "../../../utils/getDateRange";
 
-
-// const mediaUploader: IMediaUploader = new DirectMediaUploader();
 
 //All get requests
 
@@ -2354,84 +2349,6 @@ export const shareProperty = async (req: Request, res: Response, next: NextFunct
 };
 
 
-
-
-// untest route
-// export const mediaForProperty = async (req: Request, res: Response, next: NextFunction) => {
-//   const { propertyId } = req.params;
-//   const files = req.files as Express.Multer.File[];
-//   const metaArray = req.body.metadata;
-//   const userId = req.user?.id;
-
-//   if (!files || files.length === 0 || !metaArray) {
-//     new CustomResponse(404, true, "Files and metadata are required", res,);
-//     return
-//   }
-
-//   // Parse metadata array (expecting JSON strings)
-//   let metadata;
-//   try {
-
-//     const property = await Prisma.property.findUnique({ where: { id: propertyId } });
-//     if (!property) {
-//       new CustomResponse(404, true, "Property not found", res,);
-//       return
-//     }
-
-//     // Ownership check:
-//     if (property.userId !== userId) {
-//       new CustomResponse(403, true, "Forbidden: only owner can update status", res,);
-//       return
-//     };
-
-
-//     metadata = Array.isArray(metaArray)
-//       ? metaArray.map((m) => JSON.parse(m))
-//       : [JSON.parse(metaArray)];
-//   } catch {
-//     new CustomResponse(404, true, "Invalid metadata JSON", res,);
-//     return
-//   }
-
-//   if (metadata.length !== files.length) {
-//     new CustomResponse(404, true, "Metadata count must match files count", res,);
-//     return
-//   }
-
-//   const uploadJobs: UploadJob[] = files.map((file, i) => ({
-//     filePath: file.path,
-//     propertyId,
-//     meta: metadata[i],
-//   }));
-
-//   try {
-
-//     const uploaded = await mediaUploader.upload(uploadJobs);
-
-//     if (uploaded.length > 0) {
-//       await Prisma.media.createMany({
-//         data: uploaded.map((u) => ({
-//           propertyId,
-//           type: u.type as MediaType,
-//           url: u.url,
-//           publicId: u.publicId,
-//           caption: u.caption,
-//           altText: u.altText,
-//           order: u.order,
-//           width: u.width,
-//           height: u.height,
-//           duration: u.duration,
-//           sizeInKB: u.sizeInKB,
-//           format: u.format,
-//         })),
-//       });
-//     }
-
-//     new CustomResponse(200, true, "Upload successful", res, uploaded);
-//   } catch (error) {
-//     next(new InternalServerError("Upload faile", 500));
-//   }
-// };
 
 
 
