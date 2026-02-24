@@ -1,5 +1,6 @@
 // npx prisma format
 // npx prisma validate
+// npx prisma generate
 // npx prisma db push
 
 // generator client {
@@ -27,15 +28,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
-  website     String?
-  users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+// model Company {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name        String
+//   description String?
+//   website     String?
+//   users       User[]
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+// }
 
 enum KycStatus {
   PENDING
@@ -137,8 +138,8 @@ model User {
   address      PropertyAddress?
   points       Int              @default(0)
 
-  companyId String?            @db.ObjectId
-  company   Company?           @relation(fields: [companyId], references: [id])
+  // companyId String?            @db.ObjectId
+  // company   Company?           @relation(fields: [companyId], references: [id])
   likes     UserPropertyLike[]
   landLikes UserLandLike[]
 
@@ -403,7 +404,7 @@ enum PhotoType {
 }
 
 model Media {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
   property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId String?   @db.ObjectId
 
@@ -791,25 +792,23 @@ model AiProperty {
 
 // property verify
 model PropertyVerify {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  location  String
-  documents UserMedia[]
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  location String
+  contact  Json
+  amount   Float
 
-  contact   Json
-  amount    Float
-  // slug         String
-  // description  String
-  status    ticketStatus @default(PENDING)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  status    PropertyVerifyStatus @default(PENDING)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  documents UserMedia[]
 }
 
 enum PropertyVerifyStatus {
   ONGOING
   RESOLVED
-  // PENDING
-  UNPAID
+  PENDING
+  CANCELLED
 }
 
 // Lands management
@@ -879,4 +878,16 @@ model UserLandLike {
   land Lands @relation(fields: [landId], references: [id])
 
   @@unique([userId, landId])
+}
+
+// arellow partners
+
+model ArellowPartner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  website     String?
+  // users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

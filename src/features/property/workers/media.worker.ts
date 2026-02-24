@@ -16,7 +16,7 @@ export const mediaWorker = new Worker(
     try {
        const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: 'auto', folder: meta?.photoType == "TICKET" ? 'ticket-media' : 'property-media' },
+        { resource_type: 'auto', folder: meta?.from },
         (err, result) => {
           if (err) reject(err);
           else resolve(result);

@@ -146,6 +146,7 @@ export async function processImage({image, folder , photoType , type}:{image: an
     photoType,
     url: result.secure_url,
     publicId: result?.public_id,
+    
     },
   });
     return result.secure_url;

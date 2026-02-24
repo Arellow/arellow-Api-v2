@@ -45,7 +45,7 @@ const NIGERIAN_STATES: State[] = [
   { name: "Taraba", image: "https://i.pinimg.com/736x/dc/6d/f1/dc6df1bb532eaa78e564deb429f75550.jpg" },
   { name: "Yobe", image: "https://i.pinimg.com/736x/a5/d9/75/a5d9757d33968fa57a6d492206a0419f.jpg" },
   { name: "Zamfara", image: "https://i.pinimg.com/736x/8b/b9/ef/8bb9eff51dfe8ebe22254267dee019a4.jpg" },
-  { name: "FCT", image: "https://www.shutterstock.com/image-photo/abuja-fctnigeria-may-13th-2018-260nw-1090600706.jpg" },
+  { name: "Abuja", image: "https://www.shutterstock.com/image-photo/abuja-fctnigeria-may-13th-2018-260nw-1090600706.jpg" },
 ];
 
 
