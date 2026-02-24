@@ -1,103 +1,126 @@
 import { NextFunction, Request, Response } from 'express';
 import axios from 'axios';
 import { InternalServerError } from '../../../lib/appError';
-import { processImage } from '../../../utils/imagesprocess';
 import { Prisma } from '../../../lib/prisma';
 import { getDataUri } from '../../../middlewares/multer';
 import { cloudinary } from '../../../configs/cloudinary';
 
 
-export const createPropertyVerify = async (req: Request, res: Response, next: NextFunction) => {
+export const createPropertyVerify = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const idempotencyKey = req.headers["idempotency-key"] as string;
 
-  const { email, location, fullname, phonenumber , title} = req.body;
+  if (!idempotencyKey) {
+    return res.status(400).json({
+      message: "Idempotency-Key header required",
+    });
+  }
+
+  const { email, location, fullname, phonenumber, title } = req.body;
 
   let amount = 50000;
   if (location === "Abuja" || location === "Lagos") {
     amount = 150000;
   }
 
+  let uploadResult: any = null; 
+  let dbCommitted = false;
+
 
   try {
+  
+    const existing = await Prisma.propertyVerify.findUnique({
+      where: { idempotencyKey },
+    });
+
+    if (existing?.paymentReference) {
+      return res.redirect(`https://checkout.paystack.com/${existing.paymentReference}`)
+      
+    }
 
     if (!req.file) {
       return next(new InternalServerError("document not found", 404));
     }
 
-
-    // const document = await processImage({
-    //   folder: "property_veriification_container",
-    //   image: req.file,
-    //   photoType: "PROPERTYVERIFFICATION",
-    //   type: "PHOTO"
-    // });
-
-
-    // if (!document) {
-    //   return next(new InternalServerError("document upload failed", 404));
-    // }
-
-
-    const verifyRes = await Prisma.propertyVerify.create({
-      data: {
-        amount,
-        location,
-        title,
-        contact: {
-          email,
-          phonenumber
-        }
-
-      }
-    })
-
-
-
-
-
+  
     const file = getDataUri(req.file);
-    
-          const result = await cloudinary.uploader.upload(file.content, {
-          folder:  "property_veriification_container", 
-        });
-        
-        await Prisma.userMedia.create({
-        data: {
-        type: "PHOTO",
-        photoType: "PROPERTYVERIFFICATION",
-        url: result.secure_url,
-        publicId: result?.public_id,
-        propertyVerifyId: verifyRes.id
-        }});
+     uploadResult = await cloudinary.uploader.upload(file.content, {
+      folder: "property_verification_container",
+    });
 
 
-    const response = await axios.post(
-      'https://api.paystack.co/transaction/initialize',
+    const paystackRes = await axios.post(
+      "https://api.paystack.co/transaction/initialize",
       {
         email,
-        fullname,
-        phonenumber,
-        amount: amount * 100, // amount in kobo
-        metadata: {
-          fullname, phonenumber
-        },
+        amount: amount * 100,
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json',
         },
       }
     );
 
-    const { authorization_url } = response.data.data;
+    const { authorization_url, reference } = paystackRes.data.data;
 
 
-    return res.json({authorization_url,verifyRes })
+    await Prisma.$transaction(async (tx) => {
+      const property = await tx.propertyVerify.create({
+        data: {
+          amount,
+          location,
+          title,
+          contact: {
+            email,
+            phonenumber,
+            fullname
+          },
+          paymentReference: reference,
+          idempotencyKey, // ✅ store it
+        },
+      });
 
-    // return res.redirect(authorization_url);
+      await tx.userMedia.create({
+        data: {
+          type: "PHOTO",
+          photoType: "PROPERTYVERIFICATION",
+          url: uploadResult.secure_url,
+          publicId: uploadResult.public_id,
+          propertyVerifyId: property.id,
+        },
+      });
 
-  } catch (error) {
-    // console.error('Paystack error:', error.response?.data || error.message);
-    return res.status(500).json({ message: 'Failed to initialize payment' });
+       dbCommitted = true;
+    });
+
+    return res.redirect(authorization_url);
+    //  return res.json({authorization_url});
+
+  } catch (error: any) {
+
+    if (error.code === "P2002") {
+      const existing = await Prisma.propertyVerify.findUnique({
+        where: { idempotencyKey },
+      });
+
+       if (existing?.paymentReference) {
+       return res.redirect(`https://checkout.paystack.com/${existing.paymentReference}`)
+       }
+    }
+
+     if (!dbCommitted && uploadResult?.public_id) {
+ 
+      try {
+        await cloudinary.uploader.destroy(uploadResult.public_id);
+      } catch (cleanupError) {
+        console.error("Cloudinary cleanup failed:", cleanupError);
+      }
+    }
+
+    return res.status(500).json({ message: "Failed" });
   }
 };

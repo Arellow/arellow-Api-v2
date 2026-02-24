@@ -1,10 +1,12 @@
-import { Application, json, urlencoded } from "express";
+
+import express, { Application, json, urlencoded } from "express";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import indexRoutes from "../features/appRoute";
+import { paystackWebhook } from "../features/propertyverify/controller/webhook";
 
 export default (app: Application) => {
   // Logging middleware
@@ -19,6 +21,12 @@ export default (app: Application) => {
 
   // Configuration setup (dotenv)
   if (process.env.NODE_ENV !== 'production') configDotenv();
+
+  app.use(
+  "/paystack/webhook",
+  express.raw({ type: "application/json" }),
+  paystackWebhook
+);
 
   // Body parsing middleware
   app.use(json());

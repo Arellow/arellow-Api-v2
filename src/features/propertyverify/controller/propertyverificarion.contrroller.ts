@@ -1,10 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { Prisma } from "../../../lib/prisma";
 import CustomResponse from "../../../utils/helpers/response.util";
-import { InternalServerError } from "../../../lib/appError";
+import { InternalServerError , UnAuthorizedError} from "../../../lib/appError";
 import { Prisma as prisma, PropertyVerifyStatus, } from "../../../../generated/prisma/client";
-// user
+import { getDateRange } from "../../../utils/getDateRange";
+
+
+
 export const getPropertyVerifications = async (req: Request, res: Response, next: NextFunction) => {
   try {
 
@@ -19,15 +22,13 @@ export const getPropertyVerifications = async (req: Request, res: Response, next
     const pageSize = parseInt(limit as string, 10);
  
 
-    const cacheKey = `getPropertiesVerifyByUser:${JSON.stringify(req.query)}`;
+    const cacheKey = `getPropertiesVerifications:${JSON.stringify(req.query)}`;
 
-
-    // const filters: prisma.PropertyVerifyWhereInput = {
-     
-    //   status 
-  
-    // };
-
+    const filterTime = req.query.filterTime || "this_year";
+ 
+ 
+     const { current, previous } = getDateRange(filterTime.toString());
+ 
 
     const filters: prisma.PropertyVerifyWhereInput = {};
 
@@ -35,14 +36,14 @@ if (
   status &&
   Object.values(PropertyVerifyStatus).includes(status as PropertyVerifyStatus)
 ) {
-  filters.status = status as PropertyVerifyStatus;
+  filters.paymentStatus = status as PropertyVerifyStatus;
 }
 
 
     const result = await swrCache(cacheKey, async () => {
       const [propertiesVerified, total,] = await Promise.all([
         Prisma.propertyVerify.findMany({
-          where: filters,
+          where: {createdAt: { gte: current.start, lte: current.end }, ...filters},
           include: {
             documents: {
               select: {
@@ -60,7 +61,7 @@ if (
           skip: (pageNumber - 1) * pageSize,
           take: pageSize
         }),
-        Prisma.propertyVerify.count({ where: filters }),
+        Prisma.propertyVerify.count({ where: {createdAt: { gte: current.start, lte: current.end }, ...filters},}),
 
       ]);
 
@@ -89,7 +90,8 @@ if (
 
 
   } catch (error) {
-    next(new InternalServerError("Server Error", 500));
+    // next(new InternalServerError("Server Error", 500));
+    next(error);
 
   }
 
@@ -125,3 +127,36 @@ export const getPropertyVerificationDetail = async (req: Request, res: Response,
 };
 
 
+export const propertyVerificationStatus = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const {status} = req.body;
+
+  try {
+
+    const property = await Prisma.propertyVerify.findUnique({ where: { id } });
+    if (!property) {
+      return next(new InternalServerError("not found", 404));
+    }
+
+    if(property.paymentStatus == "PENDING" || property.paymentStatus == "CANCELLED") {
+      return next(new UnAuthorizedError("status can't be change", 404));
+    }
+
+    await Prisma.propertyVerify.update({
+      where: { id },
+      data: {
+        paymentStatus: status
+      },
+    });
+
+
+
+    await deleteMatchingKeys(`getPropertiesVerifications:*`);
+
+
+    new CustomResponse(200, true, "Status changed", res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+
+};
