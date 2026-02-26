@@ -13,6 +13,7 @@ import blogRoutes from './blogs/routes/blog.route';
 import adminRoutes from './admin/routes/admin.route';
 import landsRoutes from './lands/routes/lands.route';
 import propertyverifyrouter from './propertyverify/routes/propertyveriify.route';
+import partnerRoute from './partner/route/partner.route';
 const appRouter = express.Router();
 
 
@@ -30,6 +31,7 @@ const appRouter = express.Router();
  appRouter.use("/chat", chatRoutes);
  appRouter.use("/lands", landsRoutes);
  appRouter.use("/propertyverify", propertyverifyrouter);
+ appRouter.use("/partner", partnerRoute);
 
 
 export default appRouter;

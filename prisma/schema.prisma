@@ -3,21 +3,6 @@
 // npx prisma db push
 // npx prisma generate
 
-// generator client {
-//   provider = "prisma-client-js"
-// }
-
-// datasource db {
-//   provider = "mongodb"
-//   // url      = env("DATABASE_URL")
-// }
-
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -146,7 +131,6 @@ model User {
   properties         Property[] @relation("UserProperties")
   approvedProperties Property[] @relation("ApprovedProperties")
 
-  lands         Lands[] @relation("UserLands")
   approvedLands Lands[] @relation("ApprovedLands")
 
   mortgage          MortgageCalculationDraft[]
@@ -215,6 +199,8 @@ enum ActionRole {
   REWARD
   SUPPORT
   USER
+  PARTNER
+  LAND
 }
 
 model Ticket {
@@ -394,6 +380,7 @@ enum MediaType {
 }
 
 enum PhotoType {
+  // properties
   FRONT_VIEW
   LIVING_ROOM
   KITCHEN
@@ -401,6 +388,13 @@ enum PhotoType {
   PRIMARY_ROOM
   LANDS
   OTHER
+
+  // partners
+  PROOF_OF_ADDRESS
+  CAC_CERT
+  MEMORANDUM_AND_ARTICLE
+  CAC_STATUS_REPORT
+  PARTNER_BANNER
 }
 
 model Media {
@@ -426,6 +420,9 @@ model Media {
   createdAt DateTime @default(now())
   lands     Lands?   @relation(fields: [landsId], references: [id], onDelete: Cascade)
   landsId   String?  @db.ObjectId
+
+  partner   ArellowPartner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String?         @db.ObjectId
 }
 
 model ResetPassword {
@@ -799,13 +796,13 @@ model PropertyVerify {
   amount   Float
 
   // paymentReference String
-  paymentReference String?  @unique
-  idempotencyKey   String?  @unique
+  paymentReference String? @unique
+  idempotencyKey   String? @unique
 
-  paymentStatus    PropertyVerifyStatus @default(PENDING)
-  
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  paymentStatus PropertyVerifyStatus @default(PENDING)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   documents UserMedia[]
 }
 
@@ -833,7 +830,7 @@ model Lands {
   category LandCategory
 
   userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], name: "UserLands")
+  user   ArellowPartner   @relation(fields: [userId], references: [id], name: "UserLands")
 
   status          PropertyStatus @default(PENDING)
   rejectionReason String?
@@ -886,13 +883,25 @@ model UserLandLike {
 }
 
 // arellow partners
-
 model ArellowPartner {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
-  website     String?
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  description String
+  businessName   String
+  businessAdress String
+  email          String
+  phoneNumber    String
+  state          String
+  website        String?
+
+  isLandingPageFeature Boolean @default(false)
+
+  is_verified Boolean @default(false)
+  suspended   Boolean @default(false)
+
+  media     Media[]
   // users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  lands         Lands[] @relation("UserLands")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
 }

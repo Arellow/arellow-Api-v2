@@ -40,12 +40,12 @@ const NIGERIAN_STATES: State[] = [
   { name: "Osun", image: "https://i.pinimg.com/736x/e3/fc/97/e3fc972f1c567889055c814fc25d48a3.jpg" },
   { name: "Oyo", image: "https://i.pinimg.com/736x/a4/68/f6/a468f6c2c1b61a4d9a51a3f0f9243079.jpg" },
   { name: "Plateau", image: "https://i.pinimg.com/736x/9f/69/cb/9f69cb68515feb3d3f7870bc8d8da240.jpg" },
-  { name: "Rivers", image: "https://i.pinimg.com/736x/17/a8/a7/17a8a7d72ca2ece638590902ae16cc86.jpg" },
+  { name: "Rivers", image: "https://aceceforuniport.edu.ng/wp-content/uploads/2022/06/IMG_4610.jpg" },
   { name: "Sokoto", image: "https://i.pinimg.com/736x/e7/ee/82/e7ee82ad7ff3669d575cf93ec29aeb6a.jpg" },
   { name: "Taraba", image: "https://i.pinimg.com/736x/dc/6d/f1/dc6df1bb532eaa78e564deb429f75550.jpg" },
   { name: "Yobe", image: "https://i.pinimg.com/736x/a5/d9/75/a5d9757d33968fa57a6d492206a0419f.jpg" },
   { name: "Zamfara", image: "https://i.pinimg.com/736x/8b/b9/ef/8bb9eff51dfe8ebe22254267dee019a4.jpg" },
-  { name: "Abuja", image: "https://www.shutterstock.com/image-photo/abuja-fctnigeria-may-13th-2018-260nw-1090600706.jpg" },
+  { name: "Abuja", image: "https://www.oaugf.ng/6thawam2016/images/eventx/Abuja/Abuja-City-Gate.jpg" },
 ];
 
 

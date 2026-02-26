@@ -30,19 +30,32 @@ export const mediaWorker = new Worker(
     const media = uploadResult as any;
 
 
+    if(meta?.from === "PARTNER"){
+
+       await Prisma.media.create({
+        data: {
+          partnerId: propertyId,
+          url: media.secure_url,
+          publicId: media.public_id,
+          type: meta.type,
+          format: media.format,
+          sizeInKB: media.bytes / 1024,
+          photoType: meta.photoType,
+          altText: meta.type
+      },
+      });
+    }
+
     if(meta?.from === "LANDS"){
 
        await Prisma.media.create({
         data: {
-          // propertyId,
           landsId:propertyId,
           url: media.secure_url,
           publicId: media.public_id,
-          // type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
           type: meta.type,
           format: media.format,
           sizeInKB: media.bytes / 1024,
-          // order: meta.order,
           photoType: meta.photoType,
           altText: meta.type
       },
@@ -58,11 +71,9 @@ export const mediaWorker = new Worker(
           ticketId: propertyId,
           url: media.secure_url,
           publicId: media.public_id,
-          // type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
           type: meta.type,
           format: media.format,
           sizeInKB: media.bytes / 1024,
-          // order: meta.order,
           photoType: meta.photoType,
           altText: meta.type
       },
@@ -78,11 +89,9 @@ export const mediaWorker = new Worker(
           propertyId,
           url: media.secure_url,
           publicId: media.public_id,
-          // type: media.resource_type === 'video' ? MediaType.VIDEO : MediaType.PHOTO,
           type: meta.type,
           format: media.format,
           sizeInKB: media.bytes / 1024,
-          // order: meta.order,
           photoType: meta.photoType,
           altText: meta.type
       },
@@ -90,9 +99,6 @@ export const mediaWorker = new Worker(
 
     }
 
-
-    // Clean up temp file
-    // await fs.promises.unlink(filePath);
 
     // Remove job from Redis
     await job.remove();

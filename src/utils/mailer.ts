@@ -728,10 +728,11 @@ export const replyTicketMailOption = async ({  email,
 
 export const suspendedAccountMailOption = async (
   email: string,
-  reason?: string
+  reason?: string,
+  title?: string
 ) => {
-  const suspensionReason =
-    reason || "Violation of our platform's terms of service.";
+  const suspensionReason = reason || "Violation of our platform's terms of service.";
+  const suspendTitle = title || "Account Suspended";
 
   return {
     to: email,
@@ -741,7 +742,7 @@ export const suspendedAccountMailOption = async (
       <html lang="en">
       <head>
           <meta charset="utf-8">
-          <title>Account Suspended</title>
+          <title>${suspendTitle}</title>
           <style>
               body {
                   font-family: 'Lato', sans-serif;

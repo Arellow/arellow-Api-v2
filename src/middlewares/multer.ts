@@ -28,7 +28,7 @@ const storage = multer.memoryStorage();
 // });
 
 // File filter to enforce image types
-const fileFilter = (req: any, file :any, cb:any) => {
+const fileFilter = (req: any, file: any, cb: any) => {
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -64,6 +64,12 @@ export const multipleupload = multer({ storage }).fields([
   { name: "SupportImages" },
   { name: "LANDS" },
   
+  { name: "PROOF_OF_ADDRESS" },
+  { name: "CAC_CERT" },
+  { name: "MEMORANDUM_AND_ARTICLE" },
+  { name: "CAC_STATUS_REPORT" },
+  { name: "PARTNER_BANNER" },
+
 ]);
 
 // Interface for file data

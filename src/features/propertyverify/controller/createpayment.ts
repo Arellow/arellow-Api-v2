@@ -37,7 +37,7 @@ export const createPropertyVerify = async (
     });
 
     if (existing?.paymentReference) {
-      return res.redirect(`https://checkout.paystack.com/${existing.paymentReference}`)
+       return res.json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`});
       
     }
 
@@ -57,6 +57,10 @@ export const createPropertyVerify = async (
       {
         email,
         amount: amount * 100,
+        callback_url: `${process.env.BASE_URL}/paystack/callback`,
+    // metadata: {
+    //   propertyVerifyId: property.id,
+    // },
       },
       {
         headers: {
@@ -80,7 +84,7 @@ export const createPropertyVerify = async (
             fullname
           },
           paymentReference: reference,
-          idempotencyKey, // ✅ store it
+          idempotencyKey, 
         },
       });
 
@@ -97,8 +101,7 @@ export const createPropertyVerify = async (
        dbCommitted = true;
     });
 
-    return res.redirect(authorization_url);
-    //  return res.json({authorization_url});
+     return res.json({authorization_url});
 
   } catch (error: any) {
 
@@ -108,7 +111,7 @@ export const createPropertyVerify = async (
       });
 
        if (existing?.paymentReference) {
-       return res.redirect(`https://checkout.paystack.com/${existing.paymentReference}`)
+        return res.json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`});
        }
     }
 
