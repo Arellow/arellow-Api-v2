@@ -49,29 +49,43 @@ export const singleLand = async (req: Request, res: Response, next: NextFunction
           }
         },
         user: {
+          include: {
+           media: {
           select: {
-            id: true,
-            role: true,
-            email: true,
-            fullname: true,
-            username: true,
-            is_verified: true,
-            avatar: true,
-            createdAt: true,
-            lastSeen: true,
-            online: true,
-            // approvedProperties: {
-            //   where: { archived: false, status: "APPROVED" },
-            //   include: {
-            //     _count: true,
-            //     amenities: true,
-            //     media: true,
-
-            //   }
-            // }
+            url: true,
+            altText: true,
+            type: true,
+            photoType: true,
+            sizeInKB: true
 
           }
         }
+          }
+        }
+        // user: {
+        //   select: {
+        //     id: true,
+        //     // role: true,
+        //     email: true,
+        //     // fullname: true,
+        //     username: true,
+        //     is_verified: true,
+        //     avatar: true,
+        //     createdAt: true,
+        //     lastSeen: true,
+        //     online: true,
+        //     // approvedProperties: {
+        //     //   where: { archived: false, status: "APPROVED" },
+        //     //   include: {
+        //     //     _count: true,
+        //     //     amenities: true,
+        //     //     media: true,
+
+        //     //   }
+        //     // }
+
+        //   }
+        // }
 
       },
     });
