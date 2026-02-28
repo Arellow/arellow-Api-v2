@@ -20,7 +20,7 @@ const server = http.createServer(app);
   app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', "Idempotency-Key"]
   }));
 
 // assign user to API routes
