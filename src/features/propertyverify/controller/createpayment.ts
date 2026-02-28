@@ -101,7 +101,7 @@ export const createPropertyVerify = async (
        dbCommitted = true;
     });
 
-     return res.json({authorization_url});
+     return res.status(201).json({authorization_url, message: "successful", status: true});
 
   } catch (error: any) {
 
