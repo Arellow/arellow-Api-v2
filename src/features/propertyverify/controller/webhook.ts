@@ -75,17 +75,23 @@ export const paystackWebhook = async (req: Request, res: Response) => {
 
       if (!property) return res.sendStatus(200);
 
+
+      if(property.paymentStatus === "CREDITED"){
+        return res.sendStatus(200);
+      }
+
+
       await Prisma.propertyVerify.update({
           where: { id: property.id },
           data: {
-            paymentStatus: "ONGOING",
+            paymentStatus: "CREDITED",
           },
         });
     
 
     return res.sendStatus(200);
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return res.sendStatus(500);
   }
 };

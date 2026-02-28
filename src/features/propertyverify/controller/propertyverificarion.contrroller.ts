@@ -13,6 +13,7 @@ export const getPropertyVerifications = async (req: Request, res: Response, next
 
     const {
    status,
+   location,
       page = "1",
       limit = "10"
     } = req.query;
@@ -28,22 +29,24 @@ export const getPropertyVerifications = async (req: Request, res: Response, next
  
  
      const { current, previous } = getDateRange(filterTime.toString());
- 
 
-    const filters: prisma.PropertyVerifyWhereInput = {};
 
-if (
-  status &&
-  Object.values(PropertyVerifyStatus).includes(status as PropertyVerifyStatus)
-) {
-  filters.paymentStatus = status as PropertyVerifyStatus;
-}
+  const filters: prisma.PropertyVerifyWhereInput = {
+      paymentStatus: "CREDITED",
+      createdAt: { gte: current.start, lte: current.end },
+      AND: [
+        location ? { location: iLike(location as string) } : undefined,
+        status ? { status: status as PropertyVerifyStatus } : undefined,
+       
+      ].filter(Boolean) as prisma.PropertyVerifyWhereInput[]
+    };
+
 
 
     const result = await swrCache(cacheKey, async () => {
       const [propertiesVerified, total,] = await Promise.all([
         Prisma.propertyVerify.findMany({
-          where: {createdAt: { gte: current.start, lte: current.end }, ...filters},
+          where: filters,
           include: {
             documents: {
               select: {
@@ -57,11 +60,12 @@ if (
             },
            
           },
+          omit: {paymentStatus: true, idempotencyKey: true, paymentReference: true},
           orderBy: { createdAt: "desc" },
           skip: (pageNumber - 1) * pageSize,
           take: pageSize
         }),
-        Prisma.propertyVerify.count({ where: {createdAt: { gte: current.start, lte: current.end }, ...filters},}),
+        Prisma.propertyVerify.count({ where: filters}),
 
       ]);
 
@@ -104,13 +108,19 @@ export const getPropertyVerificationDetail = async (req: Request, res: Response,
  
   try {
 
+      const property = await Prisma.propertyVerify.findUnique({ where: { id } });
+    if (!property) {
+      return next(new InternalServerError("not found", 404));
+    }
+
 
 
     const data = await  Prisma.propertyVerify.findUnique({
       where: {id},
       include: {
         documents: true
-      }
+      },
+      omit: {paymentStatus: true, idempotencyKey: true, paymentReference: true},
     })
 
      
@@ -138,7 +148,7 @@ export const propertyVerificationStatus = async (req: Request, res: Response, ne
       return next(new InternalServerError("not found", 404));
     }
 
-    if(property.paymentStatus == "PENDING" || property.paymentStatus == "CANCELLED") {
+    if(property.status == "VERIFIED" || property.status == "UNVERIFIED") {
       return next(new UnAuthorizedError("status can't be change", 404));
     }
 
@@ -160,3 +170,8 @@ export const propertyVerificationStatus = async (req: Request, res: Response, ne
   }
 
 };
+
+
+
+const iLike = (field?: string) =>
+  field ? { contains: field, mode: "insensitive" } : undefined;

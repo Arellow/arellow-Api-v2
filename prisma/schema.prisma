@@ -799,19 +799,25 @@ model PropertyVerify {
   paymentReference String? @unique
   idempotencyKey   String? @unique
 
-  paymentStatus PropertyVerifyStatus @default(PENDING)
+  paymentStatus PropertyVerifyPaymentStatus @default(PENDING)
+  status PropertyVerifyStatus @default(PENDING)
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   documents UserMedia[]
 }
 
-enum PropertyVerifyStatus {
-  ONGOING
-  RESOLVED
+enum PropertyVerifyPaymentStatus {
   PENDING
-  CANCELLED
+  CREDITED
 }
+
+enum PropertyVerifyStatus {
+  PENDING
+  VERIFIED
+  UNVERIFIED
+}
+
 
 // Lands management
 
