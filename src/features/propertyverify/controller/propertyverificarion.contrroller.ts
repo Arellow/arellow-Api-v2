@@ -155,7 +155,7 @@ export const propertyVerificationStatus = async (req: Request, res: Response, ne
     await Prisma.propertyVerify.update({
       where: { id },
       data: {
-        paymentStatus: status
+        status
       },
     });
 
@@ -166,7 +166,10 @@ export const propertyVerificationStatus = async (req: Request, res: Response, ne
 
     new CustomResponse(200, true, "Status changed", res,);
   } catch (error) {
-    next(new InternalServerError("Internal server error", 500));
+    console.log(error)
+
+    next(error)
+    // next(new InternalServerError("Internal server error", 500));
   }
 
 };

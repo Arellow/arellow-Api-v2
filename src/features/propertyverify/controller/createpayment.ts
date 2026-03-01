@@ -37,8 +37,7 @@ export const createPropertyVerify = async (
     });
 
     if (existing?.paymentReference) {
-       return res.json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`});
-      
+       return res.status(201).json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`, message: "successful", status: true});
     }
 
     if (!req.file) {
@@ -111,7 +110,7 @@ export const createPropertyVerify = async (
       });
 
        if (existing?.paymentReference) {
-        return res.json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`});
+        return res.status(201).json({authorization_url: `https://checkout.paystack.com/${existing.paymentReference}`, message: "successful", status: true});
        }
     }
 
