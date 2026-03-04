@@ -5,6 +5,7 @@ import { InternalServerError } from "../../../lib/appError";
 import { deleteMatchingKeys } from "../../../lib/cache";
 
 import { mediaUploadQueue } from "../../property/queues/media.queue";
+import { parseBoolean } from "../../../utils";
 
 
 
@@ -21,11 +22,11 @@ export const createPartner = async (req: Request, res: Response, next: NextFunct
             email,
             phoneNumber,
             state,
-            // website,
 
-            isLandingPageFeature,
 
         } = req.body;
+
+        const isLandingPageFeature = parseBoolean(req.body.isLandingPageFeature);
 
 
         // Create partner
@@ -101,8 +102,9 @@ export const createPartner = async (req: Request, res: Response, next: NextFunct
         });
 
     } catch (error: any) {
+        next(error)
         // console.log({error: error?.response})
-        next(new InternalServerError("Internal server error", 500));
+        // next(new InternalServerError("Internal server error", 500));
     }
 
 };

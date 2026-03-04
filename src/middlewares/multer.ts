@@ -6,27 +6,6 @@ import path from "path";
 const storage = multer.memoryStorage();
 
 
-// const tempDir = path.join(__dirname, '../../temp_uploads');
-
-
-// Ensure temp directory exists
-// if (!fs.existsSync(tempDir)) {
-//   fs.mkdirSync(tempDir, { recursive: true });
-// }
-
-
-// const multistorage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, tempDir);
-//   },
-//   filename: (req, file, cb) => {
-//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-//     const ext = path.extname(file.originalname);
-//     const baseName = path.basename(file.originalname, ext);
-//     cb(null, `${baseName}-${uniqueSuffix}${ext}`);
-//   }
-// });
-
 // File filter to enforce image types
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
@@ -71,6 +50,11 @@ export const multipleupload = multer({ storage }).fields([
   { name: "PARTNER_BANNER" },
 
 ]);
+
+
+
+
+
 
 // Interface for file data
 export interface FileData {
