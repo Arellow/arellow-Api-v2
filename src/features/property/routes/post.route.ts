@@ -24,9 +24,11 @@ import {
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { changeStatusSchema, createPropertySchema } from './property.validate';
-import { createProperty } from '../controllers/createProperty';
+// import { createProperty } from '../controllers/createProperty';
 import { updateProperty } from '../controllers/updateProperty';
 import { UserRole } from '../../../../generated/prisma/enums';
+import { parsePropertyBody } from '../../../utils/parseJson';
+import { createProperty } from '../controllers/createProperty.controller';
 
 type Amenity = {
     name: string;
@@ -48,24 +50,41 @@ propertyRoutes.get("/seed", getAllStates);
 propertyRoutes.get("/leaderboard", getTopPerforming);
 propertyRoutes.get("/affordable", getAffordableProperties);
 
-propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
-    const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
-    const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
+// propertyRoutes.post("/createproperty", multipleupload, (req, res, next) => {
+//     const parsedFeatures: string[] = typeof req.body.features === 'string' ? JSON.parse(req.body.features || '[]') : req.body.features;
+//     const parsedAmenities: Amenity[] = typeof req.body.amenities === 'string' ? JSON.parse(req.body.amenities || '[]') : req.body.amenities;
     
-    const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price || '{}') : req.body.price;
+//     const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price || '{}') : req.body.price;
 
-    const body = {
-        ...req.body,
-        features: parsedFeatures,
-        amenities: parsedAmenities,
-        price: parsedPrice
-    };
-    req.body = body;
-    next()
+//     const body = {
+//         ...req.body,
+//         features: parsedFeatures,
+//         amenities: parsedAmenities,
+//         price: parsedPrice
+//     };
+//     req.body = body;
+//     next()
 
-},
-    validateSchema(createPropertySchema),
-     authenticate, isVerify, requireKyc, isSuspended, createProperty);
+// },
+//     validateSchema(createPropertySchema),
+//      authenticate, isVerify, requireKyc, isSuspended, createProperty);
+
+
+
+
+propertyRoutes.post(
+  "/createproperty",
+  authenticate,
+  isVerify,
+  requireKyc,
+  isSuspended,
+  multipleupload,
+  parsePropertyBody,
+  validateSchema(createPropertySchema),
+  createProperty
+);
+
+
 
 propertyRoutes.patch("/:propertyId/update", multipleupload,
     (req, res, next) => {

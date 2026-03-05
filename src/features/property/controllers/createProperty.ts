@@ -218,7 +218,8 @@ export const createProperty = async (req: Request, res: Response, next: NextFunc
 
     } catch (error:any) {
         // console.log({error: error?.response})
-        next(new InternalServerError("Internal server error", 500));
+        next(error)
+        // next(new InternalServerError("Internal server error", 500));
     }
 
 };
