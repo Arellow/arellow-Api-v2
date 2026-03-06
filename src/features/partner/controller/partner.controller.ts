@@ -33,7 +33,7 @@ export const getPartners = async (req: Request, res: Response, next: NextFunctio
 
 
         const filters: prisma.ArellowPartnerWhereInput = {
-            suspended: false,
+            // suspended: false,
 
             AND: [
                 search
@@ -71,6 +71,16 @@ export const getPartners = async (req: Request, res: Response, next: NextFunctio
 
                             }
                         },
+                        _count: {
+                            select: {
+                                lands: {where: {archived: false, status: "APPROVED"}}
+                            }
+                        }
+                        // lands: {
+                        //     where: {
+
+                        //     }
+                        // }
 
                     },
                     orderBy: { createdAt: "desc" },
