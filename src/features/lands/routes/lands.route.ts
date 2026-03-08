@@ -10,7 +10,7 @@ import { getLands, singleLand } from '../controllers/lands.controller';
 const landsRoutes = express.Router();
 
 
-landsRoutes.post("/createlands", multipleupload, (req, res, next) => {
+landsRoutes.post("/createland/:id", multipleupload, (req, res, next) => {
  
     const parsedPrice: { amount: number, currency: string } = typeof req.body.price === 'string' ? JSON.parse(req.body.price || '{}') : req.body.price;
 

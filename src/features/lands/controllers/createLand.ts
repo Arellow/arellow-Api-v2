@@ -14,7 +14,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
 
     try {
 
-        const userId = req.user?.id!;
+        const userId = req.params?.id!;
 
         const fields = req.files as { [fieldname: string]: Express.Multer.File[] } || [];
 
@@ -29,7 +29,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
             neighborhood,
             price,
             squareMeters,
-           
+           landmark
         } = req.body;
 
 
@@ -85,7 +85,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
                 neighborhood,
                 state,
                 location: propertyLocation,
-
+                landmark,
                 squareMeters: squareMeters,
 
                 price: propertyPrice,

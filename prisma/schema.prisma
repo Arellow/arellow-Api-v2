@@ -830,6 +830,7 @@ model Lands {
   state        String
   city         String
   neighborhood String
+  landmark String
   price        PriceModel
   squareMeters String
 

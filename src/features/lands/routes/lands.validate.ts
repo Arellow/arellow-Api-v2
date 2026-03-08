@@ -11,6 +11,7 @@ export const createLandsSchema = Joi.object({
   state: Joi.string().required().min(1),
   city: Joi.string().required().min(1),
   neighborhood: Joi.string().required().min(1),
+  landmark: Joi.string().required().min(1),
 
 
   price: Joi.object({
