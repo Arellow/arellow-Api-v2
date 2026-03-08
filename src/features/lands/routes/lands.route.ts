@@ -62,7 +62,7 @@ const adminMiddlewares = [
   requireKyc,
   isSuspended,
   requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
-  adminRequireRole('PROPERTY')
+  adminRequireRole('LAND')
 ];
 
 landsRoutes.post(

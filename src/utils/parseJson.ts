@@ -66,7 +66,7 @@ export const parseLandBody = (req: Request, res: Response, next: NextFunction) =
   try {
 
     req.body.price = parse(req.body.price, {});
-    req.body.squareMeters = parse(req.body.squareMeters, '');
+    // req.body.squareMeters = parse(req.body.squareMeters, '');
 
     next();
   } catch (error) {
