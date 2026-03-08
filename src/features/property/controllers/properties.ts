@@ -13,7 +13,6 @@ import { canUserAffordProperty } from "../../../utils/buyabilitycalculator";
 import { PropertyCategory, PropertyProgress, PropertyStage, PropertyStatus, SalesStatus } from "../../../../generated/prisma/enums";
 import { Prisma as prisma, } from "../../../../generated/prisma/client";
 import { getDateRange } from "../../../utils/getDateRange";
-import { JsonObject } from "../../../../generated/prisma/internal/prismaNamespace";
 
 
 //All get requests

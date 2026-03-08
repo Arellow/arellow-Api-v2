@@ -11,6 +11,7 @@ export const createProperty = async (
 
   try {
 
+
     const property = await propertyService.createProperty({
       user: req.user!,
       body: req.body,
