@@ -48,6 +48,7 @@ export const multipleupload = multer({ storage }).fields([
   { name: "MEMORANDUM_AND_ARTICLE" },
   { name: "CAC_STATUS_REPORT" },
   { name: "PARTNER_BANNER" },
+  { name: "PARTNER_CARD" },
 
 ]);
 

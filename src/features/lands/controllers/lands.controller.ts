@@ -462,28 +462,30 @@ export const getLands = async (req: Request, res: Response, next: NextFunction) 
     };
 
     const include: any = {
-        media: {
-          select: {
-            url: true,
-            altText: true,
-            type: true,
-            photoType: true,
-            sizeInKB: true
+      media: {
+        select: {
+          url: true,
+          altText: true,
+          type: true,
+          photoType: true,
+          sizeInKB: true
 
+        }
+      },
+      user: {
+        include: {
+          media: {
+            select: {
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
+            }
           }
-        },
-        user: {
-          include: {
-           media: {
-          select: {
-            url: true,
-            altText: true,
-            type: true,
-            photoType: true,
-            sizeInKB: true
-
-          } }
-          }}
+        }
+      }
     };
 
     if (userId) include.likedBy = { where: { userId }, select: { id: true } };
@@ -520,6 +522,150 @@ export const getLands = async (req: Request, res: Response, next: NextFunction) 
     next(error)
   }
 };
+
+
+
+export const getLandsByPartner = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    const parnnerId = req.params?.id;
+    const {
+      category, state, city, country, neighborhood, minPrice, maxPrice, salesStatus,
+      page = "1", limit = "10", search = ""
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const pageSize = parseInt(limit as string, 10);
+    const cacheKey = `lands:${userId}:${JSON.stringify(req.query)}`;
+
+    const filters: prisma.LandsWhereInput = {
+      userId: parnnerId,
+      archived: false,
+      status: "APPROVED",
+      AND: [
+        search ? {
+          OR: [
+            { title: iLike(search as string) },
+            { city: iLike(search as string) },
+            { state: iLike(search as string) },
+            { country: iLike(search as string) }
+          ]
+        } : undefined,
+        category ? { category: category as LandCategory } : undefined,
+        state ? { state: iLike(state as string) } : undefined,
+        city ? { city: iLike(city as string) } : undefined,
+        country ? { country: iLike(country as string) } : undefined,
+        neighborhood ? { neighborhood: iLike(neighborhood as string) } : undefined,
+        salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
+        (minPrice || maxPrice) ? {
+          price: {
+            is: {
+              amount: {
+                ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}),
+                ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {})
+              }
+            }
+          }
+        } : undefined
+      ].filter(Boolean) as prisma.LandsWhereInput[]
+    };
+
+    const include: any = {
+      media: {
+        select: {
+          url: true,
+          altText: true,
+          type: true,
+          photoType: true,
+          sizeInKB: true
+
+        }
+      },
+      user: {
+        include: {
+          media: {
+            select: {
+              url: true,
+              altText: true,
+              type: true,
+              photoType: true,
+              sizeInKB: true
+
+            }
+          }
+        }
+      }
+    };
+
+    if (userId) include.likedBy = { where: { userId }, select: { id: true } };
+
+    const result = await swrCache(cacheKey, async () => {
+      const [lands, total,
+        // category type
+        OTHERS,
+        GATES_ESTATE,
+        GOVERNMENT_ALLOCATION,
+        COMMUNNTY,
+        MIXED_USED,
+        INDUSTRAIL,
+        COMMERCIAL,
+        ESTATE
+      ] = await Promise.all([
+        Prisma.lands.findMany({ where: filters, include }),
+        Prisma.lands.count({ where: filters }),
+
+        // category count
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "OTHERS" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "GATES_ESTATE" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "GOVERNMENT_ALLOCATION" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "COMMUNNTY" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "MIXED_USED" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "INDUSTRAIL" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "COMMERCIAL" } }),
+        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "ESTATE" } }),
+
+
+
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+      const paginated = shuffleArray(lands).slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+
+      const dataWithIsLiked = paginated.map(({ likedBy, ...rest }) => ({
+        ...rest,
+        isLiked: Array.isArray(likedBy) && likedBy.length > 0
+      }));
+
+      return {
+        data: dataWithIsLiked,
+        category_count: {
+          OTHERS,
+          GATES_ESTATE,
+          GOVERNMENT_ALLOCATION,
+          COMMUNNTY,
+          MIXED_USED,
+          INDUSTRAIL,
+          COMMERCIAL,
+          ESTATE
+        },
+        pagination: {
+          total, page: pageNumber, pageSize, totalPages,
+          nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
+          prevPage: pageNumber > 1 ? pageNumber - 1 : null,
+          canGoNext: pageNumber < totalPages,
+          canGoPrev: pageNumber > 1
+        }
+      };
+    });
+
+    new CustomResponse(200, true, "Success", res, result);
+  } catch (error) {
+    next(error)
+  }
+};
+
+
+
 
 const iLike = (value?: string) => value ? { contains: value, mode: "insensitive" } : undefined;
 const shuffleArray = <T>(arr: T[]) => arr.map(v => ({ v, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ v }) => v);

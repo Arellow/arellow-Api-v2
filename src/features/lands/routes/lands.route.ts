@@ -44,7 +44,7 @@ import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 // import { createLand } from '../controllers/createLand.controller';
 import { createLandsSchema } from './lands.validate';
-import { getLands, singleLand } from '../controllers/lands.controller';
+import { getLands, getLandsByPartner, singleLand } from '../controllers/lands.controller';
 import { UserRole } from '../../../../generated/prisma/enums';
 import { parseLandBody } from '../../../utils/parseJson';
 import { createLand } from '../controllers/createLand.controller';
@@ -54,6 +54,7 @@ const landsRoutes = express.Router();
 /** Public routes */
 landsRoutes.get('/', getLands);
 landsRoutes.get('/:id/detail', singleLand);
+landsRoutes.get('/:id/partners', getLandsByPartner);
 
 /** Admin routes */
 const adminMiddlewares = [

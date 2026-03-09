@@ -60,6 +60,7 @@ export const createPartner = async (req: Request, res: Response, next: NextFunct
                 "MEMORANDUM_AND_ARTICLE",
                 "CAC_STATUS_REPORT",
                 "PARTNER_BANNER",
+                "PARTNER_CARD",
             ].includes(fieldName);
 
 

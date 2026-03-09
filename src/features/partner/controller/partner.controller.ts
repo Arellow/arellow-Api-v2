@@ -75,7 +75,8 @@ export const getPartners = async (req: Request, res: Response, next: NextFunctio
                             select: {
                                 lands: {where: {archived: false, status: "APPROVED"}}
                             }
-                        }
+                        },
+                        
                         // lands: {
                         //     where: {
 
