@@ -158,10 +158,10 @@ export const getPartnerDetail = async (req: Request, res: Response, next: NextFu
                 }
             }
         }),
-                Prisma.lands.count({ where: { userId: req.user?.id, status: "APPROVED", salesStatus: "SELLING"}, }),
-                Prisma.lands.count({ where: { userId: req.user?.id, status: "APPROVED", salesStatus: "SOLD"}, }),
+                Prisma.lands.count({ where: { userId: id, status: "APPROVED", salesStatus: "SELLING"}, }),
+                Prisma.lands.count({ where: { userId: id, status: "APPROVED", salesStatus: "SOLD"}, }),
 
-                Prisma.lands.findMany({ where: { userId: req.user?.id, status: "APPROVED", salesStatus: "SELLING"},
+                Prisma.lands.findMany({ where: { userId: id, status: "APPROVED", salesStatus: "SELLING"},
                 include: {
                 media: {
                     select: {
@@ -175,7 +175,7 @@ export const getPartnerDetail = async (req: Request, res: Response, next: NextFu
                 }
             }
                 }),
-                Prisma.lands.findMany({ where: { userId: req.user?.id, status: "APPROVED", salesStatus: "SOLD"},
+                Prisma.lands.findMany({ where: { userId: id, status: "APPROVED", salesStatus: "SOLD"},
                 include: {
                 media: {
                     select: {
