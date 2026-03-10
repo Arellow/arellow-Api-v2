@@ -138,7 +138,7 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
 
 
     const adminPermission = await Prisma.adminPermission.findUnique({
-      where: { userId },
+      where: { userId: req.user?.id! },
     });
 
     if (adminPermission && adminPermission.action.length) {
