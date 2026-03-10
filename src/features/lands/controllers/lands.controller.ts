@@ -528,7 +528,7 @@ export const getLands = async (req: Request, res: Response, next: NextFunction) 
 export const getLandsByPartner = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-    const parnnerId = req.params?.id;
+    const partnerId = req.params?.id;
     const {
       category, state, city, country, neighborhood, minPrice, maxPrice, salesStatus,
       page = "1", limit = "10", search = ""
@@ -536,10 +536,10 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
 
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
-    const cacheKey = `lands:${userId}:${JSON.stringify(req.query)}`;
+    const cacheKey = `partnerlands:${userId}:${JSON.stringify(req.query)}`;
 
     const filters: prisma.LandsWhereInput = {
-      userId: parnnerId,
+      userId: partnerId,
       archived: false,
       status: "APPROVED",
       AND: [
@@ -581,8 +581,43 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
 
         }
       },
-      user: {
-        include: {
+    };
+
+    if (userId) include.likedBy = { where: { userId }, select: { id: true } };
+
+
+    const result = await swrCache(cacheKey, async () => {
+      const [lands, total,
+        // category type
+        OTHERS,
+        GATES_ESTATE,
+        GOVERNMENT_ALLOCATION,
+        COMMUNITY,
+        MIXED_USED,
+        INDUSTRIAL,
+        COMMERCIAL,
+        ESTATE,
+        // 
+        partnerDetail
+
+
+      ] = await Promise.all([
+        Prisma.lands.findMany({ where: filters, include }),
+        Prisma.lands.count({ where: filters }),
+
+        // category count
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "OTHERS" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "GATES_ESTATE" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "GOVERNMENT_ALLOCATION" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "COMMUNITY" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "MIXED_USED" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "INDUSTRIAL" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "COMMERCIAL" } }),
+        Prisma.lands.count({ where: { userId: partnerId, archived: false, status: "APPROVED", category: "ESTATE" } }),
+
+        // partner
+        Prisma.arellowPartner.findUnique({where: {id: partnerId},  
+          include: {
           media: {
             select: {
               url: true,
@@ -593,37 +628,7 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
 
             }
           }
-        }
-      }
-    };
-
-    if (userId) include.likedBy = { where: { userId }, select: { id: true } };
-
-    const result = await swrCache(cacheKey, async () => {
-      const [lands, total,
-        // category type
-        OTHERS,
-        GATES_ESTATE,
-        GOVERNMENT_ALLOCATION,
-        COMMUNNTY,
-        MIXED_USED,
-        INDUSTRAIL,
-        COMMERCIAL,
-        ESTATE
-      ] = await Promise.all([
-        Prisma.lands.findMany({ where: filters, include }),
-        Prisma.lands.count({ where: filters }),
-
-        // category count
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "OTHERS" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "GATES_ESTATE" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "GOVERNMENT_ALLOCATION" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "COMMUNNTY" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "MIXED_USED" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "INDUSTRAIL" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "COMMERCIAL" } }),
-        Prisma.lands.count({ where: { userId: parnnerId, archived: false, status: "APPROVED", category: "ESTATE" } }),
-
+        } })
 
 
       ]);
@@ -642,12 +647,13 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
           OTHERS,
           GATES_ESTATE,
           GOVERNMENT_ALLOCATION,
-          COMMUNNTY,
+          COMMUNITY,
           MIXED_USED,
-          INDUSTRAIL,
+          INDUSTRIAL,
           COMMERCIAL,
           ESTATE
         },
+        partnerDetail,
         pagination: {
           total, page: pageNumber, pageSize, totalPages,
           nextPage: pageNumber < totalPages ? pageNumber + 1 : null,
