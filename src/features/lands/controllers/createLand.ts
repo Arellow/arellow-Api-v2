@@ -141,13 +141,13 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
       where: { userId: req.user?.id! },
     });
 
-    if (adminPermission && adminPermission.action.length) {
+    if ((adminPermission && adminPermission?.action?.length) || req.user?.role === "SUPER_ADMIN"  ) {
 
-      const hasAccess = adminPermission.action.some((role) =>
-        ["PROPERTY"].includes(role)
-      );
+      const hasAccess = adminPermission?.action.some((role) =>
+        ["LAND"].includes(role)
+      ) || req.user?.role === "SUPER_ADMIN";
       if (hasAccess) {
-        await Prisma.property.update({
+        await Prisma.lands.update({
           where: { id: newLand.id },
           data: {
             status: 'APPROVED',

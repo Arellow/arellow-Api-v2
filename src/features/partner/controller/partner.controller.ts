@@ -31,9 +31,11 @@ export const getPartners = async (req: Request, res: Response, next: NextFunctio
 
         const { current, previous } = getDateRange(filterTime.toString());
 
+        const isAdmin = (req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN") ? undefined  : false;
+
 
         const filters: prisma.ArellowPartnerWhereInput = {
-            // suspended: false,
+            suspended:  isAdmin,
 
             AND: [
                 search

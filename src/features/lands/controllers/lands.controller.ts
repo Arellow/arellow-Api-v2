@@ -375,7 +375,8 @@ export const singleLand = async (req: Request, res: Response, next: NextFunction
         media: true,
         user: {
           include: { media: true }
-        }
+        },
+         approvedBy: {select: {phone_number: true, id: true, email: true, avatar: true}}
       }
     });
 
@@ -581,6 +582,9 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
 
         }
       },
+      approvedBy: {select: {phone_number: true, id: true, email: true, avatar: true}}
+
+
     };
 
     if (userId) include.likedBy = { where: { userId }, select: { id: true } };
