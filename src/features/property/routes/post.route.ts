@@ -101,6 +101,7 @@ import authenticate, {
   adminRequireRole, 
   isSuspended, 
   isVerify, 
+  rejectSuperAdmin, 
   requireKyc, 
   requireRole 
 } from '../../../middlewares/auth.middleware';
@@ -160,8 +161,8 @@ propertyRoutes.get('/:id/detail', singleProperty);
 propertyRoutes.get('/user', authenticate, getPropertiesByUser);
 propertyRoutes.get('/user/archive', authenticate, getArchivedPropertiesByUser);
 propertyRoutes.get('/liked', authenticate, getLikedPropertiesByUser);
-propertyRoutes.post('/:id/like', authenticate, isSuspended, likeProperty);
-propertyRoutes.delete('/:id/like', authenticate, isSuspended, unLikeProperty);
+propertyRoutes.post('/:id/like', authenticate, isSuspended, rejectSuperAdmin, likeProperty);
+propertyRoutes.delete('/:id/like', authenticate, isSuspended, rejectSuperAdmin, unLikeProperty);
 propertyRoutes.post('/:id/share', shareProperty);
 
 /**
@@ -175,6 +176,7 @@ propertyRoutes.post(
   isVerify,
   requireKyc,
   isSuspended,
+  rejectSuperAdmin,
   multipleupload,
   parsePropertyBody,
   validateSchema(createPropertySchema),
@@ -187,6 +189,7 @@ propertyRoutes.patch(
   isVerify,
   requireKyc,
   isSuspended,
+  rejectSuperAdmin,
   multipleupload,
   parsePropertyBody,
   validateSchema(createPropertySchema),

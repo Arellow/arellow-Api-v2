@@ -94,6 +94,8 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction): void =
   next();
 };
 
+
+
 export const isSuspended = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
     res.status(403).json({ success: false, message: "Unauthorized: No user data found" });
@@ -138,7 +140,7 @@ export const requireKyc = async (req: Request, res: Response, next: NextFunction
 };
 
 
-export const isSuperAdmin = (req: Request, res: Response, next: NextFunction): void => {
+export const rejectSuperAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
     res.status(403).json({ success: false, message: "Unauthorized: No user data found" });
     return;
@@ -146,7 +148,7 @@ export const isSuperAdmin = (req: Request, res: Response, next: NextFunction): v
 
   const { role } = req.user;
 
-  if (role !== "SUPER_ADMIN") {
+  if (role === "SUPER_ADMIN") {
     res.status(403).json({ success: false, message: "Access denied: Superadmins only" });
     return;
   }

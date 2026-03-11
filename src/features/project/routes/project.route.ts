@@ -2,7 +2,7 @@ import express from 'express'
 
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isSuspended, isVerify, rejectSuperAdmin, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 import { createProjectSchema } from './property.validate';
 import { UserRole } from '../../../../generated/prisma/enums';
 import { parseProjectBody } from '../../../utils/parseJson';
@@ -17,7 +17,8 @@ projectRoutes.post(
   isVerify,
   requireKyc,
   isSuspended,
-  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  rejectSuperAdmin,
+  requireRole(UserRole.ADMIN),
   adminRequireRole("PROPERTY"),
   multipleupload,
   parseProjectBody,
@@ -31,7 +32,8 @@ projectRoutes.patch(
   isVerify,
   requireKyc,
   isSuspended,
-  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  rejectSuperAdmin,
+  requireRole(UserRole.ADMIN),
   adminRequireRole("PROPERTY"),
   multipleupload,
   parseProjectBody,

@@ -39,7 +39,7 @@
 
 
 import express from 'express';
-import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole , rejectSuperAdmin} from '../../../middlewares/auth.middleware';
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 // import { createLand } from '../controllers/createLand.controller';
@@ -62,7 +62,8 @@ const adminMiddlewares = [
   isVerify,
   requireKyc,
   isSuspended,
-  requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  rejectSuperAdmin,
+  requireRole(UserRole.ADMIN),
   adminRequireRole('LAND')
 ];
 

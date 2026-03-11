@@ -1,5 +1,5 @@
 import express from 'express'
-import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
+import authenticate, { adminRequireRole, isSuspended, isVerify, rejectSuperAdmin, requireKyc, requireRole } from '../../../middlewares/auth.middleware';
 
 
 import { multipleupload } from '../../../middlewares/multer';
@@ -28,8 +28,8 @@ partnerRoute.post("/createpartner", multipleupload,
 
 // },
 //     validateSchema(createPropertySchema),
-     authenticate, isVerify, requireKyc, isSuspended, 
-     requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("PARTNER"),
+     authenticate, isVerify, requireKyc, isSuspended, rejectSuperAdmin,
+     requireRole(UserRole.ADMIN), adminRequireRole("PARTNER"),
      createPartner);
 
     partnerRoute.get("/all", getPartners);

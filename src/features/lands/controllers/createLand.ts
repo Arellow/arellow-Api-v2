@@ -32,6 +32,19 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
     } = req.body;
 
 
+
+   const partner = await Prisma.arellowPartner.findUnique({where: {id: userId}});
+
+     if (!partner) {
+      return next(new InternalServerError("Invalid partner", 401));
+    }
+     if (partner.suspended) {
+      return next(new InternalServerError("Partner was suspended", 401));
+    }
+
+
+
+
     const parsedPrice: { amount: number, currency: string } = typeof price === 'string' ? JSON.parse(price) : price;
 
     // Basic validation
@@ -141,11 +154,12 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
       where: { userId: req.user?.id! },
     });
 
-    if ((adminPermission && adminPermission?.action?.length) || req.user?.role === "SUPER_ADMIN"  ) {
+    if ((adminPermission && adminPermission?.action?.length) ) {
 
       const hasAccess = adminPermission?.action.some((role) =>
         ["LAND"].includes(role)
-      ) || req.user?.role === "SUPER_ADMIN";
+      );
+      
       if (hasAccess) {
         await Prisma.lands.update({
           where: { id: newLand.id },
