@@ -1,8 +1,7 @@
 import 'dotenv/config'
+import { SendMailClient } from "zeptomail";
 
 interface MailOptions {
-  // to: { email: string; name?: string }[];
-  // from: { email: string; name?: string };
     from: string
     to: string;
   subject: string;
@@ -11,43 +10,40 @@ interface MailOptions {
 }
 
 
+const url = "https://api.zeptomail.com/v1.1/email";
+const token = process.env.ZOHO_MAIL_API_KEY!;
 
-
-import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
-
-const mailerSend = new MailerSend({
-    apiKey: process.env.MAILERSEND_API_KEY!,
-});
+let client = new SendMailClient({url, token});
 
 
 
 export const mailController = async (mailOptions: MailOptions) => {
   try {
-    const sentFrom = new Sender(
-      mailOptions.from,
-       "Arellow Homes"
-    );
 
 
-    const recipients = [
-  new Recipient(mailOptions.to, "Esteem user")
-];
+client.sendMail({
+    "from": 
+    {
+        "address": mailOptions.from,
+        "name": "Arellow Homes"
+    },
+    "to": 
+    [
+        {
+        "email_address": 
+            {
+                "address": mailOptions.to,
+                "name": "Arellow Homes",
+            }
+        }
+    ],
+    "subject": mailOptions.subject,
+    "htmlbody": mailOptions.html,
+})
 
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject(mailOptions.subject)
-      .setHtml(mailOptions.html || "")
-      // .setText(mailOptions.text || "");
-
-    // const response = await mailerSend.email.send(emailParams);
-     mailerSend.email.send(emailParams);
-
-    // return response;
 
   } catch (error: any) {
-    // console.error("MailerSend error:", error?.body || error);
-    // throw error;
+   
   }
 };
 
