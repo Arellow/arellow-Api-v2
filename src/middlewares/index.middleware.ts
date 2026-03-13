@@ -21,13 +21,15 @@ export default (app: Application) => {
   express.raw({ type: "application/json" }),
   paystackWebhook
 );
+  // Security middleware
+  app.use(helmet());
 
+  
   // Body parsing middleware
   app.use(json());
   app.use(urlencoded({ extended: true }));
   
-  // Security middleware
-  app.use(helmet());
+
 
   // Cookie parsing middleware
   app.use(cookieParser());

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { landService } from '../services/land.service';
 import CustomResponse from '../../../utils/helpers/response.util';
 import { InternalServerError } from '../../../lib/appError';
+import { Prisma } from '../../../lib/prisma';
 
 export const createLand = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -11,12 +12,17 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
     const land = await landService.createLand({
       userId,
       body: req.body,
-      files
+      files,
+      approvedById: req.user?.id!
+
     });
 
-    return new CustomResponse(201, true, 'Land created. Media uploading in background.', res, {
-      landId: land.id
-    });
+    // return new CustomResponse(201, true, 'Land created. Media uploading in background.', res, {
+    //   landId: land.id
+    // });
+  
+
+    
   } catch (error: any) {
     next(new InternalServerError(error?.message || 'Internal server error', 500));
   }
