@@ -91,11 +91,7 @@ export const propertyService = {
 
 async updateProperty({ propertyId, user, body, files }: any) {
 
-
- const updatedProperty = await Prisma.$transaction(async (tx) => {
-
-  
-  const property = await tx.property.findUnique({
+  const property = await Prisma.property.findUnique({
     where: { id: propertyId }
   });
 
@@ -109,6 +105,10 @@ async updateProperty({ propertyId, user, body, files }: any) {
   );
 
   await mediaService.deletePropertyMedia(propertyId);
+
+ const updatedProperty = await Prisma.$transaction(async (tx) => {
+
+  
 
 
   const updated = await tx.property.update({
@@ -131,14 +131,36 @@ async updateProperty({ propertyId, user, body, files }: any) {
 
       features: body.features.map((f: string) => f.trim()),
 
-      floors: Number(body.floors),
 
-      price: {
-        amount: Number(body.price.amount),
-        currency: body.price.currency
-      }
+          bedrooms: Number(body.bedrooms),
+          bathrooms: Number(body.bathrooms),
+          floors: Number(body.floors),
+          yearBuilt: Number(body.yearBuilt),
+
+          price: {
+            amount: Number(body.price.amount),
+            currency: body.price.currency
+          },
     }
   });
+
+
+
+    const adminPermission = await tx.adminPermission.findUnique({
+        where: { userId: user.id }
+      });
+
+      if (adminPermission?.action?.includes("PROPERTY")) {
+
+        await tx.property.update({
+          where: { id: updated.id },
+          data: {
+            status: "APPROVED",
+            approvedBy: { connect: { id: user.id } }
+          }
+        });
+
+      }
 
 return updated;
 })
@@ -234,10 +256,9 @@ async createProject({ user, body, files }: any) {
 async updateProject({ propertyId, user, body, files }: any) {
 
 
- const updatedProject = await Prisma.$transaction(async (tx) => {
 
-  
-  const property = await tx.property.findUnique({
+
+  const property = await Prisma.property.findUnique({
     where: { id: propertyId }
   });
 
@@ -251,6 +272,10 @@ async updateProject({ propertyId, user, body, files }: any) {
   );
 
   await mediaService.deletePropertyMedia(propertyId);
+
+ const updatedProject = await Prisma.$transaction(async (tx) => {
+
+  
 
 
   const updated = await tx.property.update({

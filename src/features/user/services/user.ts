@@ -78,9 +78,6 @@ export class UserService {
     if (data.description !== undefined) updatedData.description = data.description;
     if (data.phone_number.phone !== undefined) updatedData.phone_number = data.phone_number.phone;
     if (data.phone_number.country !== undefined) updatedData.address.country = data.phone_number.country;
-
-
-    // console.log(updatedData)
    
 
     try {

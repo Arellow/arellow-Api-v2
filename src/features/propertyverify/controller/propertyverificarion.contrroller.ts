@@ -166,10 +166,7 @@ export const propertyVerificationStatus = async (req: Request, res: Response, ne
 
     new CustomResponse(200, true, "Status changed", res,);
   } catch (error) {
-    console.log(error)
-
     next(error)
-    // next(new InternalServerError("Internal server error", 500));
   }
 
 };

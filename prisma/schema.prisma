@@ -380,16 +380,18 @@ enum MediaType {
 }
 
 enum PhotoType {
-  // properties
+  // property and project
   FRONT_VIEW
   LIVING_ROOM
   KITCHEN
   FLOOR_PLAN
   PRIMARY_ROOM
-  LANDS
   OTHER
 
-  // partners
+// land
+  LANDS
+
+  // partner
   PROOF_OF_ADDRESS
   CAC_CERT
   MEMORANDUM_AND_ARTICLE

@@ -42,9 +42,8 @@ import express from 'express';
 import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requireRole , rejectSuperAdmin} from '../../../middlewares/auth.middleware';
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
-// import { createLand } from '../controllers/createLand.controller';
 import { createLandsSchema } from './lands.validate';
-import { getLands, getLandsByPartner, singleLand } from '../controllers/lands.controller';
+import { getLands, getLandsByPartner, shareLand, singleLand } from '../controllers/lands.controller';
 import { UserRole } from '../../../../generated/prisma/enums';
 import { parseLandBody } from '../../../utils/parseJson';
 import { createLand } from '../controllers/createLand.controller';
@@ -55,6 +54,8 @@ const landsRoutes = express.Router();
 landsRoutes.get('/', getLands);
 landsRoutes.get('/:id/detail', singleLand);
 landsRoutes.get('/:id/partners', getLandsByPartner);
+landsRoutes.post('/:id/share', shareLand);
+
 
 /** Admin routes */
 const adminMiddlewares = [

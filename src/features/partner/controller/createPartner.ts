@@ -104,8 +104,6 @@ export const createPartner = async (req: Request, res: Response, next: NextFunct
 
     } catch (error: any) {
         next(error)
-        // console.log({error: error?.response})
-        // next(new InternalServerError("Internal server error", 500));
     }
 
 };

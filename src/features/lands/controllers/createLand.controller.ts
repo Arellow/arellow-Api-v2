@@ -9,6 +9,18 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
     const userId = req.params.id!;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } || [];
 
+
+       const partner = await Prisma.arellowPartner.findUnique({where: {id: userId}});
+
+    
+         if (!partner) {
+          return next( new InternalServerError("Invalid partner", 401));
+        }
+         if (partner.suspended) {
+          return next(new InternalServerError("Partner was suspended", 401));
+        }
+    
+        
     const land = await landService.createLand({
       userId,
       body: req.body,
@@ -17,9 +29,9 @@ export const createLand = async (req: Request, res: Response, next: NextFunction
 
     });
 
-    // return new CustomResponse(201, true, 'Land created. Media uploading in background.', res, {
-    //   landId: land.id
-    // });
+    return new CustomResponse(201, true, 'Land created. Media uploading in background.', res, {
+      landId: land.id
+    });
   
 
     

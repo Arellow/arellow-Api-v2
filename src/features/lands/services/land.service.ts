@@ -5,44 +5,50 @@ import { mediaService } from './media.service';
 
 export const landService = {
   async createLand({ userId, body, files, approvedById }: any) {
-    const { title, description, category, city, country, state, neighborhood, landmark, squareMeters, price,  } = body;
+    const { title, description, category, city, country, state, neighborhood, landmark, squareMeters, price, } = body;
 
-   
-      const location = await locationService.resolve(
-        body.neighborhood,
-        body.city
-      );
-    
 
-    // Create DB record
-    const newLand = await Prisma.lands.create({
-      data: {
-        title,
-        description,
-        userId,
-        category,
-        city,
-        country,
-        state,
-        neighborhood,
-        landmark,
-        squareMeters,
-        location,
-        price: {amount: Number(price.amount), currency: price.currency},
-        status: 'APPROVED',
-        salesStatus: 'SELLING'
-      }
+    const location = await locationService.resolve(
+      body.neighborhood,
+      body.city
+    );
+
+
+    const newLand = await Prisma.$transaction(async (tx) => {
+
+
+      const created = await tx.lands.create({
+        data: {
+          title,
+          description,
+          userId,
+          category,
+          city,
+          country,
+          state,
+          neighborhood,
+          landmark,
+          squareMeters,
+          location,
+          price: { amount: Number(price.amount), currency: price.currency },
+          status: 'APPROVED',
+          salesStatus: 'SELLING'
+        }
+      });
+
+
+      await tx.lands.update({
+        where: { id: created.id },
+        data: {
+          approvedBy: { connect: { id: approvedById } },
+        },
+      });
+
+      return created;
+
     });
 
 
-     await Prisma.lands.update({
-              where: { id: newLand.id },
-              data: {    
-             approvedBy: { connect: { id: approvedById} },
-              },
-            });
-
-    
 
     // Queue media uploads
     if (files) {
