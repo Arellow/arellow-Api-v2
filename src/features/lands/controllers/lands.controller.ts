@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
-import { swrCache } from "../../../lib/cache";
+import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { LandCategory, SalesStatus } from "../../../../generated/prisma/enums";
 import { redis } from "../../../lib/redis";
 import { mapEnumValue } from "../../../utils/enumMap";
@@ -192,7 +192,7 @@ export const getLandsByPartner = async (req: Request, res: Response, next: NextF
 
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
-    const cacheKey = `partnerlands:${partnerId}:${userId}:${JSON.stringify(req.query)}`;
+    const cacheKey = `partnerlands:${userId}:${partnerId}:${JSON.stringify(req.query)}`;
 
 
     const filters: prisma.LandsWhereInput = {
@@ -377,6 +377,95 @@ export const shareLand = async (req: Request, res: Response, next: NextFunction)
 
 
     new CustomResponse(200, true, "Property Shared", res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
+// likes a property
+export const likeLand = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user?.id!;
+  const landId = req.params.id;
+
+  // const cacheKey = `saved:${userId}`;
+
+  try {
+    // Check if already liked
+    const existingLike = await Prisma.userLandLike.findUnique({
+      where: {
+        userId_landId: {
+          userId,
+          landId
+        },
+      },
+    });
+
+    if (existingLike) {
+      next(new InternalServerError("Land already liked", 400));
+    }
+
+    // Create like relation
+    await Prisma.userLandLike.create({
+      data: {
+        user: { connect: { id: userId } },
+        land: { connect: { id: landId } },
+      },
+    });
+
+    // Increment likes count
+    await Prisma.lands.update({
+      where: { id: landId },
+      data: { likesCount: { increment: 1 } },
+    });
+
+
+     const cacheKey = `land:${landId}:${userId || ""}`;
+      const lastestCacheKey = `partnerlands:${userId}:*`;
+
+    await deleteMatchingKeys(cacheKey);
+    await deleteMatchingKeys(lastestCacheKey);
+
+
+    new CustomResponse(200, true, "Land liked", res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
+};
+
+
+// Unlike a property
+export const unLikeLand = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user?.id!;
+  const landId = req.params.id;
+
+
+  try {
+    // Delete the like relation
+    const deleteResult = await Prisma.userLandLike.deleteMany({
+      where: {
+        userId,
+        landId,
+      },
+    });
+
+    if (deleteResult.count === 0) {
+      next(new InternalServerError("Like does not exist", 400));
+    }
+
+    // Decrement likes count
+    await Prisma.lands.update({
+      where: { id: landId },
+      data: { likesCount: { decrement: 1 } },
+    });
+
+      const cacheKey = `land:${landId}:${userId || ""}`;
+      const lastestCacheKey = `partnerlands:${userId}:*`;
+
+    await deleteMatchingKeys(cacheKey);
+    await deleteMatchingKeys(lastestCacheKey);
+
+    new CustomResponse(200, true, "Land unliked", res,);
   } catch (error) {
     next(new InternalServerError("Internal server error", 500));
   }
