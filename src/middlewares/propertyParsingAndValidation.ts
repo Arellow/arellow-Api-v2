@@ -36,3 +36,20 @@ export function validateSchema(schema: ObjectSchema): RequestHandler {
   };
 }
 
+
+
+export const validateRoute = <T>(schema: ObjectSchema, data: any): T => {
+  const { error, value } = schema.validate(data, {
+    abortEarly: false, // show all errors
+    stripUnknown: true, // remove unknown fields
+    convert: true, // convert types automatically
+  });
+
+  if (error) {
+    throw new Error(
+      error.details.map((err) => err.message).join(", ")
+    );
+  }
+
+  return value;
+};

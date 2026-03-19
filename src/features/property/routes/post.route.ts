@@ -138,6 +138,7 @@ import {
 import { getAllStates } from '../controllers/seedPropImages';
 import { createProperty } from '../controllers/createProperty.controller';
 import { updateProperty } from '../controllers/updateProperty.controller';
+import { createPropertyWithBusboy } from '../controllers/createPropertyWithBusboy';
 
 const propertyRoutes = express.Router();
 
@@ -182,6 +183,23 @@ propertyRoutes.post(
   validateSchema(createPropertySchema),
   createProperty
 );
+
+propertyRoutes.post(
+  '/busboycreateproperty',
+  // validateSchema(createPropertySchema),
+  authenticate,
+  isVerify,
+  requireKyc,
+  isSuspended,
+  rejectSuperAdmin,
+  parsePropertyBody,
+  createPropertyWithBusboy,
+
+
+);
+
+
+
 
 propertyRoutes.patch(
   '/:propertyId/update',

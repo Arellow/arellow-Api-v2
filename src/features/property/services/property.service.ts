@@ -1,6 +1,7 @@
 import { InternalServerError } from '../../../lib/appError';
 import { deleteMatchingKeys } from '../../../lib/cache';
 import { Prisma, } from '../../../lib/prisma';
+import { CreatePropertyInput } from '../routes/property.validate';
 import { cacheService } from './cache.service';
 import { locationService } from './location.service';
 import { mediaService } from './media.service';
@@ -340,6 +341,71 @@ return updated;
 
 
 
+
+
+// test scalbility
+
+async createPropertyBusBoy({ user, body }: CreatePropertyInput) {
+    const location = await locationService.resolve(body.neighborhood, body.city);
+
+
+    console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    console.log({user, body})
+    console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+   const property = await Prisma.$transaction(async (tx) => {
+
+      const created = await tx.property.create({
+        data: {
+          ...body,
+          userId: user.id,
+          location,
+
+          amenities: {
+            create: body.amenities.map((a: Amenity) => ({
+              name: a.name.trim(),
+              photoUrl: a.photoUrl.trim()
+            }))
+          },
+
+          features: body.features.map((f: string) => f.trim()),
+
+          bedrooms: Number(body.bedrooms),
+          bathrooms: Number(body.bathrooms),
+          floors: Number(body.floors),
+          yearBuilt: Number(body.yearBuilt),
+
+          price: {
+            amount: Number(body.price.amount),
+            currency: body.price.currency
+          },
+
+          isFeatureProperty: ["ADMIN", "SUPER_ADMIN"].includes(user.role)
+        }
+      });
+
+      const adminPermission = await tx.adminPermission.findUnique({
+        where: { userId: user.id }
+      });
+
+      if (adminPermission?.action?.includes("PROPERTY")) {
+
+        await tx.property.update({
+          where: { id: created.id },
+          data: {
+            status: "APPROVED",
+            approvedBy: { connect: { id: user.id } }
+          }
+        });
+
+      }
+
+      return created;
+
+    });
+
+    return property;
+  },
 
 
 };

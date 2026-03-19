@@ -9,6 +9,7 @@
     "build": "tsc && prisma generate && prisma db push",
     "prisma:generate": "prisma generate",
     "worker": "ts-node src/features/property/workers/media.worker.ts",
+    "busboyworker": "ts-node src/services/workers/media.worker.ts",
     "worker-email": "ts-node src/features/requestProperties/workers/emailWorker.ts"
   },
   "keywords": [],
@@ -16,6 +17,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/bull": "^3.15.9",
+    "@types/busboy": "^1.5.4",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
@@ -36,11 +39,14 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^7.1.0",
     "@prisma/client": "6.19",
     "agora-access-token": "^2.0.4",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
+    "bull": "^4.16.5",
     "bullmq": "^5.56.1",
+    "busboy": "^1.6.0",
     "class-validator": "^0.14.2",
     "cloudinary": "~1.41.3",
     "cookie-parser": "^1.4.7",

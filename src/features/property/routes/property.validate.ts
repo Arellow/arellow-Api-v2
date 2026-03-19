@@ -96,3 +96,78 @@ export const PropertyProgressMap: Record<string, string> = {
 
 
 
+
+
+// types/property.ts
+
+export type MediaField =
+  | "KITCHEN"
+  | "FLOOR_PLAN"
+  | "PRIMARY_ROOM"
+  | "OTHER"
+  | "FRONT_VIEW"
+  | "LIVING_ROOM"
+  | "VIDEO"
+  | "TOUR_3D"
+  | "SupportImages"
+  | "LANDS"
+  | "PROOF_OF_ADDRESS"
+  | "CAC_CERT"
+  | "MEMORANDUM_AND_ARTICLE"
+  | "CAC_STATUS_REPORT"
+  | "PARTNER_BANNER"
+  | "PARTNER_CARD";
+
+export type MediaType = "image" | "video";
+
+export interface UploadFile {
+  buffer: Buffer
+  originalname: string;
+  mimetype: string;
+  field: MediaField;
+}
+
+export interface PropertyBody {
+  title: string;
+  description: string;
+  price: { amount: number; currency: string };
+  bedrooms: number;
+  bathrooms: number;
+  floors: number;
+  yearBuilt: number;
+  amenities?: { name: string; photoUrl: string }[];
+  features?: string[];
+  neighborhood: string;
+  city: string;
+  [key: string]: any; // for extensibility
+}
+
+export interface CreatePropertyInput {
+  user: { id: string; role: string };
+  body: any;
+  // body: PropertyBody;
+  files?: UploadFile[];
+}
+
+
+
+
+
+export const ALLOWED_MEDIA_FIELDS = new Set<MediaField>([
+  "KITCHEN",
+  "FLOOR_PLAN",
+  "PRIMARY_ROOM",
+  "OTHER",
+  "FRONT_VIEW",
+  "LIVING_ROOM",
+  "VIDEO",
+  "TOUR_3D",
+  "SupportImages",
+  "LANDS",
+  "PROOF_OF_ADDRESS",
+  "CAC_CERT",
+  "MEMORANDUM_AND_ARTICLE",
+  "CAC_STATUS_REPORT",
+  "PARTNER_BANNER",
+  "PARTNER_CARD",
+]);
