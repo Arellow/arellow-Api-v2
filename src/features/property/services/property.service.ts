@@ -123,12 +123,14 @@ async updateProperty({ propertyId, user, body, files }: any) {
 
       location,
 
-      amenities: {
-        create: body.amenities.map((a: Amenity) => ({
-          name: a.name.trim(),
-          photoUrl: a.photoUrl.trim()
-        }))
-      },
+       amenities: {
+      deleteMany: {}, 
+      create: body.amenities.map((a: Amenity) => ({
+        name: a.name.trim(),
+        photoUrl: a.photoUrl.trim(),
+      })),
+    },
+
 
       features: body.features.map((f: string) => f.trim()),
 
@@ -289,6 +291,7 @@ async updateProject({ propertyId, user, body, files }: any) {
       location,
 
       amenities: {
+        deleteMany: {}, 
         create: body.amenities.map((a: Amenity) => ({
           name: a.name.trim(),
           photoUrl: a.photoUrl.trim()
