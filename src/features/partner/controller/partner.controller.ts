@@ -7,6 +7,7 @@ import { Prisma as prisma, PropertyVerifyStatus, } from "../../../../generated/p
 import { getDateRange } from "../../../utils/getDateRange";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController } from "../../../utils/nodemailer";
+import { cloudinary } from "../../../configs/cloudinary";
 
 
 
@@ -313,6 +314,115 @@ export const partnerUnSuspend = async (req: Request, res: Response, next: NextFu
     }
 
 };
+
+
+
+export const deletePartner = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  try {
+
+    const partner = await Prisma.arellowPartner.findUnique({ where: { id } });
+    if (!partner) {
+      return next(new InternalServerError("Partner not found", 404));
+    }
+
+
+
+
+
+// if(partner.lands)
+
+    //  Delete old media
+    // const oldMediaLand = await Prisma.media.findMany({
+    //   where: { landsId: landId },
+    // });
+
+    
+    // Delete from Cloudinary
+    // for (const media of partner.lands) {
+    //       try {
+    //             await cloudinary.uploader.destroy(media.publicId);
+    //           } catch (err) {
+    //                 // console.warn(`Failed to delete media ${media.publicId}:`, err);
+    //               }
+    //             }
+
+                
+                const oldMediaPartner = await Prisma.media.findMany({
+                  where: { partnerId: id },
+                });
+
+    // Delete from Cloudinary
+    for (const media of oldMediaPartner) {
+      try {
+        await cloudinary.uploader.destroy(media.publicId);
+      } catch (err) {
+        // console.warn(`Failed to delete media ${media.publicId}:`, err);
+      }
+    }
+
+
+
+     const lands = await Prisma.lands.findMany({ where: { userId: id }, include: {media: true} });
+
+
+
+       for (const land of lands) {
+
+
+             for (const media of land.media) {
+      try {
+        await cloudinary.uploader.destroy(media.publicId);
+      } catch (err) {
+        // console.warn(`Failed to delete media ${media.publicId}:`, err);
+      }
+    }
+
+
+        await Prisma.media.deleteMany({ where: { landsId: land.id } });
+        await Prisma.userLandLike.deleteMany({ where: { landId: land.id  } });
+  await Prisma.lands.delete({ where: { id: land.id } });
+      
+
+
+        
+
+       }
+
+
+
+      for (const media of oldMediaPartner) {
+      try {
+        await cloudinary.uploader.destroy(media.publicId);
+      } catch (err) {
+        // console.warn(`Failed to delete media ${media.publicId}:`, err);
+      }
+    }
+
+
+
+
+    // Delete from DB
+    
+    await Prisma.media.deleteMany({ where: { partnerId: id } });
+    await Prisma.arellowPartner.delete({ where: { id } });
+
+
+    
+
+
+ await deleteMatchingKeys(`lands:*`);
+    await deleteMatchingKeys(`getPartners:*`);
+
+    new CustomResponse(200, true, "Partner deleted permanently", res,);
+  } catch (error) {
+    next(error)
+    // next(new InternalServerError("Internal server error", 500));
+
+  }
+
+};
+
 
 
 const iLike = (field?: string) =>

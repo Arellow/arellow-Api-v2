@@ -65,7 +65,7 @@ export const mediaService = {
 
       await cloudinary.uploader.destroy(
         media.publicId,
-        { resource_type: media.type === "VIDEO" ? "video" : "image" }
+        // { resource_type: media.type === "VIDEO" ? "video" : "image" }
       );
 
     } catch {}

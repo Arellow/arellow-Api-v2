@@ -43,7 +43,7 @@ import authenticate, { adminRequireRole, isSuspended, isVerify, requireKyc, requ
 import { multipleupload } from '../../../middlewares/multer';
 import { validateSchema } from '../../../middlewares/propertyParsingAndValidation';
 import { createLandsSchema } from './lands.validate';
-import { getLands, getLandsByPartner, likeLand, shareLand, singleLand, unLikeLand } from '../controllers/lands.controller';
+import { deleteLand, getLands, getLandsByPartner, likeLand, shareLand, singleLand, unLikeLand } from '../controllers/lands.controller';
 import { UserRole } from '../../../../generated/prisma/enums';
 import { parseLandBody } from '../../../utils/parseJson';
 import { createLand } from '../controllers/createLand.controller';
@@ -57,6 +57,7 @@ landsRoutes.get('/:id/partners', getLandsByPartner);
 landsRoutes.post('/:id/share', shareLand);
 landsRoutes.post('/:id/like', authenticate, isSuspended, rejectSuperAdmin, likeLand);
 landsRoutes.delete('/:id/like', authenticate, isSuspended, rejectSuperAdmin, unLikeLand);
+
 
 
 /** Admin routes */
@@ -78,5 +79,7 @@ landsRoutes.post(
   ...adminMiddlewares,
   createLand
 );
+
+landsRoutes.delete('/:id/delete', ...adminMiddlewares, deleteLand);
 
 export default landsRoutes;

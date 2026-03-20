@@ -277,7 +277,7 @@ export async function searchProperties(args: any) {
 
 
 
-  // const matchedCategory = getValidCategory(args.city);
+  const matchedCategory = getValidCategory(args.category || "");
 
       const filters: prisma.PropertyWhereInput = {
           archived: false,
@@ -286,24 +286,11 @@ export async function searchProperties(args: any) {
 
 
 
- ...(args.city && {
-        city: { contains: args.city, mode: "insensitive" },
+      ...(matchedCategory && {
+        category: matchedCategory,
       }),
 
-      ...(args.state && {
-        state: { contains: args.state, mode: "insensitive" },
-      }),
 
-      ...(args.neighborhood && {
-        neighborhood: { contains: args.neighborhood, mode: "insensitive" },
-      }),
-
-      // 🏠 PROPERTY TYPE
-      ...(args.category && {
-        category: args.category,
-      }),
-
-      // 🛏️ ROOMS (flexible match)
       ...(args.bedrooms && {
         bedrooms: { gte: args.bedrooms },
       }),
@@ -312,7 +299,7 @@ export async function searchProperties(args: any) {
         bathrooms: { gte: args.bathrooms },
       }),
 
-      // 💰 PRICE RANGE
+   
       ...(args.minPrice || args.maxPrice
         ? {
             price: {
@@ -326,7 +313,7 @@ export async function searchProperties(args: any) {
           }
         : {}),
 
-      // 🔍 TEXT SEARCH (VERY IMPORTANT)
+     
       ...(args.query && {
         OR: [
           { title: { contains: args.query, mode: "insensitive" } },
@@ -335,14 +322,14 @@ export async function searchProperties(args: any) {
         ],
       }),
 
-      // 🧩 FEATURES ARRAY
+   
       ...(args.features?.length && {
         features: {
-          hasSome: args.features, // matches any
+          hasSome: args.features, 
         },
       }),
 
-      // 🧱 AMENITIES RELATION
+    
       ...(args.amenities?.length && {
         amenities: {
           some: {
@@ -355,117 +342,56 @@ export async function searchProperties(args: any) {
       }),
 
 
+          ...(args.city && { 
+            OR: [
+              { title: iLike(args.city) },
+              { city: iLike(args.city) },
+              { state: iLike(args.city) },
+              { country: iLike(args.city) },
+              { neighborhood: iLike(args.city) },
+              { description: iLike(args.city) },
+            ].filter(Boolean)
+          
+          }),
+     
+          ...(args.state && { 
+            OR: [
+              { title: iLike(args.state) },
+              { city: iLike(args.state) },
+              { state: iLike(args.state) },
+              { country: iLike(args.state) },
+              { neighborhood: iLike(args.state) },
+              { description: iLike(args.state) },
+            ].filter(Boolean)
+          
+          }),
+
+          ...(args.neighborhood && { 
+            OR: [
+              { title: iLike(args.neighborhood) },
+              { city: iLike(args.neighborhood) },
+              { state: iLike(args.neighborhood) },
+              { country: iLike(args.neighborhood) },
+              { neighborhood: iLike(args.neighborhood) },
+              { description: iLike(args.neighborhood) },
+            ].filter(Boolean)
+          
+          }),
+
+          ...(args.country && { 
+            OR: [
+              { title: iLike(args.country) },
+              { city: iLike(args.country) },
+              { state: iLike(args.country) },
+              { country: iLike(args.country) },
+              { neighborhood: iLike(args.country) },
+              { description: iLike(args.country) },
+            ].filter(Boolean)
+          
+          }),
 
 
-
-// old
-
-          // AND: [
-
-          //  {
-          //   OR: [
-          //     { title: iLike(args.city) },
-          //     matchedCategory ? { category: matchedCategory } : null,
-          //     { city: iLike(args.city) },
-          //     { state: iLike(args.city) },
-          //     { country: iLike(args.city) }
-          //   ].filter(Boolean)
-          // },
-
-
-  //           title        String
-  // description  String
-  // category     PropertyCategory
-  // features     String[]
-  // amenities    Amenity[]
-  // country      String
-  // state        String
-  // city         String
-  // neighborhood String
-  // location     GeoPoint
-
-  // bedrooms     Int
-  // bathrooms    Int
-  // squareMeters String
-
-
-
-      //     ...(args.city && {
-      //   city: { contains: args.city, mode: "insensitive" },
-      // }),
-
-      // ...(args.state && {
-      //   state: { contains: args.state, mode: "insensitive" },
-      // }),
-
-      // ...(args.bedrooms && {
-      //   bedrooms: { gte: args.bedrooms }, 
-      // }),
-
-      // ...(args.bathrooms && {
-      //   bathrooms: { gte: args.bathrooms },
-      // }),
-
-      //    (args.minPrice || args.maxPrice)
-      //         ? {
-    
-      //           price: {
-      //             is: {
-      //               amount: {
-      //                 ...(args.minPrice ? { gte: parseFloat(args.minPrice as string) } : {}),
-      //                 ...(args.maxPrice ? { lte: parseFloat(args.maxPrice as string) } : {})
-      //               }
-      //             }
-    
-      //           }
-      //         }
-      //         : undefined,
-
-      // ...(args.minPrice || args.maxPrice
-      //   ? {
-      //       price: {
-      //         is: {
-      //           amount: {
-      //             ...(args.minPrice && { gte: args.minPrice }),
-      //             ...(args.maxPrice && { lte: args.maxPrice }),
-      //           },
-      //         },
-      //       },
-      //     }
-      //   : {})
-
-
-
-
-           
-            // args.bathrooms ? { bathrooms: parseInt(args.bathrooms as string) } : undefined,
-            // args.bedrooms ? { bedrooms: parseInt(args.bedrooms as string) } : undefined,
-            // args.floors ? { floors: parseInt(args.floors as string) } : undefined,
-            // // args.category ? { category: args.category as PropertyCategory } : undefined,
-    
-            // args.state ? { state: iLike(args.state as string) } : undefined,
-            // args.city ? { city: iLike(args.city as string) } : undefined,
-            // args.country ? { country: iLike(args.country as string) } : undefined,
-            // args.neighborhood ? { neighborhood: iLike(args.neighborhood as string) } : undefined,
-    
-            // // args.amenitiesArray.length > 0 ? { amenities: { some: { name: { in: amenitiesArray } } } } : undefined,
-            // // args.featuresArray.length > 0 ? { features: { hasSome: featuresArray } } : undefined,
-           
-            // (args.minPrice || args.maxPrice)
-            //   ? {
-    
-            //     price: {
-            //       is: {
-            //         amount: {
-            //           ...(args.minPrice ? { gte: parseFloat(args.minPrice as string) } : {}),
-            //           ...(args.maxPrice ? { lte: parseFloat(args.maxPrice as string) } : {})
-            //         }
-            //       }
-    
-            //     }
-            //   }
-            //   : undefined,
-          // ].filter(Boolean) as prisma.PropertyWhereInput[]
+  
         };
 
 
@@ -481,10 +407,6 @@ export async function searchProperties(args: any) {
 ]
   });
 
-  console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  console.log({args})
-  console.log({property})
-  console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
   return  property;
 }

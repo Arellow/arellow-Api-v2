@@ -899,6 +899,7 @@ Use this for most user requests.
     });
 
     let aiOutput = "";
+    
 
     for await (const chunk of stream) {
       const content = chunk.choices?.[0]?.delta?.content;
@@ -911,6 +912,13 @@ Use this for most user requests.
         });
       }
     }
+
+    if(aiOutput !== ""){
+      io.to(userId).emit("aiStream", {
+          chunk: aiOutput,
+        });
+    }
+
 
 
             if (propertyResults?.length > 0) {

@@ -9,6 +9,7 @@ import { LandsCategoryMap } from "../routes/lands.validate";
 
 import { Prisma, } from '../../../lib/prisma';
 import { Prisma as prisma, } from "../../../../generated/prisma/client";
+import { cloudinary } from "../../../configs/cloudinary";
 
 
 export const singleLand = async (req: Request, res: Response, next: NextFunction) => {
@@ -471,6 +472,48 @@ export const unLikeLand = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+
+
+export const deleteLand = async (req: Request, res: Response, next: NextFunction) => {
+  const { id: landId } = req.params;
+  try {
+
+    const land = await Prisma.lands.findUnique({ where: { id: landId } });
+    if (!land) {
+      return next(new InternalServerError("Land not found", 404));
+    }
+
+    //  Delete old media
+    const oldMedia = await Prisma.media.findMany({
+      where: { landsId: landId },
+    });
+
+    // Delete from Cloudinary
+    for (const media of oldMedia) {
+      try {
+        await cloudinary.uploader.destroy(media.publicId);
+      } catch (err) {
+        // console.warn(`Failed to delete media ${media.publicId}:`, err);
+      }
+    }
+
+    // Delete from DB
+    await Prisma.media.deleteMany({ where: { landsId: landId } });
+
+    await Prisma.userLandLike.deleteMany({ where: { landId } });
+ 
+
+    await Prisma.lands.delete({ where: { id: landId } });
+
+    await deleteMatchingKeys(`lands:*`);
+
+    new CustomResponse(200, true, "Land deleted permanently", res,);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+
+  }
+
+};
 
 
 

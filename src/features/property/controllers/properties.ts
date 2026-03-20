@@ -150,7 +150,7 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
 
     property.stage = mapEnumValue(PropertyStageMap, property?.stage) as PropertyStage;
     property.progress = mapEnumValue(PropertyProgressMap, property.progress) as PropertyProgress;
-    property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
+    // property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
 
 
     const { user, ...other } = property;
@@ -2048,9 +2048,7 @@ export const deleteProperty = async (req: Request, res: Response, next: NextFunc
     // Delete from Cloudinary
     for (const media of oldMedia) {
       try {
-        await cloudinary.uploader.destroy(media.publicId, {
-          resource_type: media.type === 'VIDEO' ? 'video' : 'image',
-        });
+        await cloudinary.uploader.destroy(media.publicId);
       } catch (err) {
         // console.warn(`Failed to delete media ${media.publicId}:`, err);
       }

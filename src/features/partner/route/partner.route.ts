@@ -7,7 +7,7 @@ import { validateSchema } from '../../../middlewares/propertyParsingAndValidatio
 
 import { UserRole } from '../../../../generated/prisma/enums';
 import { createPartner } from '../controller/createPartner';
-import { getPartnerDetail, getPartners, partnerSuspend, partnerUnSuspend, partnerVerify } from '../controller/partner.controller';
+import { deletePartner, getPartnerDetail, getPartners, partnerSuspend, partnerUnSuspend, partnerVerify } from '../controller/partner.controller';
 
 
 const partnerRoute = express.Router();
@@ -36,7 +36,9 @@ partnerRoute.post("/createpartner", multipleupload,
     partnerRoute.patch("/:id/verification", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerVerify);
     partnerRoute.patch("/:id/suspend", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerSuspend);
     partnerRoute.patch("/:id/unsuspend", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerUnSuspend);
+    // partnerRoute.delete("/:id", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerUnSuspend);
     partnerRoute.get("/:id/detail", getPartnerDetail);
+    partnerRoute.delete("/:id", deletePartner);
 
 
 export default partnerRoute;

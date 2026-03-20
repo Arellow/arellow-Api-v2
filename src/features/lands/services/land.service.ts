@@ -59,5 +59,6 @@ export const landService = {
     await deleteMatchingKeys(`lastestland:${userId}`);
 
     return newLand;
-  }
+  },
+
 };
