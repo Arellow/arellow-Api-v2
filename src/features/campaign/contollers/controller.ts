@@ -497,7 +497,7 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
 };
 
 export const requestCampaign = async (req: Request, res: Response, next: NextFunction) => {
-  const { firstName,lastName, title , email , phoneNumber , message } = req.body;
+  const { firstName,lastName, title , email , phoneNumber , message , type} = req.body;
 
   try {
 
@@ -506,6 +506,8 @@ export const requestCampaign = async (req: Request, res: Response, next: NextFun
         email, firstName, lastName, message, title,
          phoneNumber: phoneNumber.phone,
          country: phoneNumber.country,
+         type
+
       }
     });
 

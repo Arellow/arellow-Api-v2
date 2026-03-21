@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { CampaignPlaceMent } from "../../../../generated/prisma/enums";
+import { CampaignPlaceMent, CampaignType } from "../../../../generated/prisma/enums";
 
 
 export const createCampaignSchema = Joi.object({
@@ -27,6 +27,7 @@ export const createCampaignRequestSchema = Joi.object({
       phoneNumber: Joi.string().required().min(1),
       message: Joi.string().required().min(1),
       email: Joi.string().trim().email().lowercase().required(),
+      type: Joi.string().required().valid(...Object.values(CampaignType))
 
 });
 
