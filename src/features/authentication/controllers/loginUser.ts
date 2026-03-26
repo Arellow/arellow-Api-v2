@@ -14,7 +14,7 @@ export class LoginController {
   static async login(req: Request, res: Response, next: NextFunction) {
    
     try {
-     
+           
       const userInput = loginInput(req.body);
 
       const user  = await AuthService.login(userInput);

@@ -257,7 +257,7 @@ model Property {
   stagePrice PriceModel?
 
   userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], name: "UserProperties")
+  user   User   @relation(fields: [userId], references: [id], name: "UserProperties", onDelete: Cascade)
 
   status          PropertyStatus @default(PENDING)
   rejectionReason String?
@@ -354,8 +354,8 @@ model UserPropertyLike {
   userId     String @db.ObjectId
   propertyId String @db.ObjectId
 
-  user      User     @relation(fields: [userId], references: [id])
-  property  Property @relation(fields: [propertyId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, propertyId])
@@ -402,7 +402,7 @@ enum PhotoType {
 
 model Media {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property   Property? @relation(fields: [propertyId], references: [id])
   propertyId String?   @db.ObjectId
 
   type      MediaType
@@ -421,10 +421,10 @@ model Media {
   format   String?
 
   createdAt DateTime @default(now())
-  lands     Lands?   @relation(fields: [landsId], references: [id], onDelete: Cascade)
+  lands     Lands?   @relation(fields: [landsId], references: [id])
   landsId   String?  @db.ObjectId
 
-  partner   ArellowPartner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partner   ArellowPartner? @relation(fields: [partnerId], references: [id])
   partnerId String?         @db.ObjectId
 }
 
@@ -458,7 +458,7 @@ model PropertyRequest {
   budget            PriceModel
   description       String?
 
-  createdBy   User?   @relation("PropertyRequest_createdBy", fields: [createdById], references: [id])
+  createdBy   User?   @relation("PropertyRequest_createdBy", fields: [createdById], references: [id], onDelete: Cascade)
   createdById String? @db.ObjectId
 
   developerAssignments DeveloperAssignment[]
@@ -475,10 +475,10 @@ model DeveloperAssignment {
   propertyRequest   PropertyRequest @relation(fields: [propertyRequestId], references: [id])
   propertyRequestId String          @db.ObjectId
 
-  developer   User   @relation("DeveloperAssigned", fields: [developerId], references: [id])
+  developer   User   @relation("DeveloperAssigned", fields: [developerId], references: [id], onDelete: Cascade)
   developerId String @db.ObjectId
 
-  assignedBy   User?   @relation("DeveloperAssignedBy", fields: [assignedById], references: [id])
+  assignedBy   User?   @relation("DeveloperAssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
   assignedById String? @db.ObjectId
 
   assignedAt DateTime         @default(now())
@@ -519,7 +519,7 @@ model MortgageCalculationDraft {
   home_price    Float
   down_payment  Float
   userId        String?  @db.ObjectId
-  user          User?    @relation(fields: [userId], references: [id])
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -584,7 +584,7 @@ model State {
 model Blog {
   id     String @id @default(auto()) @map("_id") @db.ObjectId
   userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title            String
   content          String
@@ -653,7 +653,7 @@ model PreQualification {
   status              PropertyStatus @default(PENDING)
 
   userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -701,7 +701,7 @@ enum RequestStatus {
 model RewardHistory {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   userId    String     @db.ObjectId
-  user      User       @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   points    Int
   type      RewardType
   reason    String
@@ -711,7 +711,7 @@ model RewardHistory {
 model RewardRequest {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
   userId            String        @db.ObjectId
-  user              User          @relation(fields: [userId], references: [id])
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   requestPoints     Int
   bankAccountName   String
   bankAccountNumber String
@@ -848,7 +848,7 @@ model Lands {
   category LandCategory
 
   userId String @db.ObjectId
-  user   ArellowPartner   @relation(fields: [userId], references: [id], name: "UserLands")
+  user   ArellowPartner   @relation(fields: [userId], references: [id], name: "UserLands", onDelete: Cascade)
 
   status          PropertyStatus @default(PENDING)
   rejectionReason String?

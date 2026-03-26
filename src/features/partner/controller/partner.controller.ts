@@ -8,6 +8,7 @@ import { getDateRange } from "../../../utils/getDateRange";
 import { suspendedAccountMailOption } from "../../../utils/mailer";
 import { mailController } from "../../../utils/nodemailer";
 import { cloudinary } from "../../../configs/cloudinary";
+import { parseBoolean } from "../../../utils";
 
 
 
@@ -33,7 +34,7 @@ export const getPartners = async (req: Request, res: Response, next: NextFunctio
         const { current, previous } = getDateRange(filterTime.toString());
 
         const isAdmin = (req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN") ? undefined  : false;
-   const isLandingPageFeature = req?.query?.isLandingPageFeature === "true" ? true : false;
+            const isLandingPageFeature = parseBoolean(req?.query?.isLandingPageFeature)
 
         const filters: prisma.ArellowPartnerWhereInput = {
             suspended:  isAdmin,
@@ -215,6 +216,36 @@ export const getPartnerDetail = async (req: Request, res: Response, next: NextFu
     } catch (error) {
         next(new InternalServerError("Server Error", 500));
 
+    }
+
+};
+
+
+export const setDisplayPartnerAtHomePage = async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { isLandingPageFeature } = req.body;
+
+    try {
+
+        const partner = await Prisma.arellowPartner.findUnique({ where: { id } });
+        if (!partner) {
+            return next(new InternalServerError("not found", 404));
+        }
+
+
+        await Prisma.arellowPartner.update({
+            where: { id },
+            data: { isLandingPageFeature },
+        });
+
+
+
+        await deleteMatchingKeys(`getPartners:*`);
+
+
+        new CustomResponse(200, true, "Status changed", res,);
+    } catch (error) {
+        next(new InternalServerError("Internal server error", 500));
     }
 
 };

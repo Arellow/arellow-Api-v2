@@ -19,6 +19,7 @@ import { SubscribeService } from "../services/subscribe";
 import { SubscribeController } from "../controllers/subscribe";
 import authenticate from "../../../middlewares/auth.middleware";
 import { countriesRequest} from "../controllers/countries";
+import { DeleteAccountController } from "../controllers/deleteaccount";
 
 const authRouter = express.Router();
 
@@ -90,6 +91,12 @@ authRouter.post(
   "/logout",
   authenticate,
   LogoutController.logout
+);
+
+authRouter.delete(
+  "/delete-account",
+  authenticate,
+  DeleteAccountController.deleteaccount
 );
 
 authRouter.get("/countries", countriesRequest);
