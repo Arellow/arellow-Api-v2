@@ -21,10 +21,17 @@ export const createCampaignSchema = Joi.object({
 
 
 export const createCampaignRequestSchema = Joi.object({
-   firstName: Joi.string().required().min(1),
-      lastName: Joi.string().required().min(1),
+      name: Joi.string().required().min(1),
       title: Joi.string().required().min(1),
-      phoneNumber: Joi.string().required().min(1),
+        phoneNumber: Joi.object({
+             phone: Joi.string()
+              .pattern(/^\+?[0-9\s\-()]{7,15}$/)
+              .optional()
+              .messages({
+                'string.pattern.base': 'Phone number must be a valid format with only digits, optional +, spaces, dashes, or parentheses.',
+              }),
+          country: Joi.string().trim().min(3).required(),
+        }).required(),
       message: Joi.string().required().min(1),
       email: Joi.string().trim().email().lowercase().required(),
       type: Joi.string().required().valid(...Object.values(CampaignType))

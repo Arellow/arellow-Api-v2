@@ -553,8 +553,8 @@ model Campaign {
 
 model CampaignRequest {
   id          String @id @default(auto()) @map("_id") @db.ObjectId
-  firstName   String
-  lastName    String
+  name   String
+  // lastName    String
   title       String
   email       String
   phoneNumber String

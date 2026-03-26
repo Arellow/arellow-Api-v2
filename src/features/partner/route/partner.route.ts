@@ -36,7 +36,7 @@ partnerRoute.post("/createpartner", multipleupload,
     partnerRoute.patch("/:id/verification", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerVerify);
     partnerRoute.patch("/:id/suspend", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerSuspend);
     partnerRoute.patch("/:id/unsuspend", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), partnerUnSuspend);
-    partnerRoute.patch("/:id/landpage", authenticate, isSuspended, requireRole(UserRole.SUPER_ADMIN), setDisplayPartnerAtHomePage);
+    partnerRoute.patch("/:id/landpage", authenticate, isSuspended, requireRole(UserRole.ADMIN), adminRequireRole("PARTNER"), setDisplayPartnerAtHomePage);
     partnerRoute.get("/:id/detail", getPartnerDetail);
     partnerRoute.delete("/:id", deletePartner);
 

@@ -497,13 +497,13 @@ export const createCampaign = async (req: Request, res: Response, next: NextFunc
 };
 
 export const requestCampaign = async (req: Request, res: Response, next: NextFunction) => {
-  const { firstName,lastName, title , email , phoneNumber , message , type} = req.body;
+  const { name, title , email , phoneNumber , message , type} = req.body;
 
   try {
 
     await Prisma.campaignRequest.create({
       data: {
-        email, firstName, lastName, message, title,
+        email, name, message, title,
          phoneNumber: phoneNumber.phone,
          country: phoneNumber.country,
          type
@@ -530,8 +530,7 @@ export const requestCampaign = async (req: Request, res: Response, next: NextFun
                 message: `
 
                 user details:
-                first name: ${firstName}
-                last name: ${lastName}
+                name: ${name}
                 email: ${email}
                 phone number: ${phoneNumber}
                 email: ${email}
@@ -553,12 +552,33 @@ export const requestCampaign = async (req: Request, res: Response, next: NextFun
 
     return new CustomResponse(200, true, "Request created successfully", res);
   } catch (error) {
-    // next(error)
-    return next(new InternalServerError("Server Error", 500));
+    next(error)
+    // return next(new InternalServerError("Server Error", 500));
   }
 };
 
+export const requestCampaignDetail = async (req: Request, res: Response, next: NextFunction) => {
 
+  const { id } = req.params
+
+
+  try {
+
+    const data = await Prisma.campaignRequest.findUnique({ where: { id } });
+
+     if (!data) {
+    return next(new InternalServerError("not found", 404));
+  }
+
+
+ 
+
+
+    return new CustomResponse(200, true, "Campaign successfully", res, data);
+  } catch (error) {
+    return next(new InternalServerError("Server Error", 500));
+  }
+};
 
 
 
