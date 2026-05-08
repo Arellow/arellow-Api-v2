@@ -8,9 +8,9 @@
     "dev": "nodemon --exec ts-node api/index.ts",
     "build": "tsc && ./node_modules/.bin/prisma generate",
     "prisma:generate": "prisma generate",
-    "worker": "ts-node src/features/property/workers/media.worker.ts",
-    "busboyworker": "ts-node src/services/workers/media.worker.ts",
-    "worker-email": "ts-node src/features/requestProperties/workers/emailWorker.ts",
+    "worker": "node dist/src/features/property/workers/media.worker.js",
+    "busboyworker": "node dist/src/services/workers/media.worker.js",
+    "worker-email": "node dist/src/features/requestProperties/workers/emailWorker.js",
     "seed:referral": "ts-node prisma/seed-referral.ts"
   },
   "keywords": [],
