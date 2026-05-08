@@ -113,13 +113,22 @@ export async function deleteMultipleImages(images = []){
 
 
 
-export async function processImage({image, folder , photoType , type}:{image: any, folder: string, photoType: UserPhotoType, type: MediaType}) {
-  
+export async function processImage({
+  image, folder, photoType, type,
+  resourceType = 'image',
+}: {
+  image: any;
+  folder: string;
+  photoType: UserPhotoType;
+  type: MediaType;
+  resourceType?: 'image' | 'video' | 'raw' | 'auto';
+}) {
   const file = getDataUri(image);
 
-      const result = await cloudinary.uploader.upload(file.content, {
-      folder, 
-    });
+  const result = await cloudinary.uploader.upload(file.content, {
+    folder,
+    resource_type: resourceType,
+  });
 
   // const url =  cloudinary.url(result?.public_id, {
   //   transformation: [

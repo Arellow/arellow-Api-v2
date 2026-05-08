@@ -34,17 +34,24 @@ async function revalidate<T>(key: string, fetcher: () => Promise<T>, ttl: number
 
 
 
-export async function deleteMatchingKeys(pattern: string) {
-  const stream = redis.scanStream({ match: pattern });
-  const pipeline = redis.pipeline();
+export function deleteMatchingKeys(pattern: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const stream = redis.scanStream({ match: `*${pattern}*` });
+    const keys: string[] = [];
 
-  stream.on('data', (keys: string[]) => {
-    if (keys.length) {
-      keys.forEach((key) => pipeline.del(key));
-    }
-  });
+    stream.on('data', (batch: string[]) => {
+      keys.push(...batch);
+    });
 
-  stream.on('end', async () => {
-    await pipeline.exec();
+    stream.on('end', async () => {
+      try {
+        if (keys.length) await redis.del(...keys);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    stream.on('error', reject);
   });
 }

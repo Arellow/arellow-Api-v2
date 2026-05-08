@@ -17,7 +17,7 @@ import authenticate from "../../../middlewares/auth.middleware";
 import upload from "./middleware.upload";
 import { getIO } from "./socketServer";
 import { processImage } from "../../../utils/imagesprocess";
-import { singleupload } from "../../../middlewares/multer";
+import { chatMediaUpload } from "../../../middlewares/multer";
 import { InternalServerError } from '../../../lib/appError';
 
 let io = getIO();
@@ -135,22 +135,25 @@ chatRoutes.get('/conversations', authenticate, async (req, res) => {
   res.json(convosWithUnread);
 });
 
-// Upload (unchanged)
-chatRoutes.post('/upload-media', authenticate, singleupload, async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+// Upload — accepts images, video, audio, and documents
+chatRoutes.post('/upload-media', authenticate, chatMediaUpload, async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
-  console.log(req.file)
+  const mime = req.file.mimetype;
+  const resourceType = mime.startsWith('video/') ? 'video'
+    : mime.startsWith('audio/') ? 'video'   // Cloudinary stores audio under video
+    : mime.startsWith('image/') ? 'image'
+    : 'raw';
 
-
-  let avatar = await processImage({
+  const url = await processImage({
     folder: "chat_container",
     image: req.file,
     photoType: "CHAT",
-    type: req.body.type || 'FILE'
+    type: req.body.type || 'FILE',
+    resourceType,
   });
 
-
-  res.json({ url: avatar, type: req.body.type || 'FILE' });
+  res.json({ url, type: req.body.type || 'FILE' });
 });
 
 // Send Message (optimized: use socket.to for exclude sender, minimal include)
@@ -526,6 +529,21 @@ chatRoutes.get('/aiconversation', authenticate, async(req, res, next) => {
   }
 
 })
+
+chatRoutes.delete('/aiconversation', authenticate, async(req, res, next) => {
+  const userId = req?.user?.id!;
+
+  try {
+    await Prisma.aiMessage.deleteMany({ where: { userId } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('clearAiConversation:', err);
+    res.status(500).json({ error: 'Failed to clear conversation' });
+  }
+})
+
+
+
 
 
 export default chatRoutes;

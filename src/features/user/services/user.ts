@@ -258,7 +258,8 @@ export class UserService {
       propertystats: user.propertystats,
       kyc: user.kyc,
       address: user.address,
-      setting: user.setting
+      setting: user.setting,
+      referralCode: user.referralCode ?? undefined,
     };
   }
 }

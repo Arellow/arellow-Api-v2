@@ -71,8 +71,9 @@ export interface UserResponseDto {
    setting: {
     pushNotification:  boolean,
   emailNotification:  boolean,
-  smsNotification:  boolean 
+  smsNotification:  boolean
    }
+   referralCode?: string;
 }
 
 export interface ProjectPost {

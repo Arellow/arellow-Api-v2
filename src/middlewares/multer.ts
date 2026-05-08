@@ -16,11 +16,38 @@ const fileFilter = (req: any, file: any, cb: any) => {
   }
 };
 
+// Permissive filter for chat media (images, video, audio, common documents)
+const chatMediaFilter = (_req: any, file: any, cb: any) => {
+  const allowed = [
+    "image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp",
+    "video/mp4", "video/quicktime", "video/x-msvideo", "video/webm",
+    "audio/mpeg", "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac",
+    "audio/wav", "audio/ogg", "audio/webm",
+    "application/pdf", "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain", "text/csv",
+  ];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`File type not supported: ${file.mimetype}`), false);
+  }
+};
+
 // Single file upload middleware
 export const singleupload = multer({
   storage,
   fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+}).single("image");
+
+// Chat media upload — accepts images, video, audio, documents up to 50MB
+export const chatMediaUpload = multer({
+  storage,
+  fileFilter: chatMediaFilter,
+  limits: { fileSize: 50 * 1024 * 1024 },
 }).single("image");
 
 export const documentPhotoupload = multer({

@@ -1,39 +1,51 @@
 import { RegisterDTO } from "../dtos/registerUserDto";
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { DuplicateError, UnAuthorizedError } from "../../../lib/appError";
 import { emailVerificationMailOption } from "../../../utils/mailer";
 import { mailController, } from "../../../utils/nodemailer";
 import { generateToken } from "../../../utils/jwt";
 
+const generateReferralCode = (username: string): string =>
+  (username.slice(0, 4) + crypto.randomBytes(3).toString("hex")).toUpperCase();
+
 export class AuthService {
   public static async registerUser(dto: RegisterDTO) {
-    const { username, password, email, phone_number, fullname , role,} = dto;
+    const { username, password, email, phone_number, fullname, role, referralCode } = dto;
 
     if(role == "SUPER_ADMIN" || role == "ADMIN"){
       throw new UnAuthorizedError("Forbidden: unauthorise user role", 403);
     }
 
+    const [existingUser, existingUserName] = await Promise.all([
+      Prisma.user.findUnique({ where: { email } }),
+      Prisma.user.findUnique({ where: { username } }),
+    ]);
 
-    const existingUser = await Prisma.user.findUnique({
-      where: { email },
-    });
+    if (existingUser) throw new DuplicateError("Email already exists.");
+    if (existingUserName) throw new DuplicateError("User name already exists.");
 
-    const existingUserName = await Prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (existingUser) {
-      throw new DuplicateError("Email already exists.");
-    }
-
-    if (existingUserName) {
-      throw new DuplicateError("User name already exists.");
+    // Validate referral code if provided
+    let referredByCode: string | undefined;
+    if (referralCode) {
+      const referrer = await Prisma.user.findUnique({ where: { referralCode: referralCode.toUpperCase() } });
+      if (referrer) referredByCode = referralCode.toUpperCase();
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const cleanedPhoneNumber = phone_number.phone.replace(/[^\d+]/g, '');
+
+    // Generate unique referral code for the new user
+    let newUserReferralCode = generateReferralCode(username);
+    const codeExists = await Prisma.user.findUnique({ where: { referralCode: newUserReferralCode } });
+    if (codeExists) newUserReferralCode = generateReferralCode(username + Date.now());
+
+    console.log({
+      referralCode: newUserReferralCode,
+        referredBy: referredByCode,
+    })
+
 
     const newUser = await Prisma.user.create({
       data: {
@@ -43,6 +55,8 @@ export class AuthService {
         phone_number: cleanedPhoneNumber,
         role,
         fullname,
+        referralCode: newUserReferralCode,
+        referredBy: referredByCode,
         address: {
           country: phone_number.country,
           city: "",

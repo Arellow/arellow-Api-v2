@@ -7,33 +7,20 @@ import { getDateRange } from "../../../utils/getDateRange";
 import { deleteMatchingKeys, swrCache } from "../../../lib/cache";
 import { mailController } from "../../../utils/nodemailer";
 import { BlogRejectiontMailOption } from "../../../utils/mailer";
-import { ActionRole, BlogCategory, BlogStatus, Prisma as prisma } from "../../../../generated/prisma/client";
+import { BlogCategory, BlogStatus, Prisma as prisma } from "../../../../generated/prisma/client";
 
 export const createBlog = async (req: Request, res: Response, next: NextFunction) => {
-
-    const {
-        title,
-        content,
-    } = req.body;
-
-  const timeToRead = calculateTimeToRead(content);
-
-    const isAdmin = await adminRequireRole(req, res);
-
     try {
-
         const userId = req.user?.id!;
-
+        const { title, content } = req.body;
+        const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
+        const timeToRead = calculateTimeToRead(content ?? "");
         const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : req.body.tags;
-    
-    const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
-
-
+        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
 
         if (!req.file) {
-            return next(new InternalServerError("Avatar not found", 404));
+            return next(new InternalServerError("Banner image is required", 400));
         }
-
 
         const banner = await processImage({
             folder: "blog_container",
@@ -42,66 +29,44 @@ export const createBlog = async (req: Request, res: Response, next: NextFunction
             type: "PHOTO"
         });
 
-
-
         if (!banner) {
-            return next(new InternalServerError("Avatar upload failed", 404));
+            return next(new InternalServerError("Banner upload failed", 500));
         }
-
-      
 
         await Prisma.blog.create({
             data: {
                 userId,
                 title,
                 content,
-
                 socialMediaLinks: parsedsocialMediaLinks,
                 tags: parsedTags,
                 banner,
                 category: isAdmin ? "INTERNAL" : "EXTERNAL",
                 status: isAdmin ? "APPROVED" : "PENDING",
-                timeToRead    
+                timeToRead,
             }
-        })
+        });
 
-
-
-        new CustomResponse(201, true, "Blog created", res,);
+        new CustomResponse(201, true, "Blog created", res);
 
     } catch (error: any) {
-        next(new InternalServerError("Internal server error", 500));
+        next(error);
     }
-
 };
 
 
 export const editBlog = async (req: Request, res: Response, next: NextFunction) => {
-
-    const {
-        title,
-        content,
-    } = req.body;
-
-  const timeToRead = calculateTimeToRead(content);
-
-    const isAdmin = await adminRequireRole(req, res);
-     const { id } = req.params;
-
     try {
-
-        const userId = req.user?.id!;
-
+        const { id } = req.params;
+        const { title, content } = req.body;
+        const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
+        const timeToRead = calculateTimeToRead(content ?? "");
         const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : req.body.tags;
-    
-    const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
-
-
+        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
 
         if (!req.file) {
-            return next(new InternalServerError("Avatar not found", 404));
+            return next(new InternalServerError("Banner image is required", 400));
         }
-
 
         const banner = await processImage({
             folder: "blog_container",
@@ -110,51 +75,41 @@ export const editBlog = async (req: Request, res: Response, next: NextFunction) 
             type: "PHOTO"
         });
 
-
-
         if (!banner) {
-            return next(new InternalServerError("Avatar upload failed", 404));
+            return next(new InternalServerError("Banner upload failed", 500));
         }
 
-          const blog = await Prisma.blog.findUnique({ where: { id } });
-        
-            if (blog) {
-              await deleteImage(blog.banner);
-
-            }
-
-      
+        const existing = await Prisma.blog.findUnique({ where: { id } });
+        if (existing) {
+            await deleteImage(existing.banner);
+        }
 
         await Prisma.blog.update({
-            where: {id},
+            where: { id },
             data: {
                 title,
                 content,
-
                 socialMediaLinks: parsedsocialMediaLinks,
                 tags: parsedTags,
                 banner,
                 category: isAdmin ? "INTERNAL" : "EXTERNAL",
                 status: isAdmin ? "APPROVED" : "PENDING",
-                timeToRead    
+                timeToRead,
             }
-        })
+        });
 
-
-
-        new CustomResponse(201, true, "Blog updated", res,);
+        new CustomResponse(200, true, "Blog updated", res);
 
     } catch (error: any) {
-        next(new InternalServerError("Internal server error", 500));
+        next(error);
     }
-
 };
 
 
 export const getBlogsContributors = async (req: Request, res: Response, next: NextFunction) => {
   try {
-  
-    const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
+
+    const { page = "1", limit = "10" } = req.query;
   const search = (req.query.search as string) || "";
 
     const pageNumber = parseInt(page as string, 10);
@@ -300,7 +255,7 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
     const { page = "1", limit = "10", filterTime = "this_year" } = req.query;
   const search = (req.query.search as string) || "";
 
-    const { current, previous } = getDateRange(filterTime.toString());
+    const { current } = getDateRange(filterTime.toString());
     const pageNumber = parseInt(page as string, 10);
     const pageSize = parseInt(limit as string, 10);
 
@@ -443,40 +398,27 @@ export const changeBlogStatus = async (req: Request, res: Response, next: NextFu
 
 
 export const deleteBlog = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.user?.id;
-
-  const blogId = req.params.id;
-  const isAdmin = await adminRequireRole(req, res);
-
-
-
   try {
+    const userId = req.user?.id;
+    const blogId = req.params.id;
+    const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
 
-    const blog = await Prisma.blog.findUnique({ where: { id: blogId }, select: {userId: true, user: {select: {email:true, username: true}}} });
+    const blog = await Prisma.blog.findUnique({ where: { id: blogId }, select: { userId: true } });
     if (!blog) {
-      return next(new InternalServerError("blog not found", 404));
+      return next(new InternalServerError("Blog not found", 404));
     }
 
-
-    // Ownership check:
     if (!isAdmin && blog.userId !== userId) {
-
-      return next(new UnAuthorizedError("Forbidden: only owner can update status", 403));
+      return next(new UnAuthorizedError("Forbidden: only owner can delete this blog", 403));
     }
 
-    await Prisma.blog.delete({
-      where: { id: blogId },
+    await Prisma.blog.delete({ where: { id: blogId } });
 
-    });
-    
+    await deleteMatchingKeys(`getBlogs`);
 
-      const cacheKey = `getBlogs`;
-        await deleteMatchingKeys(cacheKey);
-
-
-    new CustomResponse(200, true, `blog deleted successfully`, res,);
+    new CustomResponse(200, true, "Blog deleted successfully", res);
   } catch (error) {
-    next(new InternalServerError("Internal server error", 500));
+    next(error);
   }
 };
 
@@ -536,50 +478,6 @@ export const blogDetail = async (req: Request, res: Response, next: NextFunction
 };
 
 
-const adminRequireRole = async (req: Request, res: Response) => {
-
-    const user = req.user;
-
-
-    const allowedRoles: ActionRole[] = ["BLOG"];
-
-
-    if (!user) {
-        return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-
-
-    if (user?.role == "SUPER_ADMIN") {
-        return true;
-    }
-
-    try {
-        const adminPermission = await Prisma.adminPermission.findUnique({
-            where: { userId: user.id },
-        });
-
-        if (!adminPermission || !adminPermission.action.length) {
-            return false
-        }
-
-        const hasAccess = adminPermission.action.some((role) =>
-            allowedRoles.includes(role)
-        );
-
-        if (!hasAccess) {
-            return false
-        }
-
-
-        return true;
-    } catch (error) {
-        // console.error("adminRequireRole error:", error);
-        return res
-            .status(500)
-            .json({ success: false, message: "Internal server error" });
-    }
-
-};
 
 const calculateTimeToRead = (content: string) => {
     const wordsPerMinute = 200; 

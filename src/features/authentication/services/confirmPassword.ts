@@ -1,9 +1,8 @@
 import { Prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { ConfirmForgotPasswordDto } from "../dtos/forgetPasswordDto";
 import { BadRequestError, InternalServerError, UnAuthorizedError } from "../../../lib/appError";
-import { generateToken } from "../../../utils/jwt";
+import { generateSessionToken } from "../../../utils/jwt";
 
 export class ConfirmPasswordService {
   async confirmForgotPassword(dto: ConfirmForgotPasswordDto) {
@@ -67,7 +66,14 @@ export class ConfirmPasswordService {
       throw new InternalServerError("Failed to update password");
     }
 
-   const token= generateToken(updatedUser.id, updatedUser.email);
+   const token = generateSessionToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      suspended: updatedUser.suspended,
+      is_verified: updatedUser.is_verified,
+      fullname: updatedUser.fullname,
+    });
 
     const {
       password,

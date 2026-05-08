@@ -14,12 +14,14 @@ import { ForgetPasswordController } from "../controllers/forgetPassword";
 import { ConfirmPasswordController } from "../controllers/comfirmPassword";
 import { UserController } from "../controllers/changePassword";
 import { LogoutController } from "../controllers/logout";
+import { RefreshTokenController } from "../controllers/refreshToken";
 import { ResendVerificationController } from "../controllers/resendVerification";
 import { SubscribeService } from "../services/subscribe";
 import { SubscribeController } from "../controllers/subscribe";
 import authenticate from "../../../middlewares/auth.middleware";
 import { countriesRequest} from "../controllers/countries";
 import { DeleteAccountController } from "../controllers/deleteaccount";
+import { authLimiter } from "../../../middlewares/rateLimit.middleware";
 
 const authRouter = express.Router();
 
@@ -34,12 +36,14 @@ const subscribeController = new SubscribeController(subscribeService);
 // Public routes
 authRouter.post(
   "/register",
+  authLimiter,
   validateSchema(registerSchema),
   RegisterController.register
 );
 
 authRouter.post(
   "/login",
+  authLimiter,
   validateSchema(loginSchema),
   LoginController.login
 );
@@ -51,12 +55,12 @@ authRouter.post(
 
 
 
-authRouter.post("/forgetpassword/web", validateSchema(forgotPasswordSchema), (req,res,next) => {
+authRouter.post("/forgetpassword/web", authLimiter, validateSchema(forgotPasswordSchema), (req, _res, next) => {
     req.body.isMobile = false
     next()
 }, forgetPasswordController.forgetPassword);
 
-authRouter.post("/forgetpassword/mobile", validateSchema(forgotPasswordSchema), (req,res,next) => {
+authRouter.post("/forgetpassword/mobile", authLimiter, validateSchema(forgotPasswordSchema), (req, _res, next) => {
     req.body.isMobile = true
     next()
 }, forgetPasswordController.forgetPassword);
@@ -64,6 +68,7 @@ authRouter.post("/forgetpassword/mobile", validateSchema(forgotPasswordSchema), 
 
 authRouter.patch(
   "/forgetpassword/confirm",
+  authLimiter,
   validateSchema(confirmForgotPasswordSchema),
   confirmPasswordController.confirmForgotPassword
 );
@@ -83,7 +88,7 @@ authRouter.patch(
 
 authRouter.post(
   "/resend-verification",
-
+  authLimiter,
   resendVerificationController.resendVerification
 );
 
@@ -91,6 +96,12 @@ authRouter.post(
   "/logout",
   authenticate,
   LogoutController.logout
+);
+
+authRouter.post(
+  "/refresh",
+  authLimiter,
+  RefreshTokenController.refresh
 );
 
 authRouter.delete(

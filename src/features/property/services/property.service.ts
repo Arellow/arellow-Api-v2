@@ -19,18 +19,18 @@ export const propertyService = {
 
   async createProperty({ user, body, files }: any) {
 
-    const location = await locationService.resolve(
-      body.neighborhood,
-      body.city
-    );
+    const DEFAULT_LOCATION = { lat: 9.6000359, lng: 7.9999721 };
+
+    // Strip frontend-only fields that are not in the Prisma schema
+    const { retainedImageUrls: _r, ...propertyBody } = body;
 
     const property = await Prisma.$transaction(async (tx) => {
 
       const created = await tx.property.create({
         data: {
-          ...body,
+          ...propertyBody,
           userId: user.id,
-          location,
+          location: DEFAULT_LOCATION,
 
           amenities: {
             create: body.amenities.map((a: Amenity) => ({
@@ -75,15 +75,19 @@ export const propertyService = {
 
     });
 
-    if (files) {
-      await mediaService.queueUploads(property.id, files);
-    }
+    // Respond immediately — resolve geocoding and queue media in the background
+    setImmediate(async () => {
+      try {
+        const location = await locationService.resolve(body.neighborhood, body.city);
+        await Prisma.property.update({ where: { id: property.id }, data: { location } });
+      } catch {}
 
-      await cacheService.clearPropertyCache(
-    property.id,
-    property.userId
-  );
+      try {
+        if (files) await mediaService.queueUploads(property.id, files);
+      } catch {}
+    });
 
+    await cacheService.clearPropertyCache(property.id, property.userId);
 
     return property;
 
@@ -105,11 +109,18 @@ async updateProperty({ propertyId, user, body, files }: any) {
     body.city
   );
 
-  await mediaService.deletePropertyMedia(propertyId);
+  const retainedImageUrls: string[] = body.retainedImageUrls
+    ? JSON.parse(body.retainedImageUrls)
+    : [];
+
+  // Strip frontend-only fields before spreading into Prisma
+  const { retainedImageUrls: _r, ...propertyBody } = body;
+
+  await mediaService.deletePropertyMedia(propertyId, retainedImageUrls);
 
  const updatedProperty = await Prisma.$transaction(async (tx) => {
 
-  
+
 
 
   const updated = await tx.property.update({
@@ -119,7 +130,7 @@ async updateProperty({ propertyId, user, body, files }: any) {
       rejectionReason: null,
       approvedBy: undefined,
 
-      ...body,
+      ...propertyBody,
 
       location,
 
@@ -168,9 +179,14 @@ async updateProperty({ propertyId, user, body, files }: any) {
 return updated;
 })
 
-  if (files) {
-    await mediaService.queueUploads(updatedProperty.id, files);
-  }
+  // Queue media uploads in the background — don't block the response
+  setImmediate(async () => {
+    try {
+      if (files && Object.keys(files).length > 0) {
+        await mediaService.queueUploads(updatedProperty.id, files);
+      }
+    } catch {}
+  });
 
   await rewardService.debitPropertyPoints(updatedProperty);
 
@@ -178,10 +194,6 @@ return updated;
     updatedProperty.id,
     updatedProperty.userId
   );
-
-
-
-  
 
   return updatedProperty;
 

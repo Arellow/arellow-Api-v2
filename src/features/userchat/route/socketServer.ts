@@ -5,10 +5,6 @@ import { Prisma } from '../../../lib/prisma';
 import OpenAI from 'openai';
 import { executeTool } from '../controller/aitools';
 import { PropertyCategory } from '../../../../generated/prisma/enums';
-// import { PropertyCategory } from '../../../../generated/prisma/enums';
-// import {  Prisma as prisma, } from '../../../../generated/prisma/client';
-// import { } from '../controller/aitools';
-
 
 interface AuthSocket extends Socket {
   user?: { userId: string };
@@ -26,30 +22,6 @@ const openai = new OpenAI({
 
 
 
-
-// const tools = [
-//   {
-//     type: "function",
-//     function: {
-//       name: "search_properties",
-//       description: "Search for real estate properties",
-//       parameters: {
-//         type: "object",
-//         properties: {
-//           city: { type: "string" },
-//           state: { type: "string" },
-//           minPrice: { type: "number" },
-//           maxPrice: { type: "number" },
-//           bedrooms: { type: "number" },
-//           bathrooms: { type: "number" },
-//           category: { type: "string" },
-//         },
-//       },
-//     },
-//   },
-// ];
-
-
 export const initSocketIO = (httpServer: http.Server) => {
   io = new Server<AuthSocket>(httpServer, { cors: { origin: '*' } });
 
@@ -58,7 +30,7 @@ export const initSocketIO = (httpServer: http.Server) => {
     if (!token) return next(new Error('Authentication error'));
 
     try {
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+     
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string, email: string };
       const userId = decoded.userId;
       socket.user = { userId };
@@ -119,7 +91,7 @@ export const initSocketIO = (httpServer: http.Server) => {
       const { conversationId, type, content, propertyId, videoCallDetails } = data;
       const senderId = socket.user!.userId;
 
-      const requiresContent = type === 'TEXT' || type === 'PHOTO' || type === 'AUDIO' || type === 'VIDEO' || type === 'FILE';
+      const requiresContent = type === 'TEXT' || type === 'PHOTO' || type === 'AUDIO' || type === 'VIDEO' || type === 'FILE' || type === 'VOICE_RECORDING';
       if (requiresContent && !content) {
 
         if (callback) callback({ error: 'Content required for this type' });
@@ -140,7 +112,7 @@ export const initSocketIO = (httpServer: http.Server) => {
             conversationId,
             senderId,
             type,
-            content: type === 'TEXT' ? content : undefined,
+            content: (type === 'PROPERTY_SHARE' || type === 'VIDEO_CALL_SCHEDULE') ? undefined : content,
             propertyId: type === 'PROPERTY_SHARE' ? propertyId : null,
             videoCallDetails: type === 'VIDEO_CALL_SCHEDULE' ? videoCallDetails : null,
             readByIds: [senderId],
@@ -204,8 +176,12 @@ export const initSocketIO = (httpServer: http.Server) => {
             : message.videoCallDetails,
         };
 
+        // Exclude sender for types with optimistic UI to avoid duplicates
         socket.to(conversationId).emit('newMessage', broadcastMessage);
-        // console.log('📨 Received broadcastMessage:', { ...broadcastMessage });
+        // Echo back to sender for types with no optimistic UI so their ChatScreen updates immediately
+        if (type === 'VIDEO_CALL_SCHEDULE' || type === 'PROPERTY_SHARE') {
+          socket.emit('newMessage', broadcastMessage);
+        }
         // Notify lists
         const conversation = await Prisma.conversation.findUnique({
           where: { id: conversationId },

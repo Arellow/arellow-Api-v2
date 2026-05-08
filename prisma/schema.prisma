@@ -159,8 +159,11 @@ model User {
   conversationIds String[]       @db.ObjectId
   conversations   Conversation[] @relation("UserConversations", fields: [conversationIds], references: [id])
 
-  online   Boolean   @default(false)
-  lastSeen DateTime?
+  online       Boolean   @default(false)
+  lastSeen     DateTime?
+  refreshToken String?
+  referralCode String?   @unique
+  referredBy   String?
 
   message Message[]
 }
@@ -388,7 +391,7 @@ enum PhotoType {
   PRIMARY_ROOM
   OTHER
 
-// land
+  // land
   LANDS
 
   // partner
@@ -553,7 +556,7 @@ model Campaign {
 
 model CampaignRequest {
   id          String @id @default(auto()) @map("_id") @db.ObjectId
-  name   String
+  name        String
   // lastName    String
   title       String
   email       String
@@ -561,12 +564,11 @@ model CampaignRequest {
   message     String
   country     String
 
-  type      CampaignType @default(CONTACT)
+  type CampaignType @default(CONTACT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 enum CampaignType {
   ADVERTISE
@@ -811,7 +813,7 @@ model PropertyVerify {
   idempotencyKey   String? @unique
 
   paymentStatus PropertyVerifyPaymentStatus @default(PENDING)
-  status PropertyVerifyStatus @default(PENDING)
+  status        PropertyVerifyStatus        @default(PENDING)
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -829,7 +831,6 @@ enum PropertyVerifyStatus {
   UNVERIFIED
 }
 
-
 // Lands management
 
 model Lands {
@@ -841,14 +842,14 @@ model Lands {
   state        String
   city         String
   neighborhood String
-  landmark String
+  landmark     String
   price        PriceModel
   squareMeters String
 
   category LandCategory
 
-  userId String @db.ObjectId
-  user   ArellowPartner   @relation(fields: [userId], references: [id], name: "UserLands", onDelete: Cascade)
+  userId String         @db.ObjectId
+  user   ArellowPartner @relation(fields: [userId], references: [id], name: "UserLands", onDelete: Cascade)
 
   status          PropertyStatus @default(PENDING)
   rejectionReason String?
@@ -902,8 +903,8 @@ model UserLandLike {
 
 // arellow partners
 model ArellowPartner {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  description String
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  description    String
   businessName   String
   businessAdress String
   email          String
@@ -918,8 +919,7 @@ model ArellowPartner {
 
   media     Media[]
   // users       User[]
-  lands         Lands[] @relation("UserLands")
+  lands     Lands[]  @relation("UserLands")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
 }

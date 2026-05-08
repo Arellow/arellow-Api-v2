@@ -109,6 +109,8 @@ export const createKyc = async (
             return next(new InternalServerError('Photo processing failed', 500));
         }
 
+         
+
 
         try {
 
@@ -164,6 +166,7 @@ export const createKyc = async (
                 userId,
                 documentType: KycDocumentType.NIN,
                 status: KycStatus.PENDING,
+                statusText: null,
                 documentNumber: maskedDocumentNumber,
                 documentPhoto,
                 tryCount: kyc ? undefined : 1,
@@ -694,20 +697,25 @@ export const approvedKyc = async (req: Request, res: Response, next: NextFunctio
 
         await Prisma.kyc.update({
             where: { id },
-            data: {
-                status: "VERIFIED",
-                statusText: null,
-            }
+            data: { status: "VERIFIED", statusText: null }
         });
 
-         await Prisma.rewardHistory.create({
-      data: {
-        userId: kyc.userId,
-        points: 10,
-        reason: "ArellowPoints Earned",
-        type: "CREDIT"
-      }
-    })
+        // Credit 10 points to the verified user
+        const verifiedUser = await Prisma.user.findUnique({ where: { id: kyc.userId } });
+
+        await Prisma.rewardHistory.create({
+            data: { userId: kyc.userId, points: 10, reason: "ArellowPoints Earned", type: "CREDIT" }
+        });
+
+        // Credit 15 points to whoever referred this user
+        if (verifiedUser?.referredBy) {
+            const referrer = await Prisma.user.findUnique({ where: { referralCode: verifiedUser.referredBy } });
+            if (referrer) {
+                await Prisma.rewardHistory.create({
+                    data: { userId: referrer.id, points: 15, reason: "Referral reward — referred user completed KYC", type: "CREDIT" }
+                });
+            }
+        }
 
         await deleteMatchingKeys("kyc:*");
 

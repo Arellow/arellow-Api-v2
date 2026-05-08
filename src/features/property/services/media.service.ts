@@ -53,27 +53,28 @@ export const mediaService = {
   },
 
 
-  async deletePropertyMedia(propertyId: string) {
+  async deletePropertyMedia(propertyId: string, retainedUrls: string[] = []) {
 
   const oldMedia = await Prisma.media.findMany({
     where: { propertyId }
   });
 
-  for (const media of oldMedia) {
+  const toDelete = retainedUrls.length
+    ? oldMedia.filter((m) => !retainedUrls.includes(m.url))
+    : oldMedia;
 
-    try {
+  if (!toDelete.length) return;
 
-      await cloudinary.uploader.destroy(
-        media.publicId,
-        // { resource_type: media.type === "VIDEO" ? "video" : "image" }
-      );
-
-    } catch {}
-
-  }
+  await Promise.all(
+    toDelete.map(async (media) => {
+      try {
+        await cloudinary.uploader.destroy(media.publicId);
+      } catch {}
+    })
+  );
 
   await Prisma.media.deleteMany({
-    where: { propertyId }
+    where: { id: { in: toDelete.map((m) => m.id) } }
   });
 
 }

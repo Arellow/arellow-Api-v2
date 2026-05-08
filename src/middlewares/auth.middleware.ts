@@ -4,37 +4,35 @@ import { Prisma } from "../lib/prisma";
 import { UserRole , ActionRole} from "../../generated/prisma/enums";
 
 
-export  async function isLoginUser(
+// Lightweight: trusts the JWT payload — no DB lookup.
+// Use this on every route. For routes that need guaranteed-fresh suspension /
+// verification status, chain `authenticateFresh` after `authenticate`.
+export function isLoginUser(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> {
-   const authHeader = req?.headers?.authorization;
+): void {
+  const authHeader = req?.headers?.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-
-  if (!token) {
-    return next();
-  }
-
+  if (!token) return next();
 
   try {
-
-   
     const decoded = verifyToken(token);
-    const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
-
-    if (user) {
-      req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
-    } else {
-       res.status(401).json({ success: false, message: "Unauthorized: User not found" });
-       return
+    // Session tokens include role/suspended/is_verified; verification-only tokens
+    // (email confirm, password reset) only have userId+email — skip those.
+    if (decoded.role) {
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+        suspended: decoded.suspended,
+        is_verified: decoded.is_verified,
+        fullname: decoded.fullname,
+      };
     }
-  
-
-
     next();
-  } catch (err) {
+  } catch {
     res.status(401).json({ success: false, message: "Token verification failed" });
   }
 }
@@ -45,36 +43,36 @@ export default async function authenticate(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-
-   if (!req.user) {
+  if (!req.user) {
     res.status(403).json({ success: false, message: "Unauthorized: No user data found" });
     return;
   }
   next();
+}
 
-  // const authHeader = req.headers.authorization;
-  // if (!authHeader || !authHeader.startsWith("Bearer ")) {
-  //   res.status(401).json({ success: false, message: "No token provided or malformed token please login" });
-  //   return;
-  // }
+// Use after `authenticate` on routes that need guaranteed-fresh DB state
+// (e.g. re-checking suspension before a financial action).
+export async function authenticateFresh(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  if (!req.user) {
+    res.status(403).json({ success: false, message: "Unauthorized: No user data found" });
+    return;
+  }
 
-  // const token = authHeader.split(" ")[1];
-
-  // try {
-  //   const decoded = verifyToken(token);
-  //   const user = await Prisma.user.findUnique({ where: { id: decoded.userId } });
-
-  //   if (!user) {
-  //     res.status(401).json({ success: false, message: "Invalid user." });
-  //     return;
-  //   }
-
-  //   req.user = { id: user.id, email: user.email, role: user.role , is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname};
-
-  //   next();
-  // } catch (err) {
-  //   res.status(401).json({ success: false, message: "Invalid or expired token" });
-  // }
+  try {
+    const user = await Prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      res.status(401).json({ success: false, message: "Unauthorized: User not found" });
+      return;
+    }
+    req.user = { id: user.id, email: user.email, role: user.role, is_verified: user.is_verified, suspended: user.suspended, fullname: user.fullname };
+    next();
+  } catch {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 }
 
 

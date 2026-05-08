@@ -12,7 +12,8 @@ export interface RegisterDTO {
     country: string
   }
   fullname: string;
-  role: UserRole,
+  role: UserRole;
+  referralCode?: string;
 }
 
 export interface UserResponseDTO {
@@ -26,10 +27,10 @@ export interface UserResponseDTO {
   createdAt: Date;
   avatar: string | null;
   role: UserRole,
-  kyc?: any,
-  address: PropertyAddress | null
-   AdminPermission:  any
-    
+  kyc?: any;
+  address: PropertyAddress | null;
+  AdminPermission?: any;
+
 
 }
 
