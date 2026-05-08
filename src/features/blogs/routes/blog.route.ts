@@ -12,9 +12,9 @@ blogRoutes.get('/:id', blogDetail);
 blogRoutes.get('/', getBlogs); 
 
 
-blogRoutes.post('/', authenticate, isVerify,requireKyc, isSuspended, singleupload, createBlog); 
-blogRoutes.patch('/:id', authenticate, isVerify,requireKyc, isSuspended, singleupload, editBlog); 
-blogRoutes.delete('/:id', authenticate,isVerify,requireKyc, isSuspended, deleteBlog); 
-blogRoutes.put('/:id', authenticate, isVerify,requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("BLOG"),  changeBlogStatus); 
+blogRoutes.post('/', authenticate, isVerify, isSuspended, singleupload, createBlog);
+blogRoutes.patch('/:id', authenticate, isVerify, isSuspended, singleupload, editBlog);
+blogRoutes.delete('/:id', authenticate, isVerify, isSuspended, deleteBlog);
+blogRoutes.put('/:id', authenticate, isVerify, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("BLOG"), changeBlogStatus);
 
 export default blogRoutes;

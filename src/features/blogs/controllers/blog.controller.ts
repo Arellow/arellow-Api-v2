@@ -168,7 +168,7 @@ export const getBlogsContributors = async (req: Request, res: Response, next: Ne
 
     new CustomResponse(200, true, "success", res, result);
   } catch (error) {
-    next(new InternalServerError("Server Error", 500));
+    next(error);
   }
 };
 
@@ -244,7 +244,7 @@ export const getBlogContributorDetail = async (req: Request, res: Response, next
     new CustomResponse(200, true, "success", res, result);
   } catch (error) {
     // console.error(error);
-    next(new InternalServerError("Server Error", 500));
+    next(error);
   }
 };
 
@@ -325,8 +325,7 @@ export const getBlogs = async (req: Request, res: Response, next: NextFunction) 
 
     new CustomResponse(200, true, "success", res, result);
   } catch (error) {
-    console.error(error);
-    next(new InternalServerError("Server Error", 500));
+    next(error);
   }
 };
 
@@ -392,7 +391,7 @@ export const changeBlogStatus = async (req: Request, res: Response, next: NextFu
 
     new CustomResponse(200, true, `status updated to ${blogStatus}`, res,);
   } catch (error) {
-    next(new InternalServerError("Internal server error", 500));
+    next(error);
   }
 };
 
@@ -471,7 +470,7 @@ export const blogDetail = async (req: Request, res: Response, next: NextFunction
 
         new CustomResponse(200, true, "successfully", res, {blog, recommendedblog});
     } catch (error) {
-        next(new InternalServerError("Internal server error", 500));
+        next(error);
     }
 
 
