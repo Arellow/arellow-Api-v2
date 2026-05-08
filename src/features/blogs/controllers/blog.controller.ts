@@ -13,14 +13,19 @@ export const createBlog = async (req: Request, res: Response, next: NextFunction
     try {
         const userId = req.user?.id!;
         const { title, content } = req.body;
-        const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
-        const timeToRead = calculateTimeToRead(content ?? "");
-        const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : req.body.tags;
-        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
+
+        if (!title || !content) {
+            return next(new InternalServerError("Title and content are required", 400));
+        }
 
         if (!req.file) {
             return next(new InternalServerError("Banner image is required", 400));
         }
+
+        const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
+        const timeToRead = calculateTimeToRead(content ?? "");
+        const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : (req.body.tags ?? []);
+        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : (req.body.socialMediaLinks ?? {});
 
         const banner = await processImage({
             folder: "blog_container",
@@ -61,27 +66,30 @@ export const editBlog = async (req: Request, res: Response, next: NextFunction) 
         const { title, content } = req.body;
         const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
         const timeToRead = calculateTimeToRead(content ?? "");
-        const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : req.body.tags;
-        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : req.body.socialMediaLinks;
-
-        if (!req.file) {
-            return next(new InternalServerError("Banner image is required", 400));
-        }
-
-        const banner = await processImage({
-            folder: "blog_container",
-            image: req.file,
-            photoType: "BLOG",
-            type: "PHOTO"
-        });
-
-        if (!banner) {
-            return next(new InternalServerError("Banner upload failed", 500));
-        }
+        const parsedTags: [] = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : (req.body.tags ?? []);
+        const parsedsocialMediaLinks = typeof req.body.socialMediaLinks === 'string' ? JSON.parse(req.body.socialMediaLinks || '{}') : (req.body.socialMediaLinks ?? {});
 
         const existing = await Prisma.blog.findUnique({ where: { id } });
-        if (existing) {
+        if (!existing) {
+            return next(new InternalServerError("Blog not found", 404));
+        }
+
+        let banner = existing.banner;
+
+        if (req.file) {
+            const uploaded = await processImage({
+                folder: "blog_container",
+                image: req.file,
+                photoType: "BLOG",
+                type: "PHOTO"
+            });
+
+            if (!uploaded) {
+                return next(new InternalServerError("Banner upload failed", 500));
+            }
+
             await deleteImage(existing.banner);
+            banner = uploaded;
         }
 
         await Prisma.blog.update({
