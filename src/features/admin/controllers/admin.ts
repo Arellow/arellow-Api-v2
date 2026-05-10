@@ -10,19 +10,28 @@ import { getMonth } from "date-fns";
 
 
 export const adminDashbroad = async (req: Request, res: Response, next: NextFunction) => {
-  const limit = 10;
-  const filterTime = (req.query.filterTime as string) || "this_year";
-  const cacheKey = `adminDashbroad:${limit}:${filterTime}`;
-
-  const { current, previous } = getDateRange("this_month");
-  const { current: currentFilter } = getDateRange(filterTime);
+  const filterTime = req.query.filterTime as string | undefined;
+  const cacheKey = `adminDashbroad:${filterTime ?? "all"}`;
 
   try {
-    const result = await swrCache(cacheKey, async () => {
-      const realtorMap = new Map<string, { name: string; propertiesSold: number; totalSoldAmount: number; currency: string }>();
+    const dateRange = filterTime ? getDateRange(filterTime) : null;
 
+    const curr = (extra: object) => ({
+      ...extra,
+      ...(dateRange ? { createdAt: { gte: dateRange.current.start, lte: dateRange.current.end } } : {}),
+    });
+
+    const prevCount = (extra: object) =>
+      dateRange
+        ? Prisma.property.count({ where: { ...extra, createdAt: { gte: dateRange.previous.start, lte: dateRange.previous.end } } })
+        : Promise.resolve(0);
+
+    const trend = (cur: number, prv: number) =>
+      dateRange ? calculateTrend(cur, prv) : { percentage: 0, trend: "equal" as const };
+
+    const result = await swrCache(cacheKey, async () => {
       const [
-        leaderBroadPropertiesData,
+        topSellers,
         recentPropertiesData,
 
         listedPropertiesCurrent, listedPropertiesPrevious,
@@ -41,17 +50,14 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
         propertyViewsAgg,
         activityRewardAgg,
         kyc,
+        totalPerformingProperties,
       ] = await Promise.all([
-        Prisma.property.findMany({
-          where: {
-            archived: false, status: "APPROVED", salesStatus: "SOLD",
-            user: { role: { notIn: ["ADMIN", "SUPER_ADMIN"] } },
-          },
-          select: {
-            userId: true,
-            price: { select: { amount: true, currency: true } },
-            user: { select: { fullname: true } },
-          },
+        Prisma.property.groupBy({
+          by: ["userId"],
+          where: { archived: false, status: "APPROVED", salesStatus: "SOLD", user: { role: { notIn: ["ADMIN", "SUPER_ADMIN"] } } },
+          _count: { userId: true },
+          orderBy: { _count: { userId: "desc" } },
+          take: 3,
         }),
 
         Prisma.property.findMany({
@@ -62,47 +68,56 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
             user: { select: { id: true, fullname: true } },
           },
           orderBy: { createdAt: "desc" },
-          take: limit,
+          take: 10,
         }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, status: "APPROVED", archived: false, createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, status: "APPROVED", archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, status: "APPROVED", archived: false }) }),
+        prevCount({ is_Property_A_Project: false, status: "APPROVED", archived: false }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: true, status: "APPROVED", archived: false, createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: true, status: "APPROVED", archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: true, status: "APPROVED", archived: false }) }),
+        prevCount({ is_Property_A_Project: true, status: "APPROVED", archived: false }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, archived: false, status: "PENDING" }) }),
+        prevCount({ is_Property_A_Project: false, archived: false, status: "PENDING" }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SELLING" }) }),
+        prevCount({ is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SELLING" }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SOLD" }) }),
+        prevCount({ is_Property_A_Project: false, archived: false, status: "APPROVED", salesStatus: "SOLD" }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, archived: false, status: "REJECTED" }) }),
+        prevCount({ is_Property_A_Project: false, archived: false, status: "REJECTED" }),
 
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "TRASHED", createdAt: { gte: current.start, lte: current.end } } }),
-        Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "TRASHED", createdAt: { gte: previous.start, lte: previous.end } } }),
+        Prisma.property.count({ where: curr({ is_Property_A_Project: false, archived: false, status: "TRASHED" }) }),
+        prevCount({ is_Property_A_Project: false, archived: false, status: "TRASHED" }),
 
         Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "CREDIT" } }),
         Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "DEBIT" } }),
         Prisma.rewardRequest.count({ where: { status: "PENDING" } }),
 
-        Prisma.user.count({ where: { createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-        Prisma.property.aggregate({ _sum: { viewsCount: true }, where: { is_Property_A_Project: false, archived: false, createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-        Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "CREDIT", createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-        Prisma.kyc.count({ where: { createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
+        Prisma.user.count({ where: { ...(dateRange ? { createdAt: { gte: dateRange.current.start, lte: dateRange.current.end } } : {}) } }),
+        Prisma.property.aggregate({ _sum: { viewsCount: true }, where: { is_Property_A_Project: false, archived: false, ...(dateRange ? { createdAt: { gte: dateRange.current.start, lte: dateRange.current.end } } : {}) } }),
+        Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "CREDIT", ...(dateRange ? { createdAt: { gte: dateRange.current.start, lte: dateRange.current.end } } : {}) } }),
+        Prisma.kyc.count({ where: { ...(dateRange ? { createdAt: { gte: dateRange.current.start, lte: dateRange.current.end } } : {}) } }),
+        Prisma.property.count({ where: curr({ archived: false, status: "APPROVED", salesStatus: "SELLING" }) }),
       ]);
 
-      const listedPropertiesStats = calculateTrend(listedPropertiesCurrent, listedPropertiesPrevious);
-      const listedProjectsStats   = calculateTrend(listedProjectCurrent,    listedProjectPrevious);
-      const pendingStats          = calculateTrend(pendingCurrent,           pendingPrevious);
-      const sellingStats          = calculateTrend(sellingCurrent,           sellingPrevious);
-      const soldStats             = calculateTrend(soldCurrent,              soldPrevious);
-      const rejectedStats         = calculateTrend(rejectedCurrent,          rejectedPrevious);
-      const trashedStats          = calculateTrend(trashedCurrent,           trashedPrevious);
+      const topUserIds = topSellers.map(s => s.userId);
+      const leaderBroadPropertiesData = topUserIds.length
+        ? await Prisma.property.findMany({
+            where: { userId: { in: topUserIds }, archived: false, status: "APPROVED", salesStatus: "SOLD" },
+            select: { userId: true, price: { select: { amount: true, currency: true } }, user: { select: { fullname: true } } },
+          })
+        : [];
+
+      const listedPropertiesStats = trend(listedPropertiesCurrent, listedPropertiesPrevious);
+      const listedProjectsStats   = trend(listedProjectCurrent,    listedProjectPrevious);
+      const pendingStats          = trend(pendingCurrent,           pendingPrevious);
+      const sellingStats          = trend(sellingCurrent,           sellingPrevious);
+      const soldStats             = trend(soldCurrent,              soldPrevious);
+      const rejectedStats         = trend(rejectedCurrent,          rejectedPrevious);
+      const trashedStats          = trend(trashedCurrent,           trashedPrevious);
 
       const totalEarning = {
         CREDIT: rewardCreditAgg._sum.points ?? 0,
@@ -111,46 +126,40 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
       const totalEarningActivites = activityRewardAgg._sum.points   ?? 0;
       const propertyViews         = propertyViewsAgg._sum.viewsCount ?? 0;
 
-      const properties = recentPropertiesData.map(property => ({
-        slug: `#Arw-${property.id.slice(-3)}`,
-        ...property,
-      }));
+      const properties = recentPropertiesData.map(p => ({ slug: `#Arw-${p.id.slice(-3)}`, ...p }));
+
+      const sellerCountMap = new Map(topSellers.map(s => [s.userId, s._count.userId]));
+      const realtorMap = new Map<string, { name: string; propertiesSold: number; totalSoldAmount: number; currency: string }>();
 
       for (const property of leaderBroadPropertiesData) {
-        const realtorId = property.userId;
-        if (!realtorMap.has(realtorId)) {
-          realtorMap.set(realtorId, {
+        if (!realtorMap.has(property.userId)) {
+          realtorMap.set(property.userId, {
             name: property.user.fullname,
-            propertiesSold: 0,
+            propertiesSold: sellerCountMap.get(property.userId) ?? 0,
             totalSoldAmount: 0,
             currency: property.price.currency,
           });
         }
-        const realtor = realtorMap.get(realtorId)!;
-        realtor.propertiesSold  += 1;
-        realtor.totalSoldAmount += property.price.amount;
+        realtorMap.get(property.userId)!.totalSoldAmount += property.price.amount;
       }
 
-      const topRealtors = [...realtorMap.values()]
-        .sort((a, b) => b.propertiesSold - a.propertiesSold)
-        .slice(0, 3);
-
-      const totalPropertiesSold  = topRealtors.reduce((sum, r) => sum + r.propertiesSold, 0);
+      const topRealtors          = [...realtorMap.values()].sort((a, b) => b.propertiesSold - a.propertiesSold);
       const grandTotalSoldAmount = topRealtors.reduce((sum, r) => sum + r.totalSoldAmount, 0);
-      const leaderboard = topRealtors.map((r) => ({
+      const totalPropertiesSold  = topRealtors.reduce((sum, r) => sum + r.propertiesSold, 0);
+      const leaderboard = topRealtors.map(r => ({
         ...r,
-        percentage: Number(((r.propertiesSold / totalPropertiesSold) * 100).toFixed(2)),
+        percentage: totalPropertiesSold > 0 ? Number(((r.propertiesSold / totalPropertiesSold) * 100).toFixed(2)) : 0,
       }));
 
       return {
         stats: {
-          listedProperties:        { count: listedPropertiesCurrent, percentage: listedPropertiesStats.percentage, trend: listedPropertiesStats.trend },
-          listedProjects:          { count: listedProjectCurrent,    percentage: listedProjectsStats.percentage,   trend: listedProjectsStats.trend },
-          pendingListingProperties:{ count: pendingCurrent,          percentage: pendingStats.percentage,          trend: pendingStats.trend },
-          sellingListedProperties: { count: sellingCurrent,          percentage: sellingStats.percentage,          trend: sellingStats.trend },
-          soldListedProperties:    { count: soldCurrent,             percentage: soldStats.percentage,             trend: soldStats.trend },
-          rejectedListedProperties:{ count: rejectedCurrent,         percentage: rejectedStats.percentage,         trend: rejectedStats.trend },
-          trashedProperties:       { count: trashedCurrent,          percentage: trashedStats.percentage,          trend: trashedStats.trend },
+          listedProperties:         { count: listedPropertiesCurrent, percentage: listedPropertiesStats.percentage, trend: listedPropertiesStats.trend },
+          listedProjects:           { count: listedProjectCurrent,    percentage: listedProjectsStats.percentage,   trend: listedProjectsStats.trend },
+          pendingListingProperties: { count: pendingCurrent,          percentage: pendingStats.percentage,          trend: pendingStats.trend },
+          sellingListedProperties:  { count: sellingCurrent,          percentage: sellingStats.percentage,          trend: sellingStats.trend },
+          soldListedProperties:     { count: soldCurrent,             percentage: soldStats.percentage,             trend: soldStats.trend },
+          rejectedListedProperties: { count: rejectedCurrent,         percentage: rejectedStats.percentage,         trend: rejectedStats.trend },
+          trashedProperties:        { count: trashedCurrent,          percentage: trashedStats.percentage,          trend: trashedStats.trend },
         },
         recentProperties: properties,
         activities: {
@@ -158,7 +167,7 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
           propertyViews,
           totalRewardsEarns: totalEarningActivites,
           kycSubmitted: kyc,
-          totalPerformingProperties: 0,
+          totalPerformingProperties,
         },
         rewardsData: {
           totalEarning,

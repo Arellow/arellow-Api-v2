@@ -9,11 +9,26 @@ import { calculateTrend } from "../../../utils/calculateTrend";
 
 export const userDashbroad = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.id!;
-    const filterTime = (req.query.filterTime as string) || "this_year";
-    const cacheKey = `userdashbroad:${userId}:${filterTime}`;
+    const filterTime = req.query.filterTime as string | undefined;
+    const cacheKey = `userdashbroad:${userId}:${filterTime ?? "all"}`;
 
     try {
-        const { current, previous } = getDateRange(filterTime);
+        // When no filterTime: count all-time, no trend comparison
+        const dateRange = filterTime ? getDateRange(filterTime) : null;
+
+        const curr = (extra: object) => ({
+            userId, ...extra,
+            ...(dateRange ? { createdAt: { gte: dateRange.current.start,  lte: dateRange.current.end  } } : {}),
+        });
+        const prevCount = (extra: object) =>
+            dateRange
+                ? Prisma.property.count({ where: { userId, ...extra, createdAt: { gte: dateRange.previous.start, lte: dateRange.previous.end } } })
+                : Promise.resolve(0);
+
+
+
+        const trend = (cur: number, prv: number) =>
+            dateRange ? calculateTrend(cur, prv) : { percentage: 0, trend: "equal" as const };
 
         const result = await swrCache(cacheKey, async () => {
             const [
@@ -31,6 +46,7 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                 soldCurrent,            soldPrevious,
                 rejectedCurrent,        rejectedPrevious,
                 trashedCurrent,         trashedPrevious,
+                propertyRequestCurrent, propertyRequestPrevious,
             ] = await Promise.all([
                 Prisma.property.findMany({
                     where: { userId, archived: false },
@@ -48,35 +64,39 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                     take: 20,
                 }),
 
-                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: false, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, is_Property_A_Project: false }) }),
+                prevCount({ archived: false, is_Property_A_Project: false }),
 
-                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: true, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: true, createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, is_Property_A_Project: true }) }),
+                prevCount({ archived: false, is_Property_A_Project: true }),
 
-                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, status: "PENDING" }) }),
+                prevCount({ archived: false, status: "PENDING" }),
 
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SELLING", createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, status: "APPROVED", salesStatus: "SELLING" }) }),
+                prevCount({ archived: false, status: "APPROVED", salesStatus: "SELLING" }),
 
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "APPROVED", salesStatus: "SOLD", createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, status: "APPROVED", salesStatus: "SOLD" }) }),
+                prevCount({ archived: false, status: "APPROVED", salesStatus: "SOLD" }),
 
-                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: false, status: "REJECTED" }) }),
+                prevCount({ archived: false, status: "REJECTED" }),
 
-                Prisma.property.count({ where: { userId, archived: true, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: true, createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: curr({ archived: true }) }),
+                prevCount({ archived: true }),
+
+                Prisma.propertyRequest.count({ where: {createdById: userId,  ...(dateRange ? { createdAt: { gte: dateRange.current.start,  lte: dateRange.current.end  } } : {}) } }),
+                Prisma.propertyRequest.count({ where: { createdById: userId ,  ...(dateRange ? { createdAt: { gte: dateRange.previous.start,  lte: dateRange.previous.end  } } : {})} }),
             ]);
 
-            const listedStats        = calculateTrend(listedPropertyCurrent, listedPropertyPrevious);
-            const listedProjectStats = calculateTrend(listedProjectCurrent,  listedProjectPrevious);
-            const pendingStats       = calculateTrend(pendingCurrent,         pendingPrevious);
-            const sellingStats       = calculateTrend(sellingCurrent,         sellingPrevious);
-            const soldStats          = calculateTrend(soldCurrent,            soldPrevious);
-            const rejectedStats      = calculateTrend(rejectedCurrent,        rejectedPrevious);
-            const trashedStats       = calculateTrend(trashedCurrent,         trashedPrevious);
+            const listedStats        = trend(listedPropertyCurrent, listedPropertyPrevious);
+            const listedProjectStats = trend(listedProjectCurrent,  listedProjectPrevious);
+            const pendingStats       = trend(pendingCurrent,         pendingPrevious);
+            const sellingStats       = trend(sellingCurrent,         sellingPrevious);
+            const soldStats          = trend(soldCurrent,            soldPrevious);
+            const rejectedStats      = trend(rejectedCurrent,        rejectedPrevious);
+            const trashedStats       = trend(trashedCurrent,         trashedPrevious);
+            const requestStats       = trend(propertyRequestCurrent, propertyRequestPrevious);
 
             const totalEarning = {
                 CREDIT: rewardCreditAgg._sum.points ?? 0,
@@ -84,6 +104,9 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
             };
             const difference = totalEarning.CREDIT - totalEarning.DEBIT;
             const withdrawableEarning = difference >= 200 ? difference - 200 : 0;
+
+
+       
 
             return {
                 stats: {
@@ -121,6 +144,11 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                         count:      trashedCurrent,
                         percentage: trashedStats.percentage,
                         trend:      trashedStats.trend,
+                    },
+                    propertyRequest: { 
+                      count: propertyRequestCurrent,  
+                      percentage: requestStats.percentage,  
+                      trend: requestStats.trend 
                     },
                 },
                 rewardData: {
