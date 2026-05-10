@@ -2,143 +2,69 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "../../../lib/prisma";
 import { swrCache } from "../../../lib/cache";
-import { redis } from "../../../lib/redis";
 import CustomResponse from "../../../utils/helpers/response.util";
 import { InternalServerError } from "../../../lib/appError";
-
 import { getDateRange } from "../../../utils/getDateRange";
-
-import { getMonth } from "date-fns";
 import { calculateTrend } from "../../../utils/calculateTrend";
-
-
-// type IRewards = {
-//   CREDIT: number,
-//   DEBIT: number,
-//   PENDING: number
-// };
+import { getMonth } from "date-fns";
 
 
 export const adminDashbroad = async (req: Request, res: Response, next: NextFunction) => {
-
   const limit = 10;
-  const filterTime = req.query.filterTime || "this_year";
-
+  const filterTime = (req.query.filterTime as string) || "this_year";
   const cacheKey = `adminDashbroad:${limit}:${filterTime}`;
 
   const { current, previous } = getDateRange("this_month");
-
-  const { current: currentFilter, previous: previousFilter } = getDateRange(filterTime as string);
-
-      const realtorMap = new Map<
-      string,
-      {
-        name: string;
-        // avatar: string;
-        // bio: string;
-        propertiesSold: number;
-        totalSoldAmount: number;
-        currency: string;
-      }
-    >();
-
-
+  const { current: currentFilter } = getDateRange(filterTime);
 
   try {
-
-
     const result = await swrCache(cacheKey, async () => {
+      const realtorMap = new Map<string, { name: string; propertiesSold: number; totalSoldAmount: number; currency: string }>();
 
       const [
-
         leaderBroadPropertiesData,
         recentPropertiesData,
 
+        listedPropertiesCurrent, listedPropertiesPrevious,
+        listedProjectCurrent,   listedProjectPrevious,
+        pendingCurrent,         pendingPrevious,
+        sellingCurrent,         sellingPrevious,
+        soldCurrent,            soldPrevious,
+        rejectedCurrent,        rejectedPrevious,
+        trashedCurrent,         trashedPrevious,
 
-        // property
-        listedPropertiesCurrent,
-        listedPropertiesPrevious,
+        rewardCreditAgg,
+        rewardDebitAgg,
+        rewardRequestCount,
 
-        listedProjectCurrent,
-        listedProjectPrevious,
-
-        pendingCurrent,
-        pendingPrevious,
-
-        sellingCurrent,
-        sellingPrevious,
-
-        soldCurrent,
-        soldPrevious,
-
-        rejectedCurrent,
-        rejectedPrevious,
-
-
-        trashedCurrent,
-        trashedPrevious,
-
-
-        rewards,
-        rewardRequest,
         users,
-        activitiesProperties,
-        activitiesRewards,
+        propertyViewsAgg,
+        activityRewardAgg,
         kyc,
-
-
-
       ] = await Promise.all([
-          Prisma.property.findMany({
+        Prisma.property.findMany({
           where: {
             archived: false, status: "APPROVED", salesStatus: "SOLD",
-            user: {
-              role: { notIn: ["ADMIN", "SUPER_ADMIN"] },
-            },
+            user: { role: { notIn: ["ADMIN", "SUPER_ADMIN"] } },
           },
           select: {
             userId: true,
-            price: {
-              select: {
-                amount: true,
-                currency: true,
-              },
-            },
-            user: {
-              select: {
-                fullname: true,
-                avatar: true,
-                description: true
-              },
-            },
+            price: { select: { amount: true, currency: true } },
+            user: { select: { fullname: true } },
           },
         }),
-
 
         Prisma.property.findMany({
           where: { archived: false },
           select: {
-            id: true,
-            createdAt: true,
-            status: true,
-            price: true,
-            state: true,
-            title: true,
-            media: true,
-            user: {
-              select: { id: true, fullname: true },
-            }
-
+            id: true, createdAt: true, status: true, price: true,
+            state: true, title: true, media: true,
+            user: { select: { id: true, fullname: true } },
           },
           orderBy: { createdAt: "desc" },
-          take: limit
+          take: limit,
+        }),
 
-        }
-        ),
-
-
-
-        //   PROPERTIES
         Prisma.property.count({ where: { is_Property_A_Project: false, status: "APPROVED", archived: false, createdAt: { gte: current.start, lte: current.end } } }),
         Prisma.property.count({ where: { is_Property_A_Project: false, status: "APPROVED", archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
 
@@ -157,270 +83,90 @@ export const adminDashbroad = async (req: Request, res: Response, next: NextFunc
         Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
         Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
 
-
         Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "TRASHED", createdAt: { gte: current.start, lte: current.end } } }),
         Prisma.property.count({ where: { is_Property_A_Project: false, archived: false, status: "TRASHED", createdAt: { gte: previous.start, lte: previous.end } } }),
 
+        Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "CREDIT" } }),
+        Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "DEBIT" } }),
+        Prisma.rewardRequest.count({ where: { status: "PENDING" } }),
 
-
-
-        // // buy ability
-        // Prisma.propertyRequest.count({ where: { createdAt: { gte: current.start, lte: current.end } } }),
-        // Prisma.propertyRequest.count({ where: { createdAt: { gte: previous.start, lte: previous.end } } }),
-
-
-        // // property request
-        // Prisma.propertyRequest.count({ where: { createdAt: { gte: current.start, lte: current.end } } }),
-        // Prisma.propertyRequest.count({ where: { createdAt: { gte: previous.start, lte: previous.end } } }),
-
-
-
-        // rewards
-        Prisma.rewardHistory.findMany({ where: {} }),
-        Prisma.rewardRequest.findMany({ where: { status: "PENDING" } }),
-
-
-        // activities
         Prisma.user.count({ where: { createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-        Prisma.property.findMany({ where: { is_Property_A_Project: false, archived: false, createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-        Prisma.rewardHistory.findMany({ where: { type: "CREDIT", createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
+        Prisma.property.aggregate({ _sum: { viewsCount: true }, where: { is_Property_A_Project: false, archived: false, createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
+        Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { type: "CREDIT", createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
         Prisma.kyc.count({ where: { createdAt: { gte: currentFilter.start, lte: currentFilter.end } } }),
-
-
-
-
-
-
-
       ]);
 
-
-
-
-
-      // // Initialize counters for all placements
-      // const rewardsData: Record<IRewards, number> = {
-      //   CREDIT: 0,
-      //   DEBIT: 0,
-      //   PENDING: 0
-      // };
-
-      // // // Sum clicks by placement
-      // for (const reward of rewards) {
-
-      //   // for (const placement of reward.) {
-      //   //   placementClicks[placement] += camp.clicks;
-      //   // }
-      // }
-
-      // // Get total clicks
-      // const totalClicks = Object.values(placementClicks).reduce(
-      //   (sum, v) => sum + v,
-      //   0
-      // );
-
-      // // Percentage
-      // const placementPercentage = Object.fromEntries(
-      //   Object.entries(placementClicks).map(([placement, clicks]) => {
-      //     const percentage = totalClicks === 0 ? 0 : (clicks / totalClicks) * 100;
-      //     return [placement, Number(percentage.toFixed(2))];
-      //   })
-      // );
-
-
-
-      // const totalCurrentClicks = clicksCurrentCampaigns.reduce(
-      //   (sum, v) => sum + v.clicks,
-      //   0
-      // );
-      // const totalPreviousClicks = clicksPreviousCampaigns.reduce(
-      //   (sum, v) => sum + v.clicks,
-      //   0
-      // );
-
-
-
-
       const listedPropertiesStats = calculateTrend(listedPropertiesCurrent, listedPropertiesPrevious);
-      const listedProjectsStats = calculateTrend(listedProjectCurrent, listedProjectPrevious);
-      const pendingStats = calculateTrend(pendingCurrent, pendingPrevious);
-      const sellingStats = calculateTrend(sellingCurrent, sellingPrevious);
-      const soldStats = calculateTrend(soldCurrent, soldPrevious);
-      const rejectedStats = calculateTrend(rejectedCurrent, rejectedPrevious);
-      const trashedStats = calculateTrend(trashedCurrent, trashedPrevious);
+      const listedProjectsStats   = calculateTrend(listedProjectCurrent,    listedProjectPrevious);
+      const pendingStats          = calculateTrend(pendingCurrent,           pendingPrevious);
+      const sellingStats          = calculateTrend(sellingCurrent,           sellingPrevious);
+      const soldStats             = calculateTrend(soldCurrent,              soldPrevious);
+      const rejectedStats         = calculateTrend(rejectedCurrent,          rejectedPrevious);
+      const trashedStats          = calculateTrend(trashedCurrent,           trashedPrevious);
 
+      const totalEarning = {
+        CREDIT: rewardCreditAgg._sum.points ?? 0,
+        DEBIT:  rewardDebitAgg._sum.points  ?? 0,
+      };
+      const totalEarningActivites = activityRewardAgg._sum.points   ?? 0;
+      const propertyViews         = propertyViewsAgg._sum.viewsCount ?? 0;
 
-      // activities
-
-
-
-
-      const totalEarning = rewards.reduce((v, c) => {
-
-        if (c.type == "CREDIT") {
-          v.CREDIT += c.points;
-        }
-
-        if (c.type == "DEBIT") {
-          v.DEBIT += c.points;
-        }
-
-        return v;
-      }, { CREDIT: 0, DEBIT: 0, });
-
-      const totalEarningActivites = activitiesRewards.reduce((v, c) => {
-
-        v += c.points;
-        return v;
-      }, 0);
-
-
-      const propertyViews = activitiesProperties.reduce((v, c) => {
-
-        v += c.viewsCount;
-
-        return v;
-
-      }, 0);
-
-
-
-
-      // Percentage
-      // const placementPercentage = Object.fromEntries(
-      //   Object.entries(placementClicks).map(([placement, clicks]) => {
-      //     const percentage = totalClicks === 0 ? 0 : (clicks / totalClicks) * 100;
-      //     return [placement, Number(percentage.toFixed(2))];
-      //   })
-      // );
-
-
-      // const pendingRewardPercentage = rewardRequest. === 0 ? 0 : (clicks / totalClicks) * 100;
-
-
-
-
-      // recentPropertiesData
       const properties = recentPropertiesData.map(property => ({
         slug: `#Arw-${property.id.slice(-3)}`,
-        ...property
-
+        ...property,
       }));
 
-
-
-        for (const property of leaderBroadPropertiesData) {
+      for (const property of leaderBroadPropertiesData) {
         const realtorId = property.userId;
-
         if (!realtorMap.has(realtorId)) {
           realtorMap.set(realtorId, {
             name: property.user.fullname,
-            // avatar: property.user.avatar,
-            // bio: property.user.description || "",
             propertiesSold: 0,
             totalSoldAmount: 0,
             currency: property.price.currency,
           });
         }
-
         const realtor = realtorMap.get(realtorId)!;
-        realtor.propertiesSold += 1;
+        realtor.propertiesSold  += 1;
         realtor.totalSoldAmount += property.price.amount;
       }
-
 
       const topRealtors = [...realtorMap.values()]
         .sort((a, b) => b.propertiesSold - a.propertiesSold)
         .slice(0, 3);
 
-
-        const totalPropertiesSold = topRealtors.reduce(
-  (sum, r) => sum + r.propertiesSold,
-  0
-);
-
-const grandTotalSoldAmount = topRealtors.reduce(
-  (sum, r) => sum + r.totalSoldAmount,
-  0
-);
-
-const leaderboard = topRealtors.map((r) => ({
-  ...r,
-  percentage: Number(
-    ((r.propertiesSold / totalPropertiesSold) * 100).toFixed(2)
-  ),
-}));
-
-
-
+      const totalPropertiesSold  = topRealtors.reduce((sum, r) => sum + r.propertiesSold, 0);
+      const grandTotalSoldAmount = topRealtors.reduce((sum, r) => sum + r.totalSoldAmount, 0);
+      const leaderboard = topRealtors.map((r) => ({
+        ...r,
+        percentage: Number(((r.propertiesSold / totalPropertiesSold) * 100).toFixed(2)),
+      }));
 
       return {
-
         stats: {
-
-          listedProperties: {
-            count: listedPropertiesCurrent,
-            percentage: listedPropertiesStats.percentage,
-            trend: listedPropertiesStats.trend
-          },
-          listedProjects: {
-            count: listedProjectCurrent,
-            percentage: listedProjectsStats.percentage,
-            trend: listedProjectsStats.trend
-          },
-          pendingListingProperties: {
-            count: pendingCurrent,
-            percentage: pendingStats.percentage,
-            trend: pendingStats.trend
-          },
-          sellingListedProperties: {
-            count: sellingCurrent,
-            percentage: sellingStats.percentage,
-            trend: sellingStats.trend
-          },
-          soldListedProperties: {
-            count: soldCurrent,
-            percentage: soldStats.percentage,
-            trend: soldStats.trend
-          },
-          rejectedListedProperties: {
-            count: rejectedCurrent,
-            percentage: rejectedStats.percentage,
-            trend: rejectedStats.trend
-          },
-          trashedProperties: {
-            count: trashedCurrent,
-            percentage: trashedStats.percentage,
-            trend: trashedStats.trend
-          },
-
+          listedProperties:        { count: listedPropertiesCurrent, percentage: listedPropertiesStats.percentage, trend: listedPropertiesStats.trend },
+          listedProjects:          { count: listedProjectCurrent,    percentage: listedProjectsStats.percentage,   trend: listedProjectsStats.trend },
+          pendingListingProperties:{ count: pendingCurrent,          percentage: pendingStats.percentage,          trend: pendingStats.trend },
+          sellingListedProperties: { count: sellingCurrent,          percentage: sellingStats.percentage,          trend: sellingStats.trend },
+          soldListedProperties:    { count: soldCurrent,             percentage: soldStats.percentage,             trend: soldStats.trend },
+          rejectedListedProperties:{ count: rejectedCurrent,         percentage: rejectedStats.percentage,         trend: rejectedStats.trend },
+          trashedProperties:       { count: trashedCurrent,          percentage: trashedStats.percentage,          trend: trashedStats.trend },
         },
         recentProperties: properties,
-
         activities: {
           numberOfUsers: users,
           propertyViews,
           totalRewardsEarns: totalEarningActivites,
           kycSubmitted: kyc,
-          totalPerformingProperties: 0
-
+          totalPerformingProperties: 0,
         },
         rewardsData: {
-          // pendingReward:{
-          //   count: rewardRequest,
-          //   percentage: 
-          // }
+          totalEarning,
+          pendingRequests: rewardRequestCount,
         },
-        leaderboardData: {
-          leaderboard,
-          grandTotalSoldAmount
-        }
-
-      }
-    })
-
-
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
+        leaderboardData: { leaderboard, grandTotalSoldAmount },
+      };
+    }, 3600);
 
     new CustomResponse(200, true, "Fetched successfully", res, result);
   } catch (error) {
@@ -431,7 +177,6 @@ const leaderboard = topRealtors.map((r) => ({
 
 export const getDashbroadChart = async (req: Request, res: Response, next: NextFunction) => {
   try {
-
     const { filterTime = "this_year" } = req.query;
 
     const { current, previous } = getDateRange(filterTime.toString());
@@ -439,8 +184,6 @@ export const getDashbroadChart = async (req: Request, res: Response, next: NextF
     const cacheKey = `getAdminDashBroadChart`;
 
     const result = await swrCache(cacheKey, async () => {
-
-
       const [properties, totalProperties, CurrentProperties, PreviousProperties] = await Promise.all([
         Prisma.property.findMany({
           where: {
@@ -467,58 +210,41 @@ export const getDashbroadChart = async (req: Request, res: Response, next: NextF
             createdAt: { gte: previous.start, lte: previous.end }
           },
         }),
-
-
       ]);
 
-
-
-      // Initialize 12 months with 0 clicks
       const months = Array.from({ length: 12 }, (_, i) => ({
         month: i,
         count: 0,
         price: 0
       }));
 
-      // Aggregate clicks
       for (const property of properties) {
-
         const monthIndex = getMonth(property.createdAt);
         months[monthIndex].count++;
         months[monthIndex].price += property.price.amount;
       }
 
-      // Convert month index to labels
       const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-      const result = months.map((m) => ({
+      const chartData = months.map((m) => ({
         month: monthLabels[m.month],
         count: m.count,
         price: m.price,
       }));
 
-
-
       const propertiesStats = calculateTrend(CurrentProperties, PreviousProperties);
-
 
       return {
         data: {
-
-          result,
-
+          result: chartData,
           stats: {
-
             totalProperties: {
               count: totalProperties,
               percentage: propertiesStats.percentage,
               trend: propertiesStats.trend
             },
-
-
           },
         }
-
       };
     });
 

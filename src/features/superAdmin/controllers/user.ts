@@ -214,39 +214,28 @@ export const getUsersController = async (req: Request, res: Response, next: Next
 
 
 export const createAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    const {email, action, username, password, phone_number, fullname
+  const { email, action, username, password, phone_number, fullname }: {
+    email: string; action: ActionRole[]; username: string;
+    password: string; phone_number: { phone: string; country: string }; fullname: string;
+  } = req.body;
 
+  const parsedAction: ActionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
 
-    }: {email:  string, action: ActionRole[], username: string, password:  string, phone_number: {phone: string, country: string}, fullname: string}  = req.body;
+  try {
+    const [existingUser, existingUserName] = await Promise.all([
+      Prisma.user.findUnique({ where: { email } }),
+      Prisma.user.findUnique({ where: { username } }),
+    ]);
 
-    const parsedAction: ActionRole[] = typeof action === 'string' ? JSON.parse(action) : action;
+    if (existingUser)    return next(new DuplicateError("Email already exists."));
+    if (existingUserName) return next(new DuplicateError("User name already exists."));
 
+    const [hashedPassword, cleanedPhoneNumber] = await Promise.all([
+      bcrypt.hash(password, 10),
+      Promise.resolve(phone_number.phone.replace(/[^\d+]/g, '')),
+    ]);
 
-    try {
-
-
-     const existingUser = await Prisma.user.findUnique({
-      where: { email },
-    });
-
-    const existingUserName = await Prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (existingUser) {
-      return next(new DuplicateError("Email already exists."));
-     
-    }
-
-    if (existingUserName) {
-      return next(new DuplicateError("User name already exists."));
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const cleanedPhoneNumber = phone_number.phone.replace(/[^\d+]/g, '');
-
-    const newUser = await Prisma.user.create({
+    await Prisma.user.create({
       data: {
         username,
         email,
@@ -255,85 +244,35 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
         is_verified: true,
         role: "ADMIN",
         fullname,
-        address: {
-          country: phone_number.country,
-          city: "",
-          location: "",
-          state: ""
+        address: { country: phone_number.country, city: "", location: "", state: "" },
+        setting: { emailNotification: true, pushNotification: true, smsNotification: false },
+        AdminPermission: {
+          create: { action: parsedAction },
         },
-        setting: {
-          emailNotification: true,
-          pushNotification: true,
-          smsNotification: false
-        }
-      }
+        kyc: {
+          create: {
+            documentType: KycDocumentType.NIN,
+            status: KycStatus.VERIFIED,
+            documentNumber: "12345",
+            documentPhoto: "",
+            tryCount: 1,
+            ninData: {
+              nin: "12345",
+              firstname: "Arellow", lastname: "Arellow", middlename: "Arellow",
+              phone: "", gender: "N/A", birthdate: "", photo: "",
+              residence: { address1: "", town: "", lga: "", state: "" },
+            },
+          },
+        },
+      },
     });
 
+    await deleteMatchingKeys("admins:*");
 
-
-     if (!newUser) {
-      return next(new InternalServerError("Admin registration failed", 500));
-    }
-
-
-
-   const adminPermission =  await Prisma.adminPermission.create({
-             data: {
-                 userId: newUser.id,
-                 action: parsedAction,
-                 
-             }
-         })
-
-         await Prisma.user.update({
-      where: { id: newUser.id },
-      data: {
-        AdminPermission: {connect: {id: adminPermission.id}}
-      }
-    });
-
-
-
-      const kycPayload = {
-                    userId: newUser.id,
-                    documentType: KycDocumentType.NIN,
-                    status: KycStatus.VERIFIED,
-                    documentNumber: "12345",
-                    documentPhoto: "",
-                    tryCount: 1,
-                    ninData: {
-                        nin: "12345",
-                        firstname: "Arellow",
-                        lastname: "Arellow",
-                        middlename: "Arellow",
-                        phone: "",
-                        gender: "N/A",
-                        birthdate: "",
-                        photo: "",
-                        residence: {
-                            address1: "",
-                            town: "",
-                            lga: "",
-                            state: ""
-                        } 
-                       
-                    }
-                };
-    
-               
-     await Prisma.kyc.create({ data: kycPayload });
-
-    
-
-
-    await deleteMatchingKeys("admins:*")
-
-     new CustomResponse(200, true, "Admin added", res,);
-
-    } catch (error) {
-        next(new InternalServerError("Internal server error", 500));
-    }
-
+    new CustomResponse(200, true, "Admin added", res);
+  } catch (error) {
+    next(new InternalServerError("Internal server error", 500));
+  }
 }
 
 export const addAdminRole = async (req: Request, res: Response, next: NextFunction) => {
