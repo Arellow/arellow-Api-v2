@@ -20,18 +20,17 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                 propertyLocationData,
                 totalPropertyLocationData,
 
-                recentRewards,
                 rewardCreditAgg,
                 rewardDebitAgg,
+                rewards,
 
-                listedCurrent,    listedPrevious,
-                pendingCurrent,   pendingPrevious,
-                sellingCurrent,   sellingPrevious,
-                soldCurrent,      soldPrevious,
-                rejectedCurrent,  rejectedPrevious,
-
-                propertyRequestCurrent,
-                propertyRequestPrevious,
+                listedPropertyCurrent,  listedPropertyPrevious,
+                listedProjectCurrent,   listedProjectPrevious,
+                pendingCurrent,         pendingPrevious,
+                sellingCurrent,         sellingPrevious,
+                soldCurrent,            soldPrevious,
+                rejectedCurrent,        rejectedPrevious,
+                trashedCurrent,         trashedPrevious,
             ] = await Promise.all([
                 Prisma.property.findMany({
                     where: { userId, archived: false },
@@ -40,17 +39,20 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                 }),
                 Prisma.property.count({ where: { userId, archived: false } }),
 
+                Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { userId, type: "CREDIT" } }),
+                Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { userId, type: "DEBIT" } }),
                 Prisma.rewardHistory.findMany({
                     where: { userId },
                     select: { id: true, points: true, type: true, reason: true, createdAt: true },
                     orderBy: { createdAt: "desc" },
                     take: 20,
                 }),
-                Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { userId, type: "CREDIT" } }),
-                Prisma.rewardHistory.aggregate({ _sum: { points: true }, where: { userId, type: "DEBIT" } }),
 
-                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.property.count({ where: { userId, archived: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: false, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: false, createdAt: { gte: previous.start, lte: previous.end } } }),
+
+                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: true, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: false, is_Property_A_Project: true, createdAt: { gte: previous.start, lte: previous.end } } }),
 
                 Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: current.start, lte: current.end } } }),
                 Prisma.property.count({ where: { userId, archived: false, status: "PENDING", createdAt: { gte: previous.start, lte: previous.end } } }),
@@ -64,16 +66,17 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
                 Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: current.start, lte: current.end } } }),
                 Prisma.property.count({ where: { userId, archived: false, status: "REJECTED", createdAt: { gte: previous.start, lte: previous.end } } }),
 
-                Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: current.start, lte: current.end } } }),
-                Prisma.propertyRequest.count({ where: { createdById: userId, createdAt: { gte: previous.start, lte: previous.end } } }),
+                Prisma.property.count({ where: { userId, archived: true, createdAt: { gte: current.start, lte: current.end } } }),
+                Prisma.property.count({ where: { userId, archived: true, createdAt: { gte: previous.start, lte: previous.end } } }),
             ]);
 
-            const listedStats   = calculateTrend(listedCurrent,   listedPrevious);
-            const pendingStats  = calculateTrend(pendingCurrent,   pendingPrevious);
-            const sellingStats  = calculateTrend(sellingCurrent,   sellingPrevious);
-            const soldStats     = calculateTrend(soldCurrent,      soldPrevious);
-            const rejectedStats = calculateTrend(rejectedCurrent,  rejectedPrevious);
-            const requestStats  = calculateTrend(propertyRequestCurrent, propertyRequestPrevious);
+            const listedStats        = calculateTrend(listedPropertyCurrent, listedPropertyPrevious);
+            const listedProjectStats = calculateTrend(listedProjectCurrent,  listedProjectPrevious);
+            const pendingStats       = calculateTrend(pendingCurrent,         pendingPrevious);
+            const sellingStats       = calculateTrend(sellingCurrent,         sellingPrevious);
+            const soldStats          = calculateTrend(soldCurrent,            soldPrevious);
+            const rejectedStats      = calculateTrend(rejectedCurrent,        rejectedPrevious);
+            const trashedStats       = calculateTrend(trashedCurrent,         trashedPrevious);
 
             const totalEarning = {
                 CREDIT: rewardCreditAgg._sum.points ?? 0,
@@ -84,21 +87,49 @@ export const userDashbroad = async (req: Request, res: Response, next: NextFunct
 
             return {
                 stats: {
-                    listedProperty:        { count: listedCurrent,           percentage: listedStats.percentage,   trend: listedStats.trend },
-                    pendingListingProperty: { count: pendingCurrent,          percentage: pendingStats.percentage,  trend: pendingStats.trend },
-                    sellingListedProperty:  { count: sellingCurrent,          percentage: sellingStats.percentage,  trend: sellingStats.trend },
-                    soldListedProperty:     { count: soldCurrent,             percentage: soldStats.percentage,     trend: soldStats.trend },
-                    rejectedListedProperty: { count: rejectedCurrent,         percentage: rejectedStats.percentage, trend: rejectedStats.trend },
-                    buyPropertyAbility:     { count: propertyRequestCurrent,  percentage: requestStats.percentage,  trend: requestStats.trend },
-                    propertyRequest:        { count: propertyRequestCurrent,  percentage: requestStats.percentage,  trend: requestStats.trend },
+                    listedProperty: {
+                        count:      listedPropertyCurrent,
+                        percentage: listedStats.percentage,
+                        trend:      listedStats.trend,
+                    },
+                    listedProject: {
+                        count:      listedProjectCurrent,
+                        percentage: listedProjectStats.percentage,
+                        trend:      listedProjectStats.trend,
+                    },
+                    pendingListingProperty: {
+                        count:      pendingCurrent,
+                        percentage: pendingStats.percentage,
+                        trend:      pendingStats.trend,
+                    },
+                    sellingListedProperty: {
+                        count:      sellingCurrent,
+                        percentage: sellingStats.percentage,
+                        trend:      sellingStats.trend,
+                    },
+                    soldListedProperty: {
+                        count:      soldCurrent,
+                        percentage: soldStats.percentage,
+                        trend:      soldStats.trend,
+                    },
+                    rejectedListedProperty: {
+                        count:      rejectedCurrent,
+                        percentage: rejectedStats.percentage,
+                        trend:      rejectedStats.trend,
+                    },
+                    trashedListed: {
+                        count:      trashedCurrent,
+                        percentage: trashedStats.percentage,
+                        trend:      trashedStats.trend,
+                    },
                 },
                 rewardData: {
                     totalEarning,
                     withdrawableEarning,
-                    rewards: recentRewards,
+                    rewards,
                 },
                 propertyLocations: {
-                    locations: propertyLocationData,
+                    locations:     propertyLocationData,
                     totalProperty: totalPropertyLocationData,
                 },
             };

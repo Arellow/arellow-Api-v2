@@ -637,22 +637,29 @@ enum BlogStatus {
 
 // -------------------------------------- PreQualification start -----------------------------
 
+enum PreQualificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model PreQualification {
-  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String                 @id @default(auto()) @map("_id") @db.ObjectId
   fullname            String
   email               String
   phonenumber         String
   occupation          String
   home_address        String
   state               String
+  country             String
   city                String
   neighbourhood       String
-  monthly_budget      Float
-  down_payment_goal   Float
+  monthly_budget      PriceModel
+  down_payment_goal   PriceModel
   employer_name       String?
   level_of_employment String?
   bank_name           String
-  status              PropertyStatus @default(PENDING)
+  status              PreQualificationStatus @default(PENDING)
 
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
