@@ -35,141 +35,57 @@ export const singleProperty = async (req: Request, res: Response, next: NextFunc
 
   try {
 
-    // find single
     const property = await Prisma.property.findUnique({
       where: { id },
       include: {
         amenities: true,
-        media: {
-          select: {
-            url: true,
-            altText: true,
-            type: true,
-            photoType: true,
-            sizeInKB: true
-
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            role: true,
-            email: true,
-            fullname: true,
-            username: true,
-            is_verified: true,
-            avatar: true,
-            createdAt: true,
-            lastSeen: true,
-            online: true,
-          }
-        }
-
+        media: { select: { url: true, altText: true, type: true, photoType: true, sizeInKB: true } },
+        user: { select: { id: true, role: true, email: true, fullname: true, username: true, is_verified: true, avatar: true, createdAt: true, lastSeen: true, online: true } },
       },
     });
 
+    if (!property) return next(new InternalServerError("Property not found", 404));
 
-   
-    const approvedProperties = await Prisma.property.findMany({
-      where: { userId: property?.userId , archived: false, status: "APPROVED"},
-      include: {
-        amenities: true,
-        media: {
-          select: {
-            url: true,
-            altText: true,
-            type: true,
-            photoType: true,
-            sizeInKB: true
-
-          }
+    const [approvedProperties, likeRecord] = await Promise.all([
+      Prisma.property.findMany({
+        where: { userId: property.userId, archived: false, status: "APPROVED" },
+        include: {
+          amenities: true,
+          media: { select: { url: true, altText: true, type: true, photoType: true, sizeInKB: true } },
         },
-        // user: {
-        //   select: {
-        //     id: true,
-        //     role: true,
-        //     email: true,
-        //     fullname: true,
-        //     username: true,
-        //     is_verified: true,
-        //     avatar: true,
-        //     createdAt: true,
-        //     lastSeen: true,
-        //     online: true,
-
-
-
-        //   }
-        // }
-
-      },
-    });
-
-
-
-    if (!property) {
-      return next(new InternalServerError("Property not found", 404));
-    }
-
-    let isLiked = false;
-
-    if (userId) {
-      const like = await Prisma.userPropertyLike.findFirst({
-        where: {
-          userId,
-          propertyId: id
-        }
-      });
-
-      isLiked = !!like;
-    }
-
+        take: 10,
+      }),
+      userId
+        ? Prisma.userPropertyLike.findUnique({ where: { userId_propertyId: { userId, propertyId: id } } })
+        : Promise.resolve(null),
+    ]);
 
     if (userId !== property.userId) {
-      await Prisma.property.update({
-        where: { id },
-        data: { viewsCount: { increment: 1 } },
-      })
+      await Prisma.property.update({ where: { id }, data: { viewsCount: { increment: 1 } } });
     }
 
-
-
-
-
     const totalViews = await Prisma.property.aggregate({
-      _sum: {
-        viewsCount: true
-      },
-      where: {
-        userId: property?.userId
-      }
+      _sum: { viewsCount: true },
+      where: { userId: property.userId },
     });
 
     const totalViewsCount = totalViews._sum.viewsCount ?? 0;
+    const isLiked = !!likeRecord;
 
-
-    property.stage = mapEnumValue(PropertyStageMap, property?.stage) as PropertyStage;
+    property.stage = mapEnumValue(PropertyStageMap, property.stage) as PropertyStage;
     property.progress = mapEnumValue(PropertyProgressMap, property.progress) as PropertyProgress;
-    // property.category = mapEnumValue(PropertyCategoryMap, property.category) as PropertyCategory;
-
 
     const { user, ...other } = property;
-
-
     const responseData = {
       ...other,
       isLiked,
-      user: { ...user, totalViewsCount , approvedProperties}
-
+      user: { ...user, totalViewsCount, approvedProperties },
     };
 
     await redis.set(cacheKey, JSON.stringify(responseData), "EX", 60);
-
     new CustomResponse(200, true, "successfully", res, responseData);
   } catch (error) {
-
     next(new InternalServerError("Internal server error", 500));
-    // next(error)
   }
 
 
@@ -448,10 +364,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
         Prisma.property.findMany({
           where: filters,
           include,
-          // orderBy: { createdAt: "desc" },
-          // skip: (pageNumber - 1) * pageSize,
-          // take: pageSize
-          // take: 50
+          skip: (pageNumber - 1) * pageSize,
+          take: pageSize,
         }),
         Prisma.property.count({ where: filters })
       ]);
@@ -460,19 +374,10 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
       const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
       const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
 
-      const shuffled = shuffleArray(properties);
-      const paginated = shuffled.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
-
-
-      //  const dataWithIsLiked = properties.map(({ likedBy, ...rest }) => ({
-      // ...rest,
-      // isLiked: Array.isArray(likedBy) && likedBy.length > 0
-      // }));
-
-      const dataWithIsLiked = paginated.map(({ likedBy, ...rest }) => ({
+      const dataWithIsLiked = shuffleArray(properties.map(({ likedBy, ...rest }) => ({
         ...rest,
         isLiked: Array.isArray(likedBy) && likedBy.length > 0
-      }));
+      })));
 
 
       return {
@@ -566,40 +471,27 @@ export const getAffordableProperties = async (
 
     const downPayment = Number(req.query.downPayment) || 200_000;
     const monthlyBudget = Number(req.query.monthlyPayment) || 100_000;
+    const cacheKey = `getAffordableProperties:${downPayment}:${monthlyBudget}:${userId || ""}`;
 
-    // Step 1: Get active properties (filter out archived or pending)
-    const properties = await Prisma.property.findMany({
-      where: {
-        archived: false,
-        status: 'APPROVED',
-        salesStatus: 'SELLING'
-      },
-      include,
-    });
+    const result = await swrCache(cacheKey, async () => {
+      const properties = await Prisma.property.findMany({
+        where: { archived: false, status: 'APPROVED', salesStatus: 'SELLING' },
+        include,
+      });
 
-    // Step 2: Filter properties based on affordability
-    const affordableProperties = properties.filter(property =>
-      canUserAffordProperty({
-        price: property.price.amount,
-        downPayment,
-        monthlyBudget
-      })
-    );
+      const affordableProperties = properties.filter(property =>
+        canUserAffordProperty({ price: property.price.amount, downPayment, monthlyBudget })
+      );
 
+      const dataWithIsLiked = affordableProperties.map(({ likedBy, ...rest }) => ({
+        ...rest,
+        isLiked: Array.isArray(likedBy) && likedBy.length > 0
+      }));
 
+      return { data: dataWithIsLiked };
+    }, 300);
 
-    const dataWithIsLiked = affordableProperties.map(({ likedBy, ...rest }) => ({
-      ...rest,
-      isLiked: Array.isArray(likedBy) && likedBy.length > 0
-    }));
-
-
-
-
-
-
-    // Step 3: Return response
-    new CustomResponse(200, true, "Affordable properties fetched", res, { data: dataWithIsLiked, });
+    new CustomResponse(200, true, "Affordable properties fetched", res, result);
   } catch (error) {
     next(new InternalServerError("Failed to fetch affordable properties"));
   }
@@ -939,11 +831,7 @@ export const getLikedPropertiesByUser = async (req: Request, res: Response, next
     });
 
 
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 3600);
-
     new CustomResponse(200, true, "success", res, result);
-
-
   } catch (error) {
     next(new InternalServerError("Failed to fetch liked properties", 500));
   }
@@ -999,18 +887,22 @@ export const getAllArchivedProperties = async (req: Request, res: Response, next
         bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
         bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
         floors ? { floors: parseInt(floors as string) } : undefined,
-        category ? { contains: category as string, mode: 'insensitive' } : undefined,
-        state ? { contains: state as string, mode: 'insensitive' } : undefined,
-        city ? { contains: city as string, mode: 'insensitive' } : undefined,
-        country ? { contains: country as string, mode: 'insensitive' } : undefined,
-        neighborhood ? { contains: neighborhood as string, mode: 'insensitive' } : undefined,
-        amenities ? { contains: amenities as string, mode: 'insensitive' } : undefined,
-        features ? { contains: features as string, mode: 'insensitive' } : undefined,
-
+        category ? { category: { contains: category as string, mode: 'insensitive' } } : undefined,
+        state ? { state: { contains: state as string, mode: 'insensitive' } } : undefined,
+        city ? { city: { contains: city as string, mode: 'insensitive' } } : undefined,
+        country ? { country: { contains: country as string, mode: 'insensitive' } } : undefined,
+        neighborhood ? { neighborhood: { contains: neighborhood as string, mode: 'insensitive' } } : undefined,
+        (amenities as string)?.split(",").filter(Boolean).length
+          ? { amenities: { some: { name: { in: (amenities as string).split(",").filter(Boolean) } } } }
+          : undefined,
+        (features as string)?.split(",").filter(Boolean).length
+          ? { features: { hasSome: (features as string).split(",").filter(Boolean) } }
+          : undefined,
 
         salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
-        minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
-        maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+        (minPrice || maxPrice)
+          ? { price: { is: { amount: { ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}), ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {}) } } } }
+          : undefined
       ].filter(Boolean) as prisma.PropertyWhereInput[]
     };
 
@@ -1130,17 +1022,22 @@ export const getArchivedPropertiesByUser = async (req: Request, res: Response, n
         bathrooms ? { bathrooms: parseInt(bathrooms as string) } : undefined,
         bedrooms ? { bedrooms: parseInt(bedrooms as string) } : undefined,
         floors ? { floors: parseInt(floors as string) } : undefined,
-        category ? { contains: category as string, mode: 'insensitive' } : undefined,
-        state ? { contains: state as string, mode: 'insensitive' } : undefined,
-        city ? { contains: city as string, mode: 'insensitive' } : undefined,
-        country ? { contains: country as string, mode: 'insensitive' } : undefined,
-        neighborhood ? { contains: neighborhood as string, mode: 'insensitive' } : undefined,
-        amenities ? { contains: amenities as string, mode: 'insensitive' } : undefined,
-        features ? { contains: features as string, mode: 'insensitive' } : undefined,
+        category ? { category: { contains: category as string, mode: 'insensitive' } } : undefined,
+        state ? { state: { contains: state as string, mode: 'insensitive' } } : undefined,
+        city ? { city: { contains: city as string, mode: 'insensitive' } } : undefined,
+        country ? { country: { contains: country as string, mode: 'insensitive' } } : undefined,
+        neighborhood ? { neighborhood: { contains: neighborhood as string, mode: 'insensitive' } } : undefined,
+        (amenities as string)?.split(",").filter(Boolean).length
+          ? { amenities: { some: { name: { in: (amenities as string).split(",").filter(Boolean) } } } }
+          : undefined,
+        (features as string)?.split(",").filter(Boolean).length
+          ? { features: { hasSome: (features as string).split(",").filter(Boolean) } }
+          : undefined,
 
         salesStatus ? { salesStatus: salesStatus as SalesStatus } : undefined,
-        minPrice ? { price: { gte: parseFloat(minPrice as string) } } : undefined,
-        maxPrice ? { price: { lte: parseFloat(maxPrice as string) } } : undefined
+        (minPrice || maxPrice)
+          ? { price: { is: { amount: { ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}), ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {}) } } } }
+          : undefined
       ].filter(Boolean) as prisma.PropertyWhereInput[]
     };
 
@@ -1219,35 +1116,10 @@ export const getTopPerforming = async (req: Request, res: Response, next: NextFu
     const cacheKey = `getTopPerforming`;
 
 
-    const realtorMap = new Map<
-      string,
-      {
-        name: string;
-        avatar: string;
-        bio: string;
-        propertiesSold: number;
-        totalSoldAmount: number;
-        currency: string;
-      }
-    >();
-
-
-    const leaderboardMap = new Map<
-      string,
-      {
-        name: string;
-        avatar: string;
-        bio: string;
-        propertiesSold: number;
-        totalSoldAmount: number;
-        currency: string;
-      }
-    >();
-
-
-
-
     const result = await swrCache(cacheKey, async () => {
+      const realtorMap = new Map<string, { name: string; avatar: string; bio: string; propertiesSold: number; totalSoldAmount: number; currency: string }>();
+      const leaderboardMap = new Map<string, { name: string; avatar: string; bio: string; propertiesSold: number; totalSoldAmount: number; currency: string }>();
+
       const [soldProperties, properties] = await Promise.all([
         Prisma.property.findMany({
           where: {
@@ -1514,25 +1386,14 @@ export const deleteProperty = async (req: Request, res: Response, next: NextFunc
       return next(new InternalServerError("Property not found", 404));
     }
 
-    //  Delete old media
-    const oldMedia = await Prisma.media.findMany({
-      where: { propertyId },
-    });
+    const oldMedia = await Prisma.media.findMany({ where: { propertyId } });
 
-    // Delete from Cloudinary
-    for (const media of oldMedia) {
-      try {
-        await cloudinary.uploader.destroy(media.publicId);
-      } catch (err) {
-        // console.warn(`Failed to delete media ${media.publicId}:`, err);
-      }
-    }
-
-    // Delete from DB
-    await Prisma.media.deleteMany({ where: { propertyId } });
-
-    await Prisma.userPropertyLike.deleteMany({ where: { propertyId } });
-    await Prisma.amenity.deleteMany({ where: { propertyId } });
+    await Promise.all([
+      Promise.all(oldMedia.map(m => cloudinary.uploader.destroy(m.publicId).catch(() => {}))),
+      Prisma.media.deleteMany({ where: { propertyId } }),
+      Prisma.userPropertyLike.deleteMany({ where: { propertyId } }),
+      Prisma.amenity.deleteMany({ where: { propertyId } }),
+    ]);
 
     await Prisma.property.delete({ where: { id: propertyId } });
 
@@ -1604,28 +1465,17 @@ export const approveProperty = async (req: Request, res: Response, next: NextFun
       return next(new InternalServerError("Property not found", 404));
     }
 
-    await Prisma.property.update({
-      where: { id },
-      data: {
-        status: 'APPROVED',
-        rejectionReason: null,
-        approvedBy: { connect: { id: req.user?.id! } },
-      },
-    });
+    const points = ["lagos", "enugu", "abuja"].includes(property.state.toLowerCase()) ? 5 : 10;
 
-    let points = 10;
-    if (property.state.toLowerCase() == "lagos" || property.state.toLowerCase() == "enugu" || property.state.toLowerCase() == "abuja") {
-      points = 5
-    }
-
-    await Prisma.rewardHistory.create({
-      data: {
-        userId: property.userId,
-        points,
-        reason: "ArellowPoints Earned",
-        type: "CREDIT"
-      }
-    })
+    await Promise.all([
+      Prisma.property.update({
+        where: { id },
+        data: { status: 'APPROVED', rejectionReason: null, approvedBy: { connect: { id: req.user?.id! } } },
+      }),
+      Prisma.rewardHistory.create({
+        data: { userId: property.userId, points, reason: "ArellowPoints Earned", type: "CREDIT" },
+      }),
+    ]);
 
     await deleteMatchingKeys(`property:${id}:*`);
     await deleteMatchingKeys(`getAllProperties:*`);
@@ -1696,22 +1546,15 @@ export const likeProperty = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (existingLike) {
-      next(new InternalServerError("Property already liked", 400));
+      return next(new InternalServerError("Property already liked", 400));
     }
 
-    // Create like relation
-    await Prisma.userPropertyLike.create({
-      data: {
-        user: { connect: { id: userId } },
-        property: { connect: { id: propertyId } },
-      },
-    });
-
-    // Increment likes count
-    await Prisma.property.update({
-      where: { id: propertyId },
-      data: { likesCount: { increment: 1 } },
-    });
+    await Promise.all([
+      Prisma.userPropertyLike.create({
+        data: { user: { connect: { id: userId } }, property: { connect: { id: propertyId } } },
+      }),
+      Prisma.property.update({ where: { id: propertyId }, data: { likesCount: { increment: 1 } } }),
+    ]);
 
 
     const savedCacheKey = `saved:${userId}`;
@@ -1749,7 +1592,7 @@ export const unLikeProperty = async (req: Request, res: Response, next: NextFunc
     });
 
     if (deleteResult.count === 0) {
-      next(new InternalServerError("Like does not exist", 400));
+      return next(new InternalServerError("Like does not exist", 400));
     }
 
     // Decrement likes count
@@ -1790,7 +1633,7 @@ export const shareProperty = async (req: Request, res: Response, next: NextFunct
     });
 
     if (!existingProperty) {
-      next(new InternalServerError("Property not found", 400));
+      return next(new InternalServerError("Property not found", 400));
     }
 
 
