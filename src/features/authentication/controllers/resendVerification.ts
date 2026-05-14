@@ -7,6 +7,7 @@ export class ResendVerificationController {
   private resendVerificationService = new ResendVerificationService();
 
   resendVerification = async (req: Request, res: Response, next: NextFunction) => {
+
     try {
       if (!req.user?.email) {
         throw new BadRequestError("User email not found");

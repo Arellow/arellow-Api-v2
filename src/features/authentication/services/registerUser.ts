@@ -41,11 +41,7 @@ export class AuthService {
     const codeExists = await Prisma.user.findUnique({ where: { referralCode: newUserReferralCode } });
     if (codeExists) newUserReferralCode = generateReferralCode(username + Date.now());
 
-    console.log({
-      referralCode: newUserReferralCode,
-        referredBy: referredByCode,
-    })
-
+   
 
     const newUser = await Prisma.user.create({
       data: {
