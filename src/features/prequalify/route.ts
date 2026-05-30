@@ -26,13 +26,13 @@ const updatePrequalificationStatusSchema = Joi.object({
     status: Joi.string().valid(...Object.values(PreQualificationStatus)).required(),
 });
 
-const adminMiddleware = [authenticate, isVerify, requireKyc, isSuspended, requireRole(UserRole.ADMIN, UserRole.SUPER_ADMIN), adminRequireRole("MORTGAGE")];
+const adminMiddleware = [authenticate, isVerify, requireKyc, isSuspended, requireRole(UserRole.ADMIN), adminRequireRole("MORTGAGE")];
 
 const prequalificationRoutes = express.Router();
 
 prequalificationRoutes.post("/",   authenticate, validateSchema(createPrequalificationSchema), createPreQualification);
 prequalificationRoutes.patch("/:id", ...adminMiddleware, validateSchema(updatePrequalificationStatusSchema), preQualificationStatus);
 prequalificationRoutes.get("/:id", authenticate, preQualificationDetail);
-prequalificationRoutes.get("/",    ...adminMiddleware, getPreQualifications);
+prequalificationRoutes.get("/", authenticate, getPreQualifications);
 
 export default prequalificationRoutes;
