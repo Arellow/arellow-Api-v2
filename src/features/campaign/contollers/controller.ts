@@ -62,7 +62,7 @@ export const AllCampaignsRequest = async (req: Request, res: Response, next: Nex
   try {
 
 
-    const cacheKey = `getAllCampaignsRequest`;
+    const cacheKey = `getAllCampaignsRequest:${pageNumber}:${pageSize}`;
 
 
     const result = await swrCache(cacheKey, async () => {

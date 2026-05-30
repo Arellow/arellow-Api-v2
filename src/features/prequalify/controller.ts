@@ -53,7 +53,7 @@ export const createPreQualification = async (
 
     mailController({ from: "noreply@arellow.com", ...userMailOptions });
 
-    await deleteMatchingKeys("PreQualification:*");
+    await deleteMatchingKeys("getPreQualifications");
 
     new CustomResponse(201, true, "Pre-Qualification submitted successfully", res);
   } catch (error) {
@@ -124,7 +124,7 @@ export const preQualificationStatus = async (req: Request, res: Response, next: 
 
     await Promise.all([
       Prisma.preQualification.update({ where: { id }, data: { status } }),
-      deleteMatchingKeys("PreQualification:*"),
+      deleteMatchingKeys("getPreQualifications"),
     ]);
 
     new CustomResponse(200, true, "Status updated successfully", res);
@@ -137,60 +137,27 @@ export const preQualificationStatus = async (req: Request, res: Response, next: 
 
 
 export const getPreQualifications = async (req: Request, res: Response, next: NextFunction) => {
+  const { page = "1", limit = "10" } = req.query;
+
+  const pageNumber = parseInt(page as string, 10);
+  const pageSize = parseInt(limit as string, 10);
+
   try {
-    const { page = "1", limit = "10", status } = req.query;
-
-    const pageNumber = parseInt(page as string, 10);
-    const pageSize  = parseInt(limit as string, 10);
-
-    const cacheKey = `PreQualification:${JSON.stringify(req.query)}`;
-
-    // const where = {
-    //   ...(status ? { status: status as string } : {}),
-    // };
+    const cacheKey = `getPreQualifications:${pageNumber}:${pageSize}`;
 
     const result = await swrCache(cacheKey, async () => {
       const [prequalification, total] = await Promise.all([
         Prisma.preQualification.findMany({
-          // where,
-          select: {
-            id: true,
-            fullname: true,
-            email: true,
-            phonenumber: true,
-            occupation: true,
-            home_address: true,
-            state: true,
-            country: true,
-            city: true,
-            neighbourhood: true,
-            monthly_budget: true,
-            down_payment_goal: true,
-            employer_name: true,
-            level_of_employment: true,
-            bank_name: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-            // user: {
-            //   select: {
-            //     id: true,
-            //     fullname: true,
-            //     email: true,
-            //     username: true,
-            //     avatar: true,
-            //     phone_number: true,
-            //   },
-            // },
-          },
           orderBy: { createdAt: "desc" },
           skip: (pageNumber - 1) * pageSize,
           take: pageSize,
         }),
-        Prisma.preQualification.count({  }),
+        Prisma.preQualification.count({}),
       ]);
 
       const totalPages = Math.ceil(total / pageSize);
+      const nextPage = pageNumber < totalPages ? pageNumber + 1 : null;
+      const prevPage = pageNumber > 1 ? pageNumber - 1 : null;
 
       return {
         data: prequalification,
@@ -199,8 +166,8 @@ export const getPreQualifications = async (req: Request, res: Response, next: Ne
           page: pageNumber,
           pageSize,
           totalPages,
-          nextPage:  pageNumber < totalPages ? pageNumber + 1 : null,
-          prevPage:  pageNumber > 1 ? pageNumber - 1 : null,
+          nextPage,
+          prevPage,
           canGoNext: pageNumber < totalPages,
           canGoPrev: pageNumber > 1,
         },
@@ -209,6 +176,7 @@ export const getPreQualifications = async (req: Request, res: Response, next: Ne
 
     new CustomResponse(200, true, "success", res, result);
   } catch (error) {
+    console.error("[getPreQualifications]", error);
     next(new InternalServerError("Server Error", 500));
   }
 };
